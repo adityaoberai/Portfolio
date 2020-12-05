@@ -58,12 +58,22 @@ body {
     font-size: 150%;
 }
 
+#welcome-section img {
+    height: 300px;
+    width: auto;
+    border: 5px solid var(--main-gray);
+    border-radius: 50%;
+}
+
 #projects {
     margin: 24px;
+    text-align: center;
 }
 
 .project-wrapper {
     display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .project-wrapper a {
@@ -84,10 +94,14 @@ body {
 
 #contact {
     margin: 24px;
+    text-align: center;
 }
 
 .contact-wrapper {
     display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
 }
 
 .contact-wrapper a {
@@ -96,4 +110,12 @@ body {
     display: inline-block;
     margin: 24px;
     margin-left: 0px;
+    padding: 5px;
+    border: 2px solid var(--main-gray);
+    border-radius: 5px;
+}
+
+.contact-wrapper a:hover {
+    background-color: var(--main-gray);
+    color: var(--main-white);
 }
