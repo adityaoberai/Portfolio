@@ -1,0 +1,48 @@
+#projects {
+    text-align: center;
+    margin-top: 13vh;
+    margin-bottom: 13vh;
+}
+
+.project-wrapper {
+    display: block;
+    max-width: 50vw;
+    max-height: 40vh;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.project-wrapper a {
+    text-decoration: none;
+    color: var(--main-gray);
+    display: flex;
+    border: 2px solid var(--main-gray);
+    border-radius: 24px;
+    padding: 2vh;
+    margin: 3vh;
+    align-items: center;
+    text-align: center;
+    
+}
+
+.project-tile {
+    margin: 2vh;
+    padding: 1vh;
+}
+
+.project-tile img {
+    width: 70%;
+}
+
+.project-tile h2 {
+    margin-top: 2vh;
+}
+
+.project-tile p {
+    margin-top: 3vh;
+}
+
+.project-wrapper a:hover {
+    background-color: var(--main-gray);
+    color: var(--main-white);
+}
