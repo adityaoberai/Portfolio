@@ -28,11 +28,12 @@ body {
     z-index: 10;
     height: 10vh;
     line-height: 10vh;
+    border-bottom-left-radius: 2vw;
+    border-bottom-right-radius: 2vw;
 }
 
 #navbar ul {
     list-style: none;
-    display: inline-block;
     float: right;
     margin: 0vw 1vw;
 }
@@ -41,6 +42,7 @@ body {
     text-align: center;
     display: inline;
     float: left;
+    font-size: 90%;
 }
 
 #navbar a {
@@ -63,11 +65,12 @@ body {
     align-items: center;
     text-align: center;
     height: 100vh;
-    font-size: 150%;
+    font-size: 140%;
+    padding: 0 1vw;
 }
 
 #welcome-section img {
-    height: 35vh;
+    height: 30vh;
     width: auto;
     border: 5px solid var(--main-gray);
     border-radius: 50%;
@@ -95,8 +98,15 @@ body {
 }
 
 #contact {
-    margin: 24px;
     text-align: center;
+    background-color: var(--main-gray);
+    border-top-left-radius: 5vw;
+    border-top-right-radius: 5vw;
+}
+
+#contact h2 {
+    color: var(--main-white);
+    padding-top: 2vh;
 }
 
 .contact-wrapper {
@@ -104,24 +114,25 @@ body {
     justify-content: center;
     align-items: center;
     text-align: center;
-    margin: 0 20vw;
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex-flow: row rap;
+    align-content: flex-end;
+    padding: 2vh 20vw;
 }
 
 .contact-wrapper a {
     text-decoration: none;
-    color: var(--main-gray);
+    color: var(--main-white);
     display: flex;
-    margin: 1.5vw;
-    margin-left: 0px;
-    padding: 0.3vw;
+    margin: 0 2vw;
+    padding: 0.5vw;
     border: 2px solid var(--main-gray);
     border-radius: 5px;
-    width: 3vw;
-    height: 3vw;
     justify-content: center;
 }
 
 .contact-wrapper a:hover {
-    background-color: var(--main-gray);
-    color: var(--main-white);
+    background-color: var(--main-white);
+    color: var(--main-gray);
 }
