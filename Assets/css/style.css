@@ -35,13 +35,13 @@ body {
 #navbar ul {
     list-style: none;
     float: right;
-    margin: 0vw 1vw;
 }
 
 #navbar li {
     text-align: center;
     display: inline;
     float: left;
+    padding: 0vw 1vw;
     font-size: 90%;
 }
 
@@ -76,6 +76,10 @@ body {
     border-radius: 50%;
     padding: 1.5vh;
     margin-bottom: 24px;
+}
+
+#welcome-section p {
+    padding: 0.5vw;
 }
 
 #welcome-section a {
