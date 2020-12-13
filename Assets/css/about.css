@@ -1,25 +1,85 @@
 #intro {
     display: flex;
-    height: 100vh;
-    width: 80vw;
-    margin-top: 13vh;
+    width: 90vw;
+    margin-top: 15vh;
     margin-left: auto;
     margin-right: auto;
-}
-
-#intro h1 {
-    text-align: center;
-}
-
-#intro-content {
-    margin-top: 15vh;
+    flex-direction: column;
 }
 
 #intro img {
-    height: 35vh;
+    height: 20vh;
     width: auto;
     border: 5px solid var(--main-gray);
     border-radius: 50%;
     padding: 1.5vh;
-    margin-right: 5vh;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.intro-content {   
+    margin: 5vh auto;
+    margin-bottom: 8vh;
+}
+
+.intro-content h1{
+    font-size: 150%;
+    margin-bottom: 3vh;
+    text-align: center;
+}
+
+.intro-content l1 {
+    font-size: 105%;
+    margin: 1vh auto;
+    text-align: left;
+}
+
+#communities h1 {
+    font-size: 150%;
+    text-align: center;
+    margin: 2vw auto;
+}
+
+#communities .logos {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex-flow: row rap;
+    align-content: flex-end;
+    padding: auto 15vw;
+}
+
+#communities .logos1 img {
+    max-width: 8vw;
+    height: auto;
+    margin: 2vh 2vw;
+}
+
+#communities .logos2 img {
+    max-height: 7vh;
+    width: auto;
+    margin: 2vh 2vw;
+}
+
+#resume {
+    display: flex;
+    margin: 5vh auto;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+}
+
+#resume a {
+    padding: 1vh 1vw;
+    border: 2px solid var(--main-gray);
+    border-radius: 5px;
+    color: var(--main-white);
+}
+
+#resume a:hover {
+    color: var(--main-white);
+    background-color: var(--main-gray);
 }
