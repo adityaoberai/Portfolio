@@ -52,14 +52,9 @@
     padding: auto 15vw;
 }
 
-#communities .logos1 img {
-    max-width: 8vw;
-    height: auto;
-    margin: 2vh 2vw;
-}
-
-#communities .logos2 img {
-    max-height: 7vh;
+#communities .logos img {
+    max-width: 15vw;
+    max-height: 15vh;
     width: auto;
     margin: 2vh 2vw;
 }
