@@ -79,7 +79,7 @@
 
 #skills img {
     height: 2.8vh;
-    width: auto;
+    width: max-content;
     margin: 2vh 1vw;
 }
 
