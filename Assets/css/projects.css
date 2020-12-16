@@ -4,10 +4,12 @@
 }
 
 .project-wrapper {
-    display: block;
+    display: flex;
     max-width: 80vw;
-    margin-left: auto;
-    margin-right: auto;
+    flex-direction: column;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
 }
 
 .project-wrapper a {
@@ -18,13 +20,11 @@
     border-radius: 2vw;
     padding: 2vh;
     margin: 3vh;
-    align-items: center;
-    text-align: center;
     max-width: 65vw;
     max-height: auto;
-    margin-left: auto;
-    margin-right: auto;
-    
+    text-align: center;
+    justify-content: center;
+    align-items: center;
 }
 
 .project-tile {
