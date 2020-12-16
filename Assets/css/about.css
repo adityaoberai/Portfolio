@@ -55,15 +55,34 @@
 }
 
 .logos img {
-    max-width: 13vw;
-    max-height: 13vh;
+    max-height: 30vh;
+    max-width: 30vw;
     width: auto;
+    height: auto;
+    margin: 2vh 2vw;
+}
+
+.longlogos {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex-flow: row wrap;
+    align-content: flex-end;
+}
+
+.longlogos img {
+    max-height: 8vh;
+    width: auto;
+    height: auto;
     margin: 2vh 2vw;
 }
 
 #skills {
     margin-bottom: 6vh;
-    width: 100vw;
+    width: 95vw;
 }
 
 #skills h1 {
@@ -77,9 +96,20 @@
     text-align: center;
 }
 
-#skills img {
+.badges {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex-flow: row wrap;
+    align-content: flex-end;
+}
+
+.badges img {
     height: 2.8vh;
-    width: max-content;
+    width: auto;
     margin: 2vh 1vw;
 }
 
@@ -109,4 +139,21 @@
 #resume a:hover {
     color: var(--main-white);
     background-color: var(--main-gray);
+} 
+
+@media screen and (min-width: 600px) {
+    .logos img {
+        max-height: 13vh;
+        max-width: 13vw;
+        width: auto;
+        height: auto;
+        margin: 2vh 2vw;
+    }
+
+    .longlogos img {
+        max-height: 7vh;
+        width: auto;
+        height: auto;
+        margin: 2vh 2vw;
+    }
 }
