@@ -28,8 +28,6 @@ body {
     z-index: 10;
     height: 10vh;
     line-height: 10vh;
-    border-bottom-left-radius: 2vw;
-    border-bottom-right-radius: 2vw;
 }
 
 #navbar ul {
