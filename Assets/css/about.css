@@ -81,8 +81,11 @@
 }
 
 #skills {
+    display: block;
     margin-bottom: 6vh;
     width: 95vw;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 #skills h1 {
