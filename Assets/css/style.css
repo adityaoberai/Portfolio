@@ -43,15 +43,81 @@ body {
     font-size: 90%;
 }
 
-#navbar a {
+#navbar ul li a {
     text-decoration: none;
+    background-color: var(--main-gray);
     color: var(--main-white);
+    border-radius: 1vw;
     font-size: 1rem;
     padding: 1vh 1vw;
-    border-radius: 1vw;
+    line-height: 10vh;
 }
 
-#navbar a:hover {
+#navbar ul li a:hover {
+    background-color: var(--main-white);
+    color: var(--main-gray);
+}
+
+.dropdown {
+    position: relative;
+    display: block;
+    float: right;
+}
+
+.dropbtn {
+    background-color: var(--main-gray);
+    color: var(--main-white);
+    height: 10vh;
+    width: 6vw;
+    line-height: 10vh;
+    padding: 1vh 1vw;
+    z-index: 10;
+    border: none;
+    background: none;
+}
+
+.dropbtn i {
+    top: 50%;
+    left: 50%;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    left: auto;
+    top: 10vh;
+    background-color: var(--main-gray);
+    z-index: 1;
+    min-width: 30vw;
+    border-bottom-left-radius: 1vw;
+    border-bottom-right-radius: 1vw;
+}
+  
+.dropdown-content a {
+    text-decoration: none;
+    display: block;
+    background-color: var(--main-gray);
+    color: var(--main-white);
+    border: 5px solid var(--main-gray);
+    border-radius: 1vw;
+    font-size: 1rem;
+    padding: 1vh 1vw;
+    height: 5vh;
+    line-height: 5vh;
+    text-align: right;
+}
+  
+.dropdown-content a:hover {
+    background-color: var(--main-white);
+    color: var(--main-gray);
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown:hover .dropbtn {
     background-color: var(--main-white);
     color: var(--main-gray);
 }
@@ -137,4 +203,30 @@ body {
 .contact-wrapper a:hover {
     background-color: var(--main-white);
     color: var(--main-gray);
+}
+
+@media screen and (min-width: 600px) { 
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        right: 0;
+        left: auto;
+        top: 10vh;
+        background-color: var(--main-gray);
+        z-index: 1;
+        min-width: 18vw;
+    }
+}
+
+@media screen and (min-width: 1200px) {
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        right: 0;
+        left: auto;
+        top: 10vh;
+        background-color: var(--main-gray);
+        z-index: 1;
+        min-width: 10vw;
+    }
 }
