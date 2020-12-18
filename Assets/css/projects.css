@@ -21,32 +21,49 @@
     border: 2px solid var(--main-gray);
     border-radius: 2vw;
     padding: 2vh;
-    margin: 3vh;
-    max-width: 65vw;
+    margin-top: 4vh;
+    margin-bottom: 4vh;
+    width: 65vw;
     max-height: auto;
     text-align: center;
     justify-content: center;
     align-items: center;
+    
 }
 
 .project-tile {
-    margin: 2vh;
+    margin: 2vh auto;
     padding: 1vh;
+    text-align: center;
 }
 
 .project-tile img {
-    width: 60%;
-}
-
-.project-tile h2 {
-    margin-top: 2vh;
+    width: 80%;
 }
 
 .project-tile p {
-    margin-top: 3vh;
+    margin-top: 2vh;
 }
 
 .project-wrapper a:hover {
     background-color: var(--main-gray);
     color: var(--main-white);
+}
+
+@media screen and (min-width: 600px) {
+    .project-wrapper a {
+        text-decoration: none;
+        color: var(--main-gray);
+        display: flex;
+        border: 2px solid var(--main-gray);
+        border-radius: 2vw;
+        padding: 2vh;
+        margin-top: 4vh;
+        margin-bottom: 4vh;
+        width: 50vw;
+        max-height: auto;
+        text-align: center;
+        justify-content: center;
+        align-items: center;
+    }   
 }
