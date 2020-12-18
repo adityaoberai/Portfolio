@@ -29,8 +29,8 @@
 }
 
 .intro-content li {
-    font-size: 105%;
-    margin: 1vh auto;
+    font-size: 85%;
+    margin: 1.5vh 5vw;
     text-align: left;
 }
 
@@ -158,5 +158,11 @@
         width: auto;
         height: auto;
         margin: 2vh 2vw;
+    }
+
+    .intro-content li {
+        font-size: 105%;
+        margin: 1.5vh auto;
+        text-align: left;
     }
 }
