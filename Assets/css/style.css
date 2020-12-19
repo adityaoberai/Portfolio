@@ -18,6 +18,10 @@ body {
     color: var(--main-gray);
 }
 
+.desktop {
+    display: none;
+}
+
 #navbar {
     display: inline-block;
     position: fixed;
