@@ -41,6 +41,10 @@
     width: 80%;
 }
 
+.project-tile h2 {
+    margin-top: 2vh;
+}
+
 .project-tile p {
     margin-top: 2vh;
 }
