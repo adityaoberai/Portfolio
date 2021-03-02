@@ -1,0 +1,49 @@
+body {
+    max-height: 100vh;
+}
+
+#message {
+    text-align: center;
+    margin-top: 13vh;
+}
+
+.message-wrapper {
+    max-width: 80vw;
+    
+    margin: 5vh auto;
+    justify-content: center;
+}
+
+.message-form {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+}
+
+.message-form-input {
+    width: 30vw;
+    height: 3vh;
+    margin: 2vh;
+    padding: 1vh 5vw;
+    border: 1px solid var(--main-gray);
+    border-radius: 2vh;
+}
+
+.longinput {
+    height: 20vh;
+    padding: 2.5vh 5vw;
+}
+
+.submitbutton {
+    width: 10vw;
+    padding: 0;
+}
+
+footer {
+    margin-bottom: 0;
+}
+
+@media screen and (min-width: 600px) {
+    
+}

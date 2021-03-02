@@ -93,6 +93,12 @@
 }
 
 @media screen and (min-width: 600px) {
+    #navbar ul {
+        list-style: none;
+        float: right;
+        margin-right: 0.5vw;
+    }
+
     .written-content-wrapper a {
         text-decoration: none;
         color: var(--main-gray);
