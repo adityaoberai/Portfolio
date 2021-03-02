@@ -137,11 +137,13 @@
     border: 2px solid var(--main-gray);
     border-radius: 5px;
     color: var(--main-gray);
+    transition-duration: 0.3s;
 }
 
 #resume a:hover {
     color: var(--main-white);
     background-color: var(--main-gray);
+    transition-duration: 0.3s;
 } 
 
 @media screen and (min-width: 600px) {

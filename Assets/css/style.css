@@ -56,11 +56,13 @@ body {
     font-size: 1rem;
     padding: 1vh 1vw;
     line-height: 10vh;
+    transition-duration: 0.3s;
 }
 
 #navbar ul li a:hover {
     background-color: var(--main-white);
     color: var(--main-gray);
+    transition-duration: 0.3s;
 }
 
 .dropdown {
@@ -112,11 +114,13 @@ body {
     height: 5vh;
     line-height: 5vh;
     text-align: right;
+    transition-duration: 0.3s;
 }
   
 .dropdown-content a:hover {
     background-color: var(--main-white);
     color: var(--main-gray);
+    transition-duration: 0.3s;
 }
 
 .dropdown:hover .dropdown-content {
@@ -164,11 +168,13 @@ body {
     padding: 1vw;
     border: 2px solid var(--main-gray);
     border-radius: 1vw;
+    transition-duration: 0.3s;
 }
 
 #welcome-section a:hover {
     background-color: var(--main-white);
     color: var(--main-gray);
+    transition-duration: 0.3s;
 }
 
 #contact {
@@ -204,11 +210,13 @@ body {
     border: 2px solid var(--main-gray);
     border-radius: 5px;
     justify-content: center;
+    transition-duration: 0.3s;
 }
 
 .contact-wrapper a:hover {
     background-color: var(--main-white);
     color: var(--main-gray);
+    transition-duration: 0.3s;
 }
 
 @media screen and (min-width: 600px) { 

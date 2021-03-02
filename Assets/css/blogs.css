@@ -28,7 +28,7 @@
     text-align: center;
     justify-content: center;
     align-items: center;
-    
+    transition-duration: 0.3s;
 }
 
 .written-content-tile {
@@ -49,6 +49,7 @@
 .written-content-wrapper a:hover {
     background-color: var(--main-gray);
     color: var(--main-white);
+    transition-duration: 0.3s;
 }
 
 #video-content {
