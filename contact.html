@@ -17,15 +17,24 @@
             document.getElementById('contact-form').addEventListener('submit', function(event) {
                 event.preventDefault();
                 try {
-                    emailjs.send("service_lhz7mpj","template_rg4023v",{
-                        from_name: document.getElementById('user_name').value,
-                        message: document.getElementById('user_message').value,
-                        reply_to: document.getElementById('user_email').value,
-                    });
-                    alert("Message Sent Successfully!");
-                    document.getElementById('user_name').value="";
-                    document.getElementById('user_message').value="";
-                    document.getElementById('user_email').value="";
+                    var name = document.getElementById('user_name').value;
+                    var usermessage = document.getElementById('user_message').value;
+                    var email = document.getElementById('user_email').value;
+                
+                    if(name === "" || usermessage === "" || email === "") {
+                        alert("Please fill all the fields");
+                    } 
+                    else {
+                        emailjs.send("service_lhz7mpj","template_rg4023v",{
+                            from_name: name,
+                            message: usermessage,
+                            reply_to: email,
+                        });
+                        alert("Message Sent Successfully!");
+                        document.getElementById('user_name').value="";
+                        document.getElementById('user_message').value="";
+                        document.getElementById('user_email').value="";
+                    }
                 }
                 catch(err)
                 {
@@ -43,14 +52,15 @@
             <div class="dropdown-content">
                 <a href="index.html">Home</a>
                 <a href="about.html">About Me</a>
-                <a href="projects.html">Projects</a>
                 <a href="blogs.html">Blogs</a>
+                <a href="projects.html">Projects</a>
+                <a href="contact.html">Contact Me</a>
             </div>
         </div>
     </nav>
 
     <section id="message">
-        <h1>💻Send A Message💻</h1>
+        <h1>💌Send A Message💌</h1>
         <div class="message-wrapper">
             <form id="contact-form" class="message-form">
                 <input type="text" class="message-form-input" placeholder="Name" id="user_name">
@@ -62,7 +72,7 @@
     </section>
 
     <footer id="contact">
-        <h2>📱Get In Touch📱</h2>
+        <h2>📱Connect With Me📱</h2>
         <div class="contact-wrapper">
             <a class="fab fa-linkedin fa-2x" href="https://linkedin.com/in/adityaoberai1" target="_blank"></a>
             <a class="fab fa-twitter fa-2x" href="https://twitter.com/adityaoberai1" target="_blank"></a>

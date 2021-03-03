@@ -184,41 +184,6 @@ body {
     border-top-right-radius: 5vw;
 }
 
-#contact h2 {
-    color: var(--main-white);
-    padding-top: 2vh;
-}
-
-.contact-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    flex-direction: row;
-    flex-wrap: wrap;
-    flex-flow: row rap;
-    align-content: flex-end;
-    padding: 2vh 20vw;
-}
-
-.contact-wrapper a {
-    text-decoration: none;
-    color: var(--main-white);
-    display: flex;
-    margin: 0 2vw;
-    padding: 0.5vw;
-    border: 2px solid var(--main-gray);
-    border-radius: 5px;
-    justify-content: center;
-    transition-duration: 0.3s;
-}
-
-.contact-wrapper a:hover {
-    background-color: var(--main-white);
-    color: var(--main-gray);
-    transition-duration: 0.3s;
-}
-
 @media screen and (min-width: 600px) { 
     .dropdown-content {
         display: none;
