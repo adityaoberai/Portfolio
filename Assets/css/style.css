@@ -18,8 +18,10 @@ body {
     color: var(--main-gray);
 }
 
-.desktop {
-    display: none;
+.landing-page {
+    background-color: var(--main-white);
+    color: var(--main-gray);
+    max-height: 100vh;
 }
 
 #navbar {
