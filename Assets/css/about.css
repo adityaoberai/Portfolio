@@ -43,6 +43,15 @@
     margin: 2vw auto;
 }
 
+#conferences {
+    margin-bottom: 7vh;
+}
+
+#conferences h1 {
+    text-align: center;
+    margin: 2vw auto;
+}
+
 .logos {
     display: flex;
     justify-content: center;
