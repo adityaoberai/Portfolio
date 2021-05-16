@@ -34,6 +34,11 @@
     text-align: left;
 }
 
+.company {
+    text-decoration: none;
+    color: var(--main-gray);
+}
+
 #communities {
     margin-bottom: 7vh;
 }
