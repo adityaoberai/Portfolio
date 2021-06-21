@@ -73,7 +73,7 @@ body {
     float: right;
 }
 
-.dropbtn {
+.menu {
     background-color: var(--main-gray);
     color: var(--main-white);
     height: 10vh;
@@ -84,7 +84,7 @@ body {
     background: none;
 }
 
-.dropbtn i {
+.menu i {
     text-decoration: none;
     display: flex;
     padding: 1vh 1vw;
@@ -129,7 +129,7 @@ body {
     display: block;
 }
 
-.dropdown:hover .dropbtn {
+.dropdown:hover .menu {
     background-color: var(--main-white);
     color: var(--main-gray);
 }
@@ -231,7 +231,7 @@ body {
         min-width: 18vw;
     }
 
-    .dropbtn {
+    .menu {
         background-color: var(--main-gray);
         color: var(--main-white);
         height: 10vh;
