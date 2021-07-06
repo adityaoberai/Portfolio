@@ -10,20 +10,20 @@ body {
     margin-bottom: 2vh;
 }
 
-.message-wrapper {
+#message .message-wrapper {
     max-width: 80vw;
     margin: 5vh auto;
     justify-content: center;
 }
 
-.message-form {
+#message .message-form {
     display: flex;
     flex-direction: column;
     text-align: center;
     align-items: center;
 }
 
-.message-form-input {
+#message .message-form-input {
     width: 50vw;
     height: 3vh;
     margin: 1vh;
@@ -33,12 +33,12 @@ body {
     font-family: sans-serif;
 }
 
-.longinput {
+#message .longinput {
     height: 15vh;
     padding: 2.5vh 5vw;
 }
 
-.submitbutton {
+#message .submitbutton {
     width: 20vw;
     height: 5vh;
     padding: 0;
@@ -80,7 +80,7 @@ body {
     flex-wrap: wrap;
     flex-flow: row rap;
     align-content: flex-end;
-    padding: 2vh 15vw;
+    padding: 2vh 10vw;
 }
 
 .contact-wrapper a {
