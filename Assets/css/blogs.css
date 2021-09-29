@@ -1,57 +1,3 @@
-#written-content {
-    text-align: center;
-    margin-top: 13vh;
-}
-
-.written-content-wrapper {
-    display: flex;
-    max-width: 80vw;
-    flex-direction: column;
-    text-align: center;
-    justify-content: center;
-    align-items: center;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.written-content-wrapper a {
-    text-decoration: none;
-    color: var(--main-gray);
-    display: flex;
-    border: 2px solid var(--main-gray);
-    border-radius: 2vw;
-    padding: 2vh;
-    margin-top: 4vh;
-    margin-bottom: 4vh;
-    width: 65vw;
-    max-height: auto;
-    text-align: center;
-    justify-content: center;
-    align-items: center;
-    transition-duration: 0.3s;
-}
-
-.written-content-tile {
-    margin: 2vh auto;
-    padding: 1vh;
-    text-align: center;
-}
-
-.written-content-tile img {
-    width: 80%;
-}
-
-.written-content-tile p {
-    margin-top: 2vh;
-    
-}
-
-.written-content-wrapper a:hover {
-    background-color: var(--main-gray);
-    color: var(--main-white);
-    transition-duration: 0.3s;
-}
-
 #video-content {
     text-align: center;
     margin-top: 5vh;
@@ -97,22 +43,6 @@
         list-style: none;
         float: right;
         margin-right: 0.5vw;
-    }
-
-    .written-content-wrapper a {
-        text-decoration: none;
-        color: var(--main-gray);
-        display: flex;
-        border: 2px solid var(--main-gray);
-        border-radius: 2vw;
-        padding: 2vh;
-        margin-top: 4vh;
-        margin-bottom: 4vh;
-        width: 50vw;
-        max-height: auto;
-        text-align: center;
-        justify-content: center;
-        align-items: center;
     }
 
     #video-content .youtube-video iframe {
