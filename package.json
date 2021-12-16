@@ -17,7 +17,6 @@
   },
   "homepage": "https://github.com/adityaoberai/adityaoberai.github.io#readme",
   "dependencies": {
-    "express": "^4.17.1",
-    "vercel": "^23.1.2"
+    "express": "^4.17.1"
   }
 }
