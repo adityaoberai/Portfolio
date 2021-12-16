@@ -1,0 +1,22 @@
+{
+  "name": "my-portfolio",
+  "version": "1.0.0",
+  "description": "My personal portfolio",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adityaoberai/adityaoberai.github.io.git"
+  },
+  "author": "Aditya Oberai",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/adityaoberai/adityaoberai.github.io/issues"
+  },
+  "homepage": "https://github.com/adityaoberai/adityaoberai.github.io#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
