@@ -42,6 +42,14 @@ app.get('/resume', function(req, res) {
   res.sendFile(path.join(__dirname + '/Socials/resume.html'));
 });
 
+app.get('/github', function(req, res) {
+  res.sendFile(path.join(__dirname + '/Socials/github.html'));
+});
+
+app.get('/instagram', function(req, res) {
+    res.sendFile(path.join(__dirname + '/Socials/instagram.html'));
+});
+
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
