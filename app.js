@@ -66,6 +66,56 @@ app.get('/instagram', function(req, res) {
   res.sendFile(path.join(__dirname + '/Socials/instagram.html'));
 });
 
+app.get('/polywork', function(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  res.sendFile(path.join(__dirname + '/Socials/polywork.html'));
+});
+
+app.get('/peerlist', function(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  res.sendFile(path.join(__dirname + '/Socials/peerlist.html'));
+});
+
+app.get('/youtube', function(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  res.sendFile(path.join(__dirname + '/Socials/youtube.html'));
+});
+
+app.get('/facebook', function(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  res.sendFile(path.join(__dirname + '/Socials/facebook.html'));
+});
+
+app.get('/devto', function(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  res.sendFile(path.join(__dirname + '/Socials/devto.html'));
+});
+
+app.get('/medium', function(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  res.sendFile(path.join(__dirname + '/Socials/medium.html'));
+});
+
+app.get('/mail', function(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  res.sendFile(path.join(__dirname + '/Socials/mail.html'));
+});
+
+app.get('/email', function(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  res.sendFile(path.join(__dirname + '/Socials/mail.html'));
+});
+
+app.get('/whatsapp', function(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  res.sendFile(path.join(__dirname + '/Socials/whatsapp.html'));
+});
+
+app.get('/call', function(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  res.sendFile(path.join(__dirname + '/Socials/call.html'));
+});
+
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
