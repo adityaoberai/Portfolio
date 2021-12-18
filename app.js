@@ -36,6 +36,11 @@ app.get('/contact', function(req, res) {
   res.sendFile(path.join(__dirname + '/contact.html'));
 });
 
+app.get('/pic', function(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  res.sendFile(path.join(__dirname + '/Assets/img/Personal/Aditya.jpg'));
+});
+
 app.get('/linkedin', function(req, res) {
   res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
   res.sendFile(path.join(__dirname + '/Socials/linkedin.html'));
