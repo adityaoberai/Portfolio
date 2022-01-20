@@ -56,6 +56,11 @@ app.get('/resume', function(req, res) {
   res.sendFile(path.join(__dirname + '/Socials/resume.html'));
 });
 
+app.get('/devresume', function(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  res.sendFile(path.join(__dirname + '/Socials/devresume.html'));
+});
+
 app.get('/github', function(req, res) {
   res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
   res.sendFile(path.join(__dirname + '/Socials/github.html'));
