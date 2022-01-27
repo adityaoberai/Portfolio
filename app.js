@@ -126,6 +126,11 @@ app.get('/arcc', function(req, res) {
   res.sendFile(path.join(__dirname + '/Socials/arcc.html'));
 });
 
+app.get('/meet', function(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  res.sendFile(path.join(__dirname + '/Socials/arcc.html'));
+});
+
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
