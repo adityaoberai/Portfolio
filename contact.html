@@ -41,21 +41,15 @@
                     var name = document.getElementById('user_name').value;
                     var usermessage = document.getElementById('user_message').value;
                     var email = document.getElementById('user_email').value;
-                
-                    if(name === "" || usermessage === "" || email === "") {
-                        alert("Please fill all the fields");
-                    } 
-                    else {
-                        emailjs.send("service_lhz7mpj","template_rg4023v",{
-                            from_name: name,
-                            message: usermessage,
-                            reply_to: email,
-                        });
-                        alert("Message Sent Successfully!");
-                        document.getElementById('user_name').value="";
-                        document.getElementById('user_message').value="";
-                        document.getElementById('user_email').value="";
-                    }
+                    emailjs.send("service_lhz7mpj","template_rg4023v",{
+                        from_name: name,
+                        message: usermessage,
+                        reply_to: email,
+                    });
+                    alert("Message Sent Successfully!");
+                    document.getElementById('user_name').value="";
+                    document.getElementById('user_message').value="";
+                    document.getElementById('user_email').value="";
                 }
                 catch(err)
                 {
@@ -92,10 +86,10 @@
         <h1>💌Send A Message💌</h1>
         <div class="message-wrapper">
             <form id="contact-form" class="message-form">
-                <input type="text" class="message-form-input" placeholder="Name" id="user_name">
-                <input type="email" class="message-form-input" placeholder="Email Address" id="user_email">
-                <textarea id="user_message" class="message-form-input longinput" placeholder="Write Message Here..."></textarea>
-                <input type="submit" class="message-form-input submitbutton" value="Send">
+                <input type="text" class="message-form-input" placeholder="Name" id="user_name" required>
+                <input type="email" class="message-form-input" placeholder="Email Address" id="user_email" required>
+                <textarea id="user_message" class="message-form-input longinput" placeholder="Write Message Here..." required></textarea>
+                <input type="submit" class="message-form-input submitbutton" value="Send" required>
             </form>
         </div>
     </section>
