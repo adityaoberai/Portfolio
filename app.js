@@ -26,6 +26,11 @@ app.get('/blogs', function(req, res) {
   res.sendFile(path.join(__dirname + '/blogs.html'));
 });
 
+app.get('/videos', function(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  res.sendFile(path.join(__dirname + '/videos.html'));
+});
+
 app.get('/projects', function(req, res) {
   res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
   res.sendFile(path.join(__dirname + '/projects.html'));
