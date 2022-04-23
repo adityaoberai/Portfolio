@@ -1,7 +1,7 @@
 const express = require('express')
 const path = require('path');
 
-const app = express()
+const app = express();
 
 app.use(express.static(path.join(__dirname)));
 app.use('/Assets', express.static(path.join(__dirname + '/Assets')));
@@ -133,7 +133,7 @@ app.get('/arcc', function(req, res) {
 
 app.get('/meet', function(req, res) {
   res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
-  res.sendFile(path.join(__dirname + '/Socials/arcc.html'));
+  res.sendFile(path.join(__dirname + '/Socials/meet.html'));
 });
 
 const port = process.env.PORT || 3000;
