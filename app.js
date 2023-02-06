@@ -61,9 +61,19 @@ app.get('/resume', function(req, res) {
   res.sendFile(path.join(__dirname + '/Socials/resume.html'));
 });
 
+app.get('/resumedoc', function(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  res.sendFile(path.join(__dirname + '/Socials/resumedoc.html'));
+});
+
 app.get('/devresume', function(req, res) {
   res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
   res.sendFile(path.join(__dirname + '/Socials/devresume.html'));
+});
+
+app.get('/devresumedoc', function(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  res.sendFile(path.join(__dirname + '/Socials/devresumedoc.html'));
 });
 
 app.get('/github', function(req, res) {
@@ -149,6 +159,11 @@ app.get('/anotherrandomcommunity', function(req, res) {
 app.get('/arc', function(req, res) {
   res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
   res.sendFile(path.join(__dirname + '/Socials/arc.html'));
+});
+
+app.get('/sponsor', function(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  res.sendFile(path.join(__dirname + '/Socials/sponsor.html'));
 });
 
 const port = process.env.PORT || 3000;
