@@ -148,7 +148,12 @@ app.get('/meet', function(req, res) {
 
 app.get('/newsletter', function(req, res) {
   res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
-  res.sendFile(path.join(__dirname + '/newsletter.html'));
+  res.sendFile(path.join(__dirname + '/Socials/arcn.html'));
+});
+
+app.get('/arcn', function(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  res.sendFile(path.join(__dirname + '/Socials/arcn.html'));
 });
 
 app.get('/anotherrandomcommunity', function(req, res) {
