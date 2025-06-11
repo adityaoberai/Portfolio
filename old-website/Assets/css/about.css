@@ -1,0 +1,207 @@
+#intro {
+    display: flex;
+    margin-top: 14vh;
+    margin-left: auto;
+    margin-right: auto;
+    flex-direction: column;
+    margin-bottom: 7vh;
+}
+
+#intro img {
+    height: 20vh;
+    width: auto;
+    border: 5px solid var(--main-gray);
+    border-radius: 50%;
+    padding: 1.5vh;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.intro-content {   
+    margin: 0vh auto;
+    margin-top: 5vh;
+}
+
+.intro-content h1{
+    margin-bottom: 3vh;
+    text-align: center;
+}
+
+.intro-content li {
+    font-size: 85%;
+    margin: 1.5vh 5vw;
+    text-align: left;
+}
+
+.company {
+    text-decoration: none;
+    color: var(--main-gray);
+}
+
+#companies {
+    margin-bottom: 7vh;
+}
+
+#companies h1 {
+    text-align: center;
+    margin: 2vw auto;
+}
+
+#communities {
+    margin-bottom: 7vh;
+}
+
+#communities h1 {
+    text-align: center;
+    margin: 2vw auto;
+}
+
+#conferences {
+    margin-bottom: 7vh;
+}
+
+#conferences h1 {
+    text-align: center;
+    margin: 2vw auto;
+}
+
+.logos {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex-flow: row wrap;
+    align-content: flex-end;
+}
+
+.logos img {
+    max-height: 30vh;
+    max-width: 30vw;
+    width: auto;
+    height: auto;
+    margin: 2vh 2vw;
+}
+
+.longlogos {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex-flow: row wrap;
+    align-content: flex-end;
+}
+
+.longlogos img {
+    max-height: 8vh;
+    width: auto;
+    height: auto;
+    margin: 2vh 2vw;
+}
+
+.logos .company img {
+    max-height: 30vh;
+    max-width: 30vw;
+    width: auto;
+    height: auto;
+    margin: 2vh 2vw;
+}
+
+#skills {
+    display: block;
+    margin-bottom: 6vh;
+    width: 95vw;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#skills h1 {
+    text-align: center;
+    margin: 2vw auto;
+}
+
+#skills h2 {
+    font-size: 1.3em;
+    margin: 3vh auto;
+    text-align: center;
+}
+
+.badges {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex-flow: row wrap;
+    align-content: flex-end;
+}
+
+.badges img {
+    height: 2.8vh;
+    width: auto;
+    margin: 2vh 1vw;
+}
+
+#resume {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 2vh;
+}
+
+#resume a {
+    margin-top: 1.5vh;
+    text-align: center;
+    display: inline;
+    float: center;
+    text-decoration: none;
+    background-color: var(--main-gray);
+    color: var(--main-white);
+    padding: 1vw;
+    border: 2px solid var(--main-gray);
+    border-radius: 0.5vw;
+    transition-duration: 0.3s;
+}
+
+#resume a:hover {
+    background-color: var(--main-white);
+    color: var(--main-gray);
+    transition-duration: 0.3s;
+}
+
+@media screen and (min-width: 600px) {
+    .logos img {
+        max-height: 13vh;
+        max-width: 13vw;
+        width: auto;
+        height: auto;
+        margin: 2vh 2vw;
+    }
+
+    .longlogos img {
+        max-height: 7.5vh;
+        width: auto;
+        height: auto;
+        margin: 2vh 2vw;
+    }
+
+    .logos .company img {
+        max-height: 20vh;
+        max-width: 20vw;
+        width: auto;
+        height: auto;
+        margin: 2vh 2vw;
+    }
+
+    .intro-content li {
+        font-size: 105%;
+        margin: 1.5vh auto;
+        text-align: left;
+    }
+}

@@ -1,0 +1,127 @@
+body {
+    background-color: var(--main-white);
+    color: var(--main-gray);
+}
+
+#message {
+    text-align: center;
+    margin-top: 13vh;
+    margin-bottom: 2vh;
+}
+
+#message .message-wrapper {
+    max-width: 80vw;
+    margin: 5vh auto;
+    justify-content: center;
+}
+
+#message .message-form {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+}
+
+#message .message-form-input {
+    width: 50vw;
+    height: 3vh;
+    margin: 1vh;
+    padding: 1vh 5vw;
+    border: 1px solid var(--main-gray);
+    border-radius: 1vh;
+    font-family: sans-serif;
+}
+
+#message .longinput {
+    height: 15vh;
+    padding: 2.5vh 5vw;
+}
+
+#message .submitbutton {
+    width: 20vw;
+    height: 5vh;
+    padding: 0;
+    margin: 3vh 0;
+    text-decoration: none;
+    color: var(--main-white);
+    background-color: var(--main-gray);
+    transition: 0.3ms;
+}
+
+#message .submitbutton:hover {
+    width: 20vw;
+    height: 5vh;
+    padding: 0;
+    margin: 3vh 0;
+    text-decoration: none;
+    background-color: var(--main-white);
+    color: var(--main-gray);
+    transition: 0.3ms;
+}
+
+.socials {
+    margin-top: 5vh;
+    width: 100vw;
+}
+
+.socials h2 {
+    color: var(--main-grey);
+    margin: 3vh 0vw;
+    text-align: center;
+}
+
+.socials img {
+    height: 3vh;
+    margin: 1vh 1vw;
+}
+
+.socials .socials-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex-flow: row rap;
+    align-content: flex-end;
+    padding: 1vh 5vw;
+    background-color: var(--main-grey);
+}
+
+@media screen and (min-width: 800px) {
+    #message .message-form-input {
+        width: 20vw;
+        height: 2.5vh;
+        margin: 2vh;
+        padding: 1vh 3vw;
+        border: 1px solid var(--main-gray);
+        border-radius: 1vh;
+    }
+    
+    #message .longinput {
+        height: 13vh;
+        padding: 2.5vh 3vw;
+    }
+    
+    #message .submitbutton {
+        width: 10vw;
+        height: 5vh;
+        padding: 0;
+        margin: 3.5vh 0;
+        text-decoration: none;
+        color: var(--main-white);
+        background-color: var(--main-gray);
+        transition: 0.3ms;
+    }
+
+    #message .submitbutton:hover {
+        width: 10vw;
+        height: 5vh;
+        padding: 0;
+        margin: 3.5vh 0;
+        text-decoration: none;
+        background-color: var(--main-white);
+        color: var(--main-gray);
+        transition: 0.3ms;
+    }
+}
