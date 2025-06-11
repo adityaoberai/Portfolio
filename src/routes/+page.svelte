@@ -13,8 +13,6 @@
     <meta property="og:title" content="Aditya Oberai" />
     <meta property="og:description" content="DevRel, Communities, and Open Source" />
     <meta property="og:image" content="https://oberai.dev/og.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
     <meta property="og:site_name" content="Aditya Oberai" />
     
     <!-- Twitter -->
