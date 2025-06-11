@@ -86,11 +86,6 @@ app.get('/instagram', function(req, res) {
   res.sendFile(path.join(__dirname + '/Socials/instagram.html'));
 });
 
-app.get('/polywork', function(req, res) {
-  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
-  res.sendFile(path.join(__dirname + '/Socials/polywork.html'));
-});
-
 app.get('/peerlist', function(req, res) {
   res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
   res.sendFile(path.join(__dirname + '/Socials/peerlist.html'));
