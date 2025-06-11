@@ -12,7 +12,7 @@
     <meta property="og:url" content="https://oberai.dev/" />
     <meta property="og:title" content="Aditya Oberai" />
     <meta property="og:description" content="DevRel, Communities, and Open Source" />
-    <meta property="og:image" content="/og.png" />
+    <meta property="og:image" content="https://oberai.dev/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:site_name" content="Aditya Oberai" />
@@ -22,7 +22,7 @@
     <meta property="twitter:url" content="https://oberai.dev/" />
     <meta property="twitter:title" content="Aditya Oberai" />
     <meta property="twitter:description" content="DevRel, Communities, and Open Source" />
-    <meta property="twitter:image" content="/og.png" />
+    <meta property="twitter:image" content="https://oberai.dev/og.png" />
     <meta property="twitter:creator" content="@adityaoberai1" />
     
     <!-- Additional meta tags -->
