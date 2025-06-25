@@ -13,7 +13,7 @@
 	>
 		{TAB_LABELS[ACTIVE_TABS.LINKS]}
 	</TabButton>
-	<div class="tab-divider"></div>
+	
 	<TabButton isActive={activeTab === ACTIVE_TABS.AMA} onClick={() => setActiveTab(ACTIVE_TABS.AMA)}>
 		{TAB_LABELS[ACTIVE_TABS.AMA]}
 	</TabButton>
@@ -25,13 +25,6 @@
 		gap: 0.5rem;
 		align-items: center;
 		background-color: transparent;
-	}
-
-	.tab-divider {
-		width: 2px;
-		height: 2rem;
-		background-color: var(--text-color);
-		margin: 0 0.5rem;
 	}
 
 	@media (max-width: 480px) {
