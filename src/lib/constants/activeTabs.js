@@ -4,6 +4,6 @@ export const ACTIVE_TABS = {
 };
 
 export const TAB_LABELS = {
-	[ACTIVE_TABS.LINKS]: 'Important Links',
-	[ACTIVE_TABS.AMA]: 'Ask Me Anything'
+	[ACTIVE_TABS.LINKS]: 'Links',
+	[ACTIVE_TABS.AMA]: 'AMA'
 };
