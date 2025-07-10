@@ -1,10 +1,9 @@
 <script>
     import { getPinkIcon, socialLinks } from "$lib/constants/links";
-    import aditya from '$lib/assets/aditya.jpg';
 </script>
 
 <section id="socials">
-    <img class="display-picture" src={aditya} alt="Aditya Oberai">
+    <img class="display-picture" src="/aditya.jpg" alt="Aditya Oberai">
     <h1>Aditya Oberai</h1>
     <p>DevRel, Communities, and Open Source</p>
     <div class="social-icons">
