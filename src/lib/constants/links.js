@@ -58,7 +58,7 @@ export const featureLinks = [
     },
     {
         name: 'View my resume',
-        url: '/resume.pdf',
+        url: '/resume/',
         type: 'external-link'
     }
 ];
