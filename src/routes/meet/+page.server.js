@@ -1,6 +1,8 @@
 import  { redirect } from '@sveltejs/kit';
 
+export const trailingSlash = 'ignore';
+
 export async function load() {
     // Redirect to the Google Meet link
-    throw redirect(302, 'https://meet.google.com/erv-qmct-yvc');
+    redirect(302, 'https://meet.google.com/erv-qmct-yvc');
 }

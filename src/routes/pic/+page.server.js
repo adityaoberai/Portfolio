@@ -1,6 +1,8 @@
 import { redirect } from "@sveltejs/kit";
 
+export const trailingSlash = 'ignore';
+
 export async function load() {
     // Redirect to the image URL
-    throw redirect(301, '/aditya.jpg');
+    redirect(301, '/aditya.jpg');
 }
