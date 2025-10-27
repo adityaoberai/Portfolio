@@ -43,7 +43,7 @@ export const socialLinks = [
 export const featureLinks = [
     {
         name: 'Read my newsletter on Substack',
-        url: 'https://newsletter.oberai.dev',
+        url: 'https://oberai.substack.com/',
         type: 'newspaper'
     },
     {
