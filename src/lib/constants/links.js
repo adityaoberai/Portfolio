@@ -20,7 +20,7 @@ export const socialLinks = [
     },
     { 
         name: 'X',
-        url: 'https://x.com/adityaoberai1',
+        url: 'https://x.com/adityaoberai',
         type: 'twitter'
     },
     {
