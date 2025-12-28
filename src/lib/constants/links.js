@@ -8,6 +8,7 @@ export function getPinkIcon(type) {
         case 'newspaper': return 'icon-newspaper'
         case 'camera': return 'icon-camera'
         case 'external-link': return 'icon-external-link'
+        case 'ama': return 'icon-annotation'
         default: return 'icon-external-link'
     }
 }
@@ -41,6 +42,11 @@ export const socialLinks = [
 ];
 
 export const featureLinks = [
+    {
+        name: 'Anonymously ask me a question',
+        url: 'https://betweenus.today/creator/aditya',
+        type: 'ama'
+    },
     {
         name: 'Read my newsletter on Substack',
         url: 'https://oberai.substack.com/',
