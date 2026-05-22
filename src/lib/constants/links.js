@@ -43,13 +43,8 @@ export const socialLinks = [
 
 export const featureLinks = [
     {
-        name: 'Anonymously ask me a question',
-        url: 'https://betweenus.today/creator/aditya',
-        type: 'ama'
-    },
-    {
-        name: 'Read my newsletter on Substack',
-        url: 'https://oberai.substack.com/',
+        name: 'Read my blog on Substack',
+        url: 'https://oberai.blog',
         type: 'newspaper'
     },
     {
