@@ -1,24 +1,39 @@
-<script>
-    import '../app.css';
-    const { children } = $props();
+<script lang="ts">
+	import '@fontsource-variable/newsreader/opsz.css';
+	import '@fontsource-variable/newsreader/opsz-italic.css';
+	import '../app.css';
+	import { page } from '$app/state';
+	import SiteHeader from '$lib/components/SiteHeader.svelte';
+	import SiteFooter from '$lib/components/SiteFooter.svelte';
+
+	const { children } = $props();
 </script>
 
 <svelte:head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/@appwrite.io/pink-icons" />
-
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1BXTEHW3F6"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-1BXTEHW3F6');
-    </script>
-
-    <title>Aditya Oberai</title>
+	<!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-1BXTEHW3F6"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag() {
+			dataLayer.push(arguments);
+		}
+		gtag('js', new Date());
+		gtag('config', 'G-1BXTEHW3F6');
+	</script>
 </svelte:head>
 
-{@render children()}
+<div class="flex min-h-screen flex-col">
+	<a
+		href="#main"
+		class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-ink focus:px-4 focus:py-2.5 focus:text-small focus:text-paper"
+	>
+		Skip to content
+	</a>
+	<SiteHeader />
+	{#key page.url.pathname}
+		<main id="main" tabindex="-1" class="page-enter flex-1 focus:outline-none">
+			{@render children()}
+		</main>
+	{/key}
+	<SiteFooter />
+</div>
