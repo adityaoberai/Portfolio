@@ -28,8 +28,7 @@
 
 <div class="mx-auto max-w-4xl px-6 py-16 md:px-8 md:py-24">
 	<header class="max-w-2xl">
-		<p class="eyebrow">Speaking</p>
-		<h1 class="mt-6 text-h1">Talks, stages, and the occasional microphone.</h1>
+		<h1 class="text-h1">Talks, stages, and the occasional microphone.</h1>
 		<p class="mt-6 text-lede italic text-secondary">
 			I speak about developer relations, communities, and building with AI, and I've organized a
 			conference or two myself. If you're putting an event together, I'd love to hear about it.

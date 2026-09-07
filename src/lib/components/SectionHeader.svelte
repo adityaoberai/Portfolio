@@ -8,12 +8,7 @@
 </script>
 
 {#if title}
-	<p class="eyebrow">
-		<span class="text-accent">{number}</span>
-		<span aria-hidden="true">·</span>
-		{label}
-	</p>
-	<h2 class="mt-3 text-h2">{title}</h2>
+	<h2 class="text-h2">{title}</h2>
 {:else}
 	<h2 class="eyebrow">
 		<span class="text-accent">{number}</span>

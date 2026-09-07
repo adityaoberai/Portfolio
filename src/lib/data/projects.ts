@@ -11,6 +11,28 @@ export type Project = {
 
 export const projects: Project[] = [
 	{
+		slug: 'relief-atl',
+		name: 'Relief ATL',
+		overview:
+			'A map of public restrooms in Atlanta that ranks nearby options by an Access Confidence Score, so you find one you can actually use rather than one that is merely close.',
+		motivation:
+			'A Georgia State University audit found that 55% of 262 potential public restrooms in Atlanta failed basic access checks. Relief ATL turns that static research into a live tool that anyone can update, with no account required.',
+		technologies: [
+			'SvelteKit',
+			'TypeScript',
+			'MapLibre GL JS',
+			'PostgreSQL',
+			'TimescaleDB',
+			'DigitalOcean App Platform'
+		],
+		outcome: 'Winner of Best Use of DigitalOcean at Hack RenderATL 2026.',
+		links: [
+			{ label: 'Devpost', href: 'https://devpost.com/software/relief-atl' },
+			{ label: 'GitHub', href: 'https://github.com/adityaoberai/hack-renderatl' }
+		],
+		featured: true
+	},
+	{
 		slug: 'ai-crystal-ball',
 		name: 'AI Crystal Ball',
 		overview:

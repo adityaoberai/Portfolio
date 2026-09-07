@@ -9,7 +9,7 @@
 >
 	<p class="meta">{talk.event} · {talk.year}</p>
 	<h3 class="text-h3">{talk.title}</h3>
-	<p class="line-clamp-3 text-small text-secondary">{talk.description}</p>
+	<p class="text-small text-secondary">{talk.description}</p>
 	{#if talk.recording}
 		<p class="mt-auto pt-1">
 			<a

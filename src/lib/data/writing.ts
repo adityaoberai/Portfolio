@@ -9,6 +9,12 @@ export type WritingSample = {
 // meta: a short mono tag shown left of the title (e.g. 'MAY 2026').
 export const writingSamples: WritingSample[] = [
 	{
+		meta: 'AUG 2026',
+		title: 'The Grief And Rage Leaving Home Brings',
+		description: 'Remembering The Caterpillar Before The Butterfly.',
+		href: 'https://www.oberai.blog/p/the-grief-and-rage-leaving-home-brings'
+	},
+	{
 		meta: 'MAY 2026',
 		title: 'The Glorious Burden Of Leaving Footsteps In The Sand',
 		description: 'On legacy, purpose, and the strange comfort of being forgotten.',

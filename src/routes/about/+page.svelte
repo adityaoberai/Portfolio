@@ -11,8 +11,7 @@
 />
 
 <article class="mx-auto max-w-2xl px-6 py-16 md:px-8 md:py-24">
-	<p class="eyebrow">About</p>
-	<h1 class="mt-6 text-h1">Making complicated things make sense.</h1>
+	<h1 class="text-h1">Making complicated things make sense.</h1>
 	<p class="mt-6 text-lede italic text-secondary">
 		That's the thread through everything I do: developer relations, writing, speaking, teaching, and
 		the occasional photograph.
@@ -117,8 +116,9 @@
 			>, free for anyone to use.
 		</p>
 		<p class="mt-4 text-body">
-			I write about developer relations, developer tools, and whatever I'm currently figuring out
-			at <ExternalLink href="https://oberai.blog">oberai.blog</ExternalLink>.
+			I write about developer relations, developer tools, and whatever I'm currently figuring out at <ExternalLink
+				href="https://oberai.blog">oberai.blog</ExternalLink
+			>.
 		</p>
 		<p class="mt-4 text-body">
 			And I still show up at hackathons, these days usually on the judging side.

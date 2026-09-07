@@ -14,10 +14,10 @@
 
 <div class="mx-auto max-w-4xl px-6 py-16 md:px-8 md:py-24">
 	<header class="max-w-2xl">
-		<p class="eyebrow">Projects</p>
-		<h1 class="mt-6 text-h1">Things I've built.</h1>
+		<h1 class="text-h1">Things I've built.</h1>
 		<p class="mt-6 text-lede italic text-secondary">
-			Six projects, curated. Most were built to teach something, and all of them to scratch an itch.
+			Seven projects, curated. Most were built to teach something, and all of them to scratch an
+			itch.
 		</p>
 	</header>
 

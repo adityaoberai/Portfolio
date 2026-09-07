@@ -51,8 +51,7 @@
 			</div>
 		</div>
 		<div class="max-w-2xl">
-			<p class="eyebrow">Developer Relations · Writing · Speaking · Photography</p>
-			<h1 class="mt-6 text-h1">Hi, I'm <span class="whitespace-nowrap">Aditya Oberai.</span></h1>
+			<h1 class="text-h1">Hi, I'm <span class="whitespace-nowrap">Aditya Oberai.</span></h1>
 			<p class="mt-6 text-lede italic">
 				I work in developer relations, helping developer tools communicate better, teach better, and
 				build stronger communities.

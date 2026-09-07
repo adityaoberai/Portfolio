@@ -43,8 +43,7 @@
 />
 
 <div class="mx-auto max-w-2xl px-6 py-16 md:px-8 md:py-24">
-	<p class="eyebrow">Contact</p>
-	<h1 class="mt-6 text-h1">Say hello.</h1>
+	<h1 class="text-h1">Say hello.</h1>
 	<p class="mt-6 text-lede italic text-secondary">
 		Whether it's a speaking invitation, a consulting question, or a community collaboration, my
 		inbox is open. And I actually read it.

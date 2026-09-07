@@ -13,8 +13,7 @@
 
 <div class="mx-auto max-w-4xl px-6 py-16 md:px-8 md:py-24">
 	<header class="max-w-2xl">
-		<p class="eyebrow">Work</p>
-		<h1 class="mt-6 text-h1">The work, by theme.</h1>
+		<h1 class="text-h1">The work, by theme.</h1>
 		<p class="mt-6 text-lede italic text-secondary">
 			Job titles say less than the work does, so here it is, organized by what it was for rather
 			than where it happened.

@@ -26,7 +26,7 @@
 				>{/if}
 		</span>
 		{#if description}
-			<span class="line-clamp-2 text-small text-secondary">{description}</span>
+			<span class="text-small text-secondary">{description}</span>
 		{/if}
 		{#if domain}
 			<span class="meta">{domain}</span>
