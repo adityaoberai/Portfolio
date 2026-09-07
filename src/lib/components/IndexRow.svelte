@@ -8,7 +8,7 @@
 		external = false,
 		domain
 	}: {
-		meta: string;
+		meta?: string;
 		title: string;
 		subtitle?: string;
 		description?: string;
@@ -19,7 +19,9 @@
 </script>
 
 {#snippet inner()}
-	<span class="meta pt-1">{meta}</span>
+	{#if meta}
+		<span class="meta pt-1">{meta}</span>
+	{/if}
 	<span class="flex min-w-0 flex-col gap-1">
 		<span class="row-title text-h3">
 			{title}{#if external}
@@ -44,12 +46,14 @@
 		{href}
 		target={external ? '_blank' : undefined}
 		rel={external ? 'noopener noreferrer' : undefined}
-		class="group grid grid-cols-1 gap-x-4 gap-y-1 rounded-md px-4 py-5 transition-colors duration-150 hover:bg-surface md:grid-cols-[5.5rem_1fr]"
+		class="group grid grid-cols-1 gap-x-4 gap-y-1 rounded-md px-4 py-5 transition-colors duration-150 hover:bg-surface {meta
+			? 'md:grid-cols-[5.5rem_1fr]'
+			: ''}"
 	>
 		{@render inner()}
 	</a>
 {:else}
-	<div class="grid grid-cols-1 gap-x-4 gap-y-1 px-4 py-5 md:grid-cols-[5.5rem_1fr]">
+	<div class="grid grid-cols-1 gap-x-4 gap-y-1 px-4 py-5 {meta ? 'md:grid-cols-[5.5rem_1fr]' : ''}">
 		{@render inner()}
 	</div>
 {/if}

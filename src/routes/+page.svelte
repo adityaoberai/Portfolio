@@ -17,11 +17,11 @@
 	let { data }: PageProps = $props();
 
 	const featuredWorkRows = [
-		{ tag: 'DEVREL', title: 'Developer Relations', slug: 'developer-relations' },
-		{ tag: 'STORYTELLING', title: 'Product Storytelling', slug: 'product-storytelling' },
-		{ tag: 'COMMUNITY', title: 'Community', slug: 'community' },
-		{ tag: 'DX', title: 'Developer Experience', slug: 'developer-experience' },
-		{ tag: 'AWARDS', title: 'Recognition', slug: 'recognition' }
+		{ title: 'Developer Relations', slug: 'developer-relations' },
+		{ title: 'Product Storytelling', slug: 'product-storytelling' },
+		{ title: 'Community', slug: 'community' },
+		{ title: 'Developer Experience', slug: 'developer-experience' },
+		{ title: 'Recognition', slug: 'recognition' }
 	].map((row) => {
 		const theme = workThemes.find((t) => t.slug === row.slug);
 		return { ...row, description: theme?.summary ?? '' };
@@ -99,12 +99,7 @@
 	/>
 	<div class="-mx-4 mt-6 divide-y divide-hairline border-b border-t border-hairline">
 		{#each featuredWorkRows as row (row.slug)}
-			<IndexRow
-				meta={row.tag}
-				title={row.title}
-				description={row.description}
-				href="/work#{row.slug}"
-			/>
+			<IndexRow title={row.title} description={row.description} href="/work#{row.slug}" />
 		{/each}
 	</div>
 </section>
