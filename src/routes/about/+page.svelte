@@ -69,26 +69,41 @@
 		<h2 class="eyebrow">
 			<span class="text-accent">02</span> <span aria-hidden="true">·</span> What I care about
 		</h2>
-		<p class="mt-5 text-body">
-			Three things, mostly. <em>Clear communication</em>: documentation, blog posts, and launch
-			announcements are products in their own right, and they deserve the same care as the code they
-			describe. <em>Education</em>: Appwrite Education, CodeCapture, and most of my writing exist
-			because someone, somewhere, is learning this for the first time.
-			<em>Communities</em>: not audiences but communities, places where people know each other's
-			names, answer each other's questions, and stay long after the swag runs out.
-		</p>
+		<p class="mt-5 text-body">Three things, mostly.</p>
+		<ul class="mt-4 list-disc space-y-3 pl-5 text-body">
+			<li>
+				<em>Clear communication</em>: documentation, blog posts, and launch announcements are
+				products in their own right, and they deserve the same care as the code they describe.
+			</li>
+			<li>
+				<em>Education</em>: Appwrite Education, CodeCapture, and most of my writing exist because
+				someone, somewhere, is learning this for the first time.
+			</li>
+			<li>
+				<em>Communities</em>: not audiences but communities, places where people know each other's
+				names, answer each other's questions, and stay long after the swag runs out.
+			</li>
+		</ul>
 	</section>
 
 	<section class="mt-14">
 		<h2 class="eyebrow">
 			<span class="text-accent">03</span> <span aria-hidden="true">·</span> How I work
 		</h2>
-		<p class="mt-5 text-body">
-			Evidence over adjectives: I'd rather show you a launch, an article, or a number than call
-			myself passionate. Teaching over selling: if the product is good, explaining it honestly is
-			the best marketing there is. And writing things down: most problems in developer relations
-			turn out to be documentation problems wearing a costume.
-		</p>
+		<ul class="mt-5 list-disc space-y-3 pl-5 text-body">
+			<li>
+				<em>Evidence over adjectives</em>: I'd rather show you a launch, an article, or a number
+				than call myself passionate.
+			</li>
+			<li>
+				<em>Teaching over selling</em>: if the product is good, explaining it honestly is the best
+				marketing there is.
+			</li>
+			<li>
+				<em>Writing things down</em>: most problems in developer relations turn out to be
+				documentation problems wearing a costume.
+			</li>
+		</ul>
 	</section>
 
 	<section class="mt-14">
@@ -99,17 +114,21 @@
 			When I'm not working, I'm usually holding a camera. Photography started as a conference habit
 			(hallways, cities, people mid-laugh) and turned into a serious pursuit; my archive lives on <ExternalLink
 				href="https://www.pexels.com/@oberai">Pexels</ExternalLink
-			>, free for anyone to use. I write about developer relations, developer tools, and whatever
-			I'm currently figuring out at
-			<ExternalLink href="https://oberai.blog">oberai.blog</ExternalLink>. And I still show up at
-			hackathons, these days usually on the judging side.
+			>, free for anyone to use.
+		</p>
+		<p class="mt-4 text-body">
+			I write about developer relations, developer tools, and whatever I'm currently figuring out
+			at <ExternalLink href="https://oberai.blog">oberai.blog</ExternalLink>.
+		</p>
+		<p class="mt-4 text-body">
+			And I still show up at hackathons, these days usually on the judging side.
 		</p>
 	</section>
 
 	<div class="mt-14 border-t border-hairline pt-10">
 		<p class="text-body text-secondary">Prefer the formal version?</p>
 		<p class="mt-4">
-			<a href={site.resume} class="btn-secondary" download>Download résumé</a>
+			<a href={site.resume} class="btn-secondary" download>Download resumé</a>
 		</p>
 	</div>
 </article>
