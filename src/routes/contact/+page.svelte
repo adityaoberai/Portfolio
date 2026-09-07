@@ -27,7 +27,7 @@
 			domain: 'pexels.com'
 		},
 		{
-			meta: 'RÉSUMÉ',
+			meta: 'Resume',
 			title: 'resume.pdf',
 			href: site.resume,
 			external: false,

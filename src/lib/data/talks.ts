@@ -4,6 +4,7 @@ export type Talk = {
 	year: number;
 	description: string;
 	recording?: string;
+	slides?: string;
 	featured?: boolean;
 };
 
@@ -14,6 +15,7 @@ export const talks: Talk[] = [
 		year: 2026,
 		description:
 			'How AI-assisted long-form technical content can drive growth for developer-facing products, with a practical workflow for articles that rank on Google and influence AI-generated answers.',
+		slides: 'https://drive.google.com/file/d/1FOhj1zm_a3tnqiyf2m6A5d20hojDqWUN/view?usp=sharing',
 		featured: true
 	},
 	{
@@ -31,6 +33,7 @@ export const talks: Talk[] = [
 		year: 2025,
 		description:
 			"A framework for evaluating your company's readiness to launch community initiatives, before you burn goodwill finding out the hard way.",
+		slides: 'https://drive.google.com/file/d/1dbsZEPMbhGjr3Q_uaAx6l9DHuG2BKgsA/view?usp=sharing',
 		featured: true
 	},
 	{
@@ -58,13 +61,28 @@ export const talks: Talk[] = [
 			'How GPT models can support event-driven consumer use-cases like language translation, demonstrated with serverless architectures.'
 	},
 	{
+		title: "Balancing Community Health and Open Source Growth: The Contributor's Role",
+		event: 'GitTogether Bengaluru',
+		year: 2024,
+		description:
+			'What a healthy open source community looks like, and how contributors can sustain it while collaborating better with maintainers.',
+		recording: 'https://www.youtube.com/watch?v=YuUt5qABv_k'
+	},
+	{
 		title: 'Understanding Role-Based Access Control with ASP.NET Web APIs',
 		event: '.NET Conf',
 		year: 2023,
 		description:
 			'Building custom role-based access control in .NET 8 Web APIs, beyond what the framework gives you out of the box.',
-		recording: 'https://www.youtube.com/watch?v=r8fVjPqpVkA',
-		featured: true
+		recording: 'https://www.youtube.com/watch?v=r8fVjPqpVkA'
+	},
+	{
+		title: 'Build AI-Enabled Apps with .NET MAUI and Azure Cognitive Services',
+		event: 'Global Azure Bengaluru',
+		year: 2023,
+		description:
+			'Adding vision, speech, and language features to cross-platform .NET MAUI apps with Azure Cognitive Services.',
+		recording: 'https://www.youtube.com/watch?v=jeqKTGhcMCg'
 	},
 	{
 		title: 'How Can DevRel Enable Engineering?',
@@ -80,22 +98,35 @@ export const talks: Talk[] = [
 		year: 2023,
 		description:
 			'An honest talk about stage fright, and the techniques that let you get up and speak anyway.',
-		recording: 'https://www.youtube.com/watch?v=TlV4Igt6yyQ'
+		recording: 'https://www.youtube.com/watch?v=TlV4Igt6yyQ',
+		featured: true
+	},
+	{
+		title: 'Why DevRel Needs More Students To Lead',
+		event: 'DevRelCon Tokyo',
+		year: 2021,
+		description:
+			'Why student communities are an untapped source of developer relations talent, and how DevRel teams can give students room to lead.',
+		recording: 'https://www.youtube.com/watch?v=u9Mqygwah58'
 	}
 ];
 
 export const speakingTopics: string[] = [
-	'Developer relations',
-	'Community building',
-	'AI-assisted content creation',
-	'Technical writing',
-	'Open source',
-	'Developer education',
-	'AI applications',
-	'Product storytelling',
-	'SvelteKit and web development',
-	'.NET and Microsoft Azure'
+	'developer relations',
+	'community building',
+	'technical writing',
+	'open source',
+	'developer education',
+	'AI-driven development',
+	'storytelling',
+	'product ideation',
+	'startups',
+	'web development',
+	'cloud computing',
+	'API development'
 ];
 
-export const speakerBio =
-	'Aditya Oberai is the Developer Relations Lead at Appwrite and an avid tech community and hackathon enthusiast. Having worked with various technologies, including .NET, Microsoft Azure, and SvelteKit, he has spent the last six years empowering student and tech communities. He is a Microsoft MVP and a DigitalOcean Wavemaker. Aditya was awarded "Best Developer Relations Professional of the Year" at the CMX Community Industry Awards 2024 and currently serves as a Steering Committee member for the Developer Relations Foundation.';
+export const speakerBio = [
+	'Aditya Oberai is the Developer Relations Lead at Appwrite and an avid tech community and hackathon enthusiast. Having worked with various web and cloud technologies, he has spent the last seven years empowering student and tech communities in India and beyond.',
+	'Aditya has been an active Microsoft MVP since 2022. He was awarded "Best Developer Relations Professional of the Year" at the CMX Community Industry Awards 2024 and led the organisation of the first-ever DevRelCon in India in 2024.'
+].join('\n\n');

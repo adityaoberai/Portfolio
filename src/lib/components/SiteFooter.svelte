@@ -2,14 +2,12 @@
 	import { site } from '$lib/data/site';
 	import { socialLinks } from '$lib/data/links';
 
-	const year = new Date().getFullYear();
-
 	const footerLinks = [
 		...socialLinks.map(({ name, url }) => ({ name, url, external: true })),
 		{ name: 'Email', url: `mailto:${site.email}`, external: false },
 		{ name: 'Writing', url: 'https://oberai.blog', external: true },
 		{ name: 'Photography', url: 'https://www.pexels.com/@oberai', external: true },
-		{ name: 'Résumé', url: site.resume, external: false }
+		{ name: 'Resume', url: site.resume, external: false }
 	];
 </script>
 
@@ -34,8 +32,4 @@
 			{/each}
 		</ul>
 	</nav>
-
-	<p class="mt-6 text-small italic text-secondary">
-		Set in Newsreader · Built with SvelteKit · © {year} Aditya Oberai
-	</p>
 </footer>

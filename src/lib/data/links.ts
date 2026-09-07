@@ -45,7 +45,7 @@ export const destinations: Destination[] = [
 		external: true
 	},
 	{
-		title: 'Résumé',
+		title: 'Resume',
 		description:
 			'The formal version: roles, launches, talks, and recognition on a single page, updated regularly.',
 		cta: 'Download the PDF',

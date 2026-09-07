@@ -2,6 +2,7 @@
 	let {
 		meta,
 		title,
+		subtitle,
 		description,
 		href,
 		external = false,
@@ -9,6 +10,7 @@
 	}: {
 		meta: string;
 		title: string;
+		subtitle?: string;
 		description?: string;
 		href?: string;
 		external?: boolean;
@@ -25,6 +27,9 @@
 					>(opens in new tab)</span
 				>{/if}
 		</span>
+		{#if subtitle}
+			<span class="meta">{subtitle}</span>
+		{/if}
 		{#if description}
 			<span class="text-small text-secondary">{description}</span>
 		{/if}

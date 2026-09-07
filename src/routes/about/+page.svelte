@@ -128,7 +128,7 @@
 	<div class="mt-14 border-t border-hairline pt-10">
 		<p class="text-body text-secondary">Prefer the formal version?</p>
 		<p class="mt-4">
-			<a href={site.resume} class="btn-secondary" download>Download resumé</a>
+			<a href={site.resume} class="btn-secondary" download>Download resume</a>
 		</p>
 	</div>
 </article>

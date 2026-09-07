@@ -194,7 +194,7 @@ The site should feel responsive and lightweight.
 
 ## Homepage Experience
 
-The homepage should not resemble a résumé.
+The homepage should not resemble a resume.
 
 Instead, it should follow this rhythm:
 
@@ -243,7 +243,7 @@ Examples:
 - Read my writing on Substack
 - Explore my photography on Pexels
 - Browse my projects on GitHub
-- Download my résumé
+- Download my resume
 
 The website should act as the central hub connecting these platforms.
 

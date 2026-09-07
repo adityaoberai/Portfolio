@@ -6,7 +6,7 @@ Build a static personal website that serves as the definitive home for Aditya Ob
 
 The goal is not to build a developer portfolio or migrate existing content platforms. Instead, the website should present a thoughtful overview of Aditya's work, interests, and accomplishments while directing visitors to the platforms where that work already lives.
 
-The website should feel like meeting the person behind the work—not reading a résumé.
+The website should feel like meeting the person behind the work—not reading a resume.
 
 ---
 
@@ -50,7 +50,7 @@ The website is **not**:
 - A newsletter platform
 - A photography gallery
 - A GitHub portfolio clone
-- A résumé website
+- A resume website
 
 ---
 
@@ -236,7 +236,7 @@ This page should connect:
 - Photography
 - Curiosity
 
-without simply repeating the résumé.
+without simply repeating the resume.
 
 ---
 
@@ -458,7 +458,7 @@ Suggested approach:
 - Clean sans-serif for body copy
 - Monospace only for metadata, tags, or technical snippets
 
-The overall experience should resemble a well-designed magazine profile more than a résumé.
+The overall experience should resemble a well-designed magazine profile more than a resume.
 
 ---
 
@@ -625,7 +625,7 @@ Build:
 - Speaking
 - Contact
 
-Populate these pages using information from the current résumé and the existing talks database.
+Populate these pages using information from the current resume and the existing talks database.
 
 ---
 
@@ -649,11 +649,11 @@ Complete:
 The site is ready when:
 
 - Visitors understand who Aditya is within 10 seconds.
-- Professional work is presented thematically rather than as a résumé.
+- Professional work is presented thematically rather than as a resume.
 - Projects are curated and linked externally.
 - Community work is visible and well explained.
 - Speaking has a dedicated, professional page.
-- Writing, photography, GitHub, and résumé are easy to discover.
+- Writing, photography, GitHub, and resume are easy to discover.
 - The site is fully static, responsive, performant, and easy to maintain.
 
 ---

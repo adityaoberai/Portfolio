@@ -115,8 +115,9 @@
 	<div class="-mx-4 mt-6 divide-y divide-hairline border-b border-t border-hairline">
 		{#each speakingPreview as talk (talk.event + talk.title)}
 			<IndexRow
-				meta="{talk.year} · {talk.event}"
+				meta={String(talk.year)}
 				title={talk.title}
+				subtitle={talk.event}
 				description={talk.description}
 				href="/speaking"
 			/>
