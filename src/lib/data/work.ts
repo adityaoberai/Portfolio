@@ -25,13 +25,8 @@ export const workThemes: WorkTheme[] = [
 				tag: 'LAUNCHES',
 				title: 'Product launches',
 				description:
-					"Leading Appwrite's public-facing product releases end to end: announcements, blogs, documentation, newsletters, and social media for every launch."
-			},
-			{
-				tag: 'AI DOCS',
-				title: 'AI documentation',
-				description:
-					"Planned and launched Appwrite's AI documentation (MCP servers, AGENTS.md, agent skills, and plugins) so developers can build with Appwrite through tools like Claude Code, Codex, and Cursor."
+					"Leading Appwrite's public-facing product releases end to end, including Init, Appwrite's recurring launch week: announcements, blogs, documentation, newsletters, social media, events, and livestreams for every launch.",
+				link: { label: 'Appwrite Init', href: 'https://appwrite.io/init' }
 			},
 			{
 				tag: 'PROCESS',
@@ -43,7 +38,7 @@ export const workThemes: WorkTheme[] = [
 				tag: 'DOCS',
 				title: 'Documentation and website ownership',
 				description:
-					'Owning content strategy and updates across the Appwrite website and documentation, keeping both accurate as the product evolves.'
+					"Owning content strategy and updates across the Appwrite website and documentation, including leading all of Appwrite's docs and writing docs for Sites, Databases, and AI (MCP servers, AGENTS.md, agent skills, and plugins), so developers can build with Appwrite through tools like Claude Code, Codex, and Cursor."
 			},
 			{
 				tag: 'SUPPORT',
@@ -84,20 +79,20 @@ export const workThemes: WorkTheme[] = [
 			'Building programs that turn users into contributors, students into builders, and community members into advocates.',
 		items: [
 			{
-				tag: 'EDUCATION',
-				title: 'Appwrite Education',
+				tag: 'STUDENTS',
+				title: "Appwrite's Education program",
 				description:
 					'Launched with GitHub Education to support college and university students, growing to 15,000+ students.'
 			},
 			{
-				tag: 'HEROES',
+				tag: 'AMBASSADORS',
 				title: 'Appwrite Heroes',
 				description:
 					"Launched and ran Appwrite's superuser program for three years, supporting the community's most active contributors."
 			},
 			{
 				tag: 'HACKATHONS',
-				title: 'Hackathons',
+				title: "Appwrite's Hackathons",
 				description:
 					'Planned and hosted multiple hackathons end to end, from marketing and submissions to community and judging, engaging 7,000+ developers.'
 			},

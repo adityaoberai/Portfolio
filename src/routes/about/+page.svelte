@@ -58,8 +58,8 @@
 			more than 140 articles, launched an education program that reached 15,000+ students, ran
 			hackathons for 7,000+ developers, and helped onboard 70,000+ new community members through
 			initiatives like Hacktoberfest. In December 2025, I stepped into leading Developer Relations
-			at Appwrite, owning our public-facing product releases, content strategy, and the AI
-			documentation that helps developers build with Appwrite through tools like Claude Code and
+			at Appwrite, owning our public-facing product releases, content strategy, developer docs, and
+			AI ecosystem tools that help developers build with Appwrite through tools like Claude Code and
 			Cursor.
 		</p>
 	</section>
@@ -75,8 +75,8 @@
 				products in their own right, and they deserve the same care as the code they describe.
 			</li>
 			<li>
-				<em>Education</em>: Appwrite Education, CodeCapture, and most of my writing exist because
-				someone, somewhere, is learning this for the first time.
+				<em>Education</em>: Projects like CodeCapture and most of my writing exist because someone,
+				somewhere, is learning this for the first time.
 			</li>
 			<li>
 				<em>Communities</em>: not audiences but communities, places where people know each other's
