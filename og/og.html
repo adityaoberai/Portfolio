@@ -1,0 +1,171 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<style>
+			@font-face {
+				font-family: 'Newsreader';
+				src: url('../node_modules/@fontsource-variable/newsreader/files/newsreader-latin-opsz-normal.woff2')
+					format('woff2');
+				font-weight: 200 800;
+				font-style: normal;
+			}
+			@font-face {
+				font-family: 'Newsreader';
+				src: url('../node_modules/@fontsource-variable/newsreader/files/newsreader-latin-opsz-italic.woff2')
+					format('woff2');
+				font-weight: 200 800;
+				font-style: italic;
+			}
+			:root {
+				--paper: #fcf9f5;
+				--surface: #f6f0e7;
+				--ink: #211915;
+				--ink-soft: #3d3029;
+				--secondary: #6f635a;
+				--hairline: #e7dfd3;
+				--hairline-strong: #d5c8b8;
+				--accent: #a63a2b;
+			}
+			* {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+			html,
+			body {
+				width: 1200px;
+				height: 630px;
+				overflow: hidden;
+			}
+			body {
+				background: var(--paper);
+				color: var(--ink);
+				font-family: 'Newsreader', Georgia, serif;
+				font-optical-sizing: auto;
+				-webkit-font-smoothing: antialiased;
+				padding: 56px 72px 52px;
+				display: flex;
+				flex-direction: column;
+			}
+			.mono {
+				font-family: ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
+				font-size: 17px;
+				letter-spacing: 0.02em;
+				color: var(--secondary);
+			}
+			.eyebrow {
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+				font-size: 16px;
+			}
+			.top {
+				display: flex;
+				justify-content: space-between;
+				align-items: baseline;
+			}
+			.top .site {
+				font-family: 'Newsreader';
+				font-style: italic;
+				font-size: 24px;
+				font-weight: 500;
+				color: var(--ink);
+				letter-spacing: 0;
+				text-transform: none;
+			}
+			.top .site .star {
+				color: var(--accent);
+				font-style: normal;
+				margin-right: 2px;
+			}
+			.hero {
+				flex: 1;
+				display: flex;
+				align-items: center;
+				gap: 72px;
+				margin-top: 8px;
+			}
+			.text {
+				flex: 1;
+				max-width: 760px;
+			}
+			h1 {
+				font-size: 72px;
+				line-height: 1.1;
+				font-weight: 500;
+				letter-spacing: -0.015em;
+			}
+			h1 .dot {
+				color: var(--accent);
+			}
+			.lede {
+				margin-top: 28px;
+				font-size: 31px;
+				line-height: 1.42;
+				font-style: italic;
+				color: var(--ink-soft);
+				max-width: 680px;
+			}
+			.frame {
+				flex-shrink: 0;
+				width: 272px;
+				height: 272px;
+				border: 1px solid var(--hairline);
+				border-radius: 8px;
+				padding: 8px;
+				background: var(--paper);
+			}
+			.frame img {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+				border-radius: 4px;
+				display: block;
+			}
+			.rule {
+				height: 1px;
+				background: var(--hairline);
+				margin-top: 10px;
+			}
+			.bottom {
+				display: flex;
+				justify-content: space-between;
+				align-items: baseline;
+				margin-top: 26px;
+				white-space: nowrap;
+				font-size: 16px;
+			}
+			.bottom .facts {
+				display: flex;
+				gap: 18px;
+			}
+			.bottom .sep {
+				color: var(--accent);
+			}
+		</style>
+	</head>
+	<body>
+		<div class="top">
+			<div class="site"><span class="star">*</span>oberai.dev</div>
+			<div class="mono eyebrow">Developer Relations Lead · Appwrite</div>
+		</div>
+		<div class="hero">
+			<div class="text">
+				<h1>Hi, I'm<br />Aditya Oberai<span class="dot">.</span></h1>
+				<p class="lede">
+					I work in developer relations, helping developer tools communicate better, teach better,
+					and build stronger communities.
+				</p>
+			</div>
+			<div class="frame"><img src="../static/aditya.jpg" alt="" /></div>
+		</div>
+		<div class="rule"></div>
+		<div class="bottom mono">
+			<div class="facts">
+				<span>140+ technical articles</span><span class="sep">·</span
+				><span>8+ conference talks</span><span class="sep">·</span><span>5× Microsoft MVP</span>
+			</div>
+			<div>CMX Best DevRel Professional 2024</div>
+		</div>
+	</body>
+</html>
