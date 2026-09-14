@@ -59,7 +59,6 @@
 					{copied ? 'Copied!' : 'Copy bio'}
 				</button>
 				<a href="/pic" class="prose-link text-small">Headshot</a>
-				<a href={site.resume} class="prose-link text-small">Resume</a>
 			</div>
 		</div>
 	</section>
