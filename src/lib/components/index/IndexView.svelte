@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { site } from '$lib/data/site';
+	import Portrait from '$lib/components/Portrait.svelte';
 	import { highlights } from '$lib/data/highlights';
 	import { sections } from '$lib/data/sections';
 	import { featured, type Artifact } from '$lib/data/artifacts';
@@ -50,7 +51,7 @@
 				>
 			</div>
 		</div>
-		<img src={site.portrait} alt="Aditya Oberai" width="240" height="240" />
+		<Portrait width={180} loading="eager" class="portrait" />
 	</section>
 
 	<section class="glance" aria-labelledby="glance-title">
@@ -126,7 +127,7 @@
 		line-height: 1.6;
 		color: #55574d;
 	}
-	.intro img {
+	.intro :global(.portrait) {
 		width: 180px;
 		aspect-ratio: 1;
 		object-fit: cover;
@@ -238,7 +239,7 @@
 			gap: 28px;
 			padding-top: 44px;
 		}
-		.intro img {
+		.intro :global(.portrait) {
 			display: none;
 		}
 		.chapters {

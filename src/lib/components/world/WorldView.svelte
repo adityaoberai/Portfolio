@@ -157,6 +157,14 @@
 		</canvas>
 		{#if status !== 'ready'}
 			<div class="fallback" role="status">
+				<img
+					class="still"
+					src="/room-still.jpg"
+					alt=""
+					width="1164"
+					height="619"
+					fetchpriority="high"
+				/>
 				<span class="fallback-symbol" aria-hidden="true">{status === 'loading' ? '◌' : '↗'}</span>
 				<h2>{status === 'loading' ? 'Opening the room…' : 'The room couldn’t open here.'}</h2>
 				<p>
@@ -569,6 +577,19 @@
 		padding: 24px;
 		text-align: center;
 		background: #e9ebdf;
+	}
+	.fallback .still {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+		opacity: 0.35;
+		filter: saturate(0.6);
+		pointer-events: none;
+	}
+	.fallback > :not(.still) {
+		position: relative;
 	}
 	.fallback-symbol {
 		font-size: 36px;

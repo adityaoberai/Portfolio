@@ -17,15 +17,15 @@
 				font-weight: 200 800;
 				font-style: italic;
 			}
+			/* V3 palette, shared with the site and the room. */
 			:root {
-				--paper: #fcf9f5;
-				--surface: #f6f0e7;
-				--ink: #211915;
-				--ink-soft: #3d3029;
-				--secondary: #6f635a;
-				--hairline: #e7dfd3;
-				--hairline-strong: #d5c8b8;
-				--accent: #a63a2b;
+				--paper: #f8f5ed;
+				--room: #e9ebdf;
+				--ink: #1f2620;
+				--ink-soft: #3a473d;
+				--secondary: #5f6555;
+				--hairline: #dedbcf;
+				--accent: #304e42;
 			}
 			* {
 				box-sizing: border-box;
@@ -39,133 +39,93 @@
 				overflow: hidden;
 			}
 			body {
+				display: grid;
+				grid-template-columns: 470px 1fr;
+				gap: 36px;
+				padding: 52px 52px 52px 64px;
 				background: var(--paper);
 				color: var(--ink);
 				font-family: 'Newsreader', Georgia, serif;
 				font-optical-sizing: auto;
 				-webkit-font-smoothing: antialiased;
-				padding: 56px 72px 52px;
+			}
+			.text {
 				display: flex;
 				flex-direction: column;
 			}
+			.site {
+				font-size: 24px;
+				font-style: italic;
+				font-weight: 500;
+			}
 			.mono {
 				font-family: ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
-				font-size: 17px;
-				letter-spacing: 0.02em;
+				font-size: 15px;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
 				color: var(--secondary);
 			}
-			.eyebrow {
-				text-transform: uppercase;
-				letter-spacing: 0.08em;
-				font-size: 16px;
-			}
-			.top {
-				display: flex;
-				justify-content: space-between;
-				align-items: baseline;
-			}
-			.top .site {
-				font-family: 'Newsreader';
-				font-style: italic;
-				font-size: 24px;
-				font-weight: 500;
-				color: var(--ink);
-				letter-spacing: 0;
-				text-transform: none;
-			}
-			.top .site .star {
-				color: var(--accent);
-				font-style: normal;
-				margin-right: 2px;
-			}
-			.hero {
-				flex: 1;
-				display: flex;
-				align-items: center;
-				gap: 72px;
-				margin-top: 8px;
-			}
-			.text {
-				flex: 1;
-				max-width: 760px;
+			.role {
+				margin-top: 10px;
 			}
 			h1 {
-				font-size: 72px;
-				line-height: 1.1;
+				margin-top: auto;
+				font-size: 68px;
+				line-height: 1.04;
 				font-weight: 500;
-				letter-spacing: -0.015em;
-			}
-			h1 .dot {
-				color: var(--accent);
+				letter-spacing: -0.035em;
 			}
 			.lede {
-				margin-top: 28px;
-				font-size: 31px;
-				line-height: 1.42;
-				font-style: italic;
+				margin-top: 22px;
+				font-size: 25px;
+				line-height: 1.4;
 				color: var(--ink-soft);
-				max-width: 680px;
+			}
+			.modes {
+				display: flex;
+				gap: 6px;
+				margin-top: auto;
+				padding: 5px;
+				width: max-content;
+				border: 1px solid #c9c4b6;
+				border-radius: 999px;
+				font:
+					600 14px/1 system-ui,
+					sans-serif;
+				letter-spacing: 0.08em;
+			}
+			.modes span {
+				padding: 12px 20px;
+				border-radius: 999px;
+				color: #55574d;
+			}
+			.modes .on {
+				background: var(--accent);
+				color: #fffdf6;
 			}
 			.frame {
-				flex-shrink: 0;
-				width: 272px;
-				height: 272px;
-				border: 1px solid var(--hairline);
-				border-radius: 8px;
-				padding: 8px;
-				background: var(--paper);
+				overflow: hidden;
+				border: 1px solid #d3d5c3;
+				border-radius: 12px;
+				background: var(--room);
 			}
 			.frame img {
+				display: block;
 				width: 100%;
 				height: 100%;
 				object-fit: cover;
-				border-radius: 4px;
-				display: block;
-			}
-			.rule {
-				height: 1px;
-				background: var(--hairline);
-				margin-top: 10px;
-			}
-			.bottom {
-				display: flex;
-				justify-content: space-between;
-				align-items: baseline;
-				margin-top: 26px;
-				white-space: nowrap;
-				font-size: 16px;
-			}
-			.bottom .facts {
-				display: flex;
-				gap: 18px;
-			}
-			.bottom .sep {
-				color: var(--accent);
+				object-position: 50% 55%;
 			}
 		</style>
 	</head>
 	<body>
-		<div class="top">
-			<div class="site"><span class="star">*</span>oberai.dev</div>
-			<div class="mono eyebrow">Developer Relations Lead · Appwrite</div>
+		<div class="text">
+			<div class="site">adityaoberai.com</div>
+			<div class="mono role">Aditya Oberai · Developer Relations at Appwrite</div>
+			<h1>Come spend a minute in my world.</h1>
+			<p class="lede">Walk around my room, or skim the Index.</p>
+			<div class="modes"><span class="on">WORLD</span><span>INDEX</span></div>
 		</div>
-		<div class="hero">
-			<div class="text">
-				<h1>Hi, I'm<br />Aditya Oberai<span class="dot">.</span></h1>
-				<p class="lede">
-					I work in developer relations, helping developer tools communicate better, teach better,
-					and build stronger communities.
-				</p>
-			</div>
-			<div class="frame"><img src="../static/aditya.jpg" alt="" /></div>
-		</div>
-		<div class="rule"></div>
-		<div class="bottom mono">
-			<div class="facts">
-				<span>140+ technical articles</span><span class="sep">·</span
-				><span>8+ conference talks</span><span class="sep">·</span><span>5× Microsoft MVP</span>
-			</div>
-			<div>CMX Best DevRel Professional 2024</div>
-		</div>
+		<div class="frame"><img src="room.jpg" alt="" /></div>
 	</body>
 </html>

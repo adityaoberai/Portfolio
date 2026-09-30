@@ -2,7 +2,7 @@
 	import PageMeta from '$lib/components/PageMeta.svelte';
 	import PageIntro from '$lib/components/PageIntro.svelte';
 	import { about } from '$lib/data/about';
-	import { site } from '$lib/data/site';
+	import Portrait from '$lib/components/Portrait.svelte';
 </script>
 
 <PageMeta
@@ -18,7 +18,7 @@
 
 	<article class="story">
 		<figure>
-			<img src={site.portrait} alt="Aditya Oberai" width="240" height="300" />
+			<Portrait width={240} height={300} loading="eager" />
 		</figure>
 		<p class="first">{about.intro}</p>
 
@@ -74,7 +74,7 @@
 		width: 220px;
 		margin: 32px 0 16px 32px;
 	}
-	figure img {
+	figure :global(img) {
 		display: block;
 		width: 100%;
 		height: auto;

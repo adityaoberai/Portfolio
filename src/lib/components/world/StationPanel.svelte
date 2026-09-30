@@ -11,6 +11,7 @@
 	import { socialLinks, sponsorLink } from '$lib/data/links';
 	import { collection } from '$lib/data/collection';
 	import Slab from './Slab.svelte';
+	import Portrait from '$lib/components/Portrait.svelte';
 
 	let { id }: { id: StationId } = $props();
 	const station = $derived(stationById[id]);
@@ -151,7 +152,7 @@
 	<h2 id="station-title">{about.headline}</h2>
 	<p class="lead">{about.standfirst}</p>
 	<div class="reflection">
-		<img src={site.portrait} alt="Aditya Oberai" width="120" height="150" loading="lazy" />
+		<Portrait width={120} height={150} />
 		<p>{about.intro}</p>
 	</div>
 	<h3 class="subhead">What I care about</h3>
@@ -397,7 +398,7 @@
 		align-items: start;
 		margin-top: 20px;
 	}
-	.reflection img {
+	.reflection :global(img) {
 		width: 120px;
 		height: 150px;
 		object-fit: cover;

@@ -15,9 +15,12 @@
 		"test:e2e": "playwright test",
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
-		"og": "node og/render.js"
+		"og": "node og/render.js",
+		"assets": "node scripts/derive-assets.mjs",
+		"perf": "node scripts/perf.mjs"
 	},
 	"devDependencies": {
+		"@axe-core/playwright": "4.13.0",
 		"@eslint/compat": "^1.2.5",
 		"@eslint/js": "^9.18.0",
 		"@fontsource-variable/newsreader": "^5.2.10",

@@ -8,28 +8,30 @@
 - Source brief: user attachment, adityaoberai.com V3 (2026-09-30).
 - Full requirements and execution decisions live in root `v3.md`.
 
-## Current state (verified 2026-09-30)
+## Current state (verified 2026-10-01)
 
-- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 `298269e`, Phase 3 `e71d7cc`, Phase 4 (this state). `main` is untouched. Nothing is pushed to the remote.
+- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 `298269e`, Phase 3 `e71d7cc`, Phase 4 `9b8afb4`, Phase 5 (this state). `main` is untouched. Nothing is pushed to the remote.
 - Stack: SvelteKit 2.70, Svelte 5.57, TypeScript, Tailwind 4, **adapter-node 5.5.7** (replaced adapter-static), Three.js 0.186.1.
 - `/world` has all nine stations from the brief (desk & computer, notebook & fountain pen, Fujifilm X-T30 II, Pokémon shelf, corkboard, conference wall, mirror, window, door) and four curiosities (Blastoise plush, Superman mug, suitcase, football), plus decoration (reading corner, tripod, prints, lamp). The window follows Bengaluru time. `/now` exists. `/index` is SSR and never loads the scene.
 - `/` renders World or Index on the server from the `mode` cookie (default World). `/world` and `/index` set it.
 - Every page is V3 now: one header (WORLD / INDEX switch everywhere, section nav on deep pages), one footer, one container width. Deep pages: `/work`, `/projects`, `/speaking`, `/writing`, `/community`, `/photography`, `/collection`, `/about`, `/contact`, `/now`; `/resume` stays a PDF redirect. All V2 components are gone.
-- Validation: `npm run check` 0/0, `npm test` 13/13, `npm run test:e2e` 19/19 against the built Node server. 10 draw calls, 7,736 triangles at rest.
-- Blocked on the user: deployment host choice and a physical mid-range phone test (see the gate in `v3.md`).
+- Validation: `npm run check` 0/0, `npm test` 13/13, `npm run test:e2e` 22/22 (including axe WCAG 2.2 AA audits) against the built Node server, `npm run lint` passes. 10–11 draw calls, ~7.8k triangles. Launch checklist and measured performance proxy: `v3.md`, "Launch checklist".
+- Blocked on the user: deployment host choice, a physical mid-range phone test (see the gate in `v3.md`), analytics decision, and copy review.
 
 ## Open review items (not yet fixed)
 
 - Copy written by Claude, not Aditya, needs his review before launch: the four curiosity lines in `src/lib/data/room.ts` (the suitcase line names Yokohama, London, Toronto, Atlanta, inferred from talks and photos; the football line is invented flavour), and the station summaries.
 - `src/lib/data/now.ts`: "Reading" and "Thinking about" are left out because there is no source for them; Aditya should supply them. `now.updated` is a manual date and must change whenever the page changes.
-- `npm run lint` fails on 47 untouched legacy files (Prettier). Not V3 work; don't reformat the repo as part of a feature change.
 - `npm audit`: 3 low findings in the SvelteKit/cookie chain; only `--force` resolves them.
+- Google Analytics (existing V2 tag in `src/routes/+layout.svelte`) is 160 KB of third-party JavaScript on every page, more than all first-party JavaScript on Index. Keep, defer, or replace: Aditya's call.
 
 ## Next steps
 
 1. User: run the real-phone gate in `v3.md` and record results here.
 2. User: choose a host. If Appwrite Sites, confirm with a preview deployment that its SvelteKit SSR build works with adapter-node, or switch to the adapter it expects.
-3. Phase 5: metadata, OG image, SEO, canonical domain, asset optimisation (the 1.26 MB portrait), accessibility audit. The user directed work to continue through Phases 1–5 before the phone gate; the gate still blocks milestone #10.
+3. User: review the Claude-written copy (open items above) and supply Now's Reading / Thinking about.
+4. User: decide on analytics.
+5. When a host is chosen: deploy with `ORIGIN=https://adityaoberai.com`, then plan the oberai.dev redirect (see `v3.md`; Appwrite domain redirects drop paths).
 
 ## Change log
 
@@ -250,3 +252,20 @@
 - `/resume` intentionally stays a 302 to the PDF: it is an existing short link people share, and an HTML résumé would duplicate the PDF. Recorded in `v3.md`.
 - `tests/browser/pages.spec.ts` (new): every deep page (status, h1, nav state, mode switch, no scene bundle), phone width, artifact anchors, "In the room" deep link, redirects with real status codes, sitemap coverage. 19 browser tests total.
 - Ran Prettier on the files above; reverted its incidental changes to untouched files (`PageMeta`, `NotFound`, `+error`, `404`, `+layout.ts`).
+
+### 2026-10-01 — Phase 5: launch readiness
+
+- `.prettierrc`: `endOfLine: auto`. The long-standing `npm run lint` failure (47, later 22 files) was only CRLF line endings from `core.autocrlf=true` on Windows; with this, `npm run lint` (Prettier + ESLint) passes. No files were reformatted.
+- `package.json`: added `@axe-core/playwright` 4.13.0 (dev, exact); scripts `assets` and `perf`. `package-lock.json` updated accordingly.
+- `tests/browser/a11y.spec.ts` (new): axe WCAG 2.2 AA audits of every content page and the 404, the room, all nine station sheets (after the sheet's fade-in, which otherwise produces a false contrast failure), and the no-WebGL fallback. No violations.
+- `scripts/derive-assets.mjs` (new): captures `static/room-still.jpg` (52 KB) and `og/room.jpg` (154 KB) from the running site with the Bengaluru clock pinned to daytime, and derives `static/aditya-480.webp` (9.5 KB) and `.jpg` (16.6 KB) from the 3280×3280, 1.26 MB portrait.
+- `og/og.html`: redesigned for V3 (palette, adityaoberai.com, "Come spend a minute in my world.", WORLD / INDEX, the room). `static/og.png` re-rendered with `npm run og`. `og/README.md` documents the new steps.
+- `src/lib/components/Portrait.svelte` (new): `<picture>` with the small WebP and JPEG fallback. Used by `IndexView`, `/about`, and the mirror panel. `/aditya.jpg` stays full size for `/pic`.
+- `src/lib/components/world/WorldView.svelte`: the loading and failure states show the room still behind the message, so World never shows an empty box.
+- `src/lib/data/site.ts`: canonical `url` and `ogImage` now use `https://adityaoberai.com`; added `portraitSmall`. Email unchanged.
+- `src/lib/components/PageMeta.svelte`: OG image width/height/alt, `og:locale`, `twitter:site`, `og:type=profile` on `/about`, Person JSON-LD (escaped) on `/`, `/index`, `/about`.
+- `static/robots.txt`: sitemap URL on the new domain.
+- `vite.config.js`: `chunkSizeWarningLimit: 600` with a comment; the only chunk over 500 KB raw is the lazy scene, whose budget is tracked in `v3.md`.
+- `scripts/perf.mjs` (new): performance proxy (phone viewport, 4× CPU throttle, software WebGL). Results recorded in `v3.md`; clearly not the real-phone gate.
+- `v3.md`: new "Launch checklist" with what is done, the measured proxy, and what still needs Aditya or the host.
+- Ran Prettier on the files above.
