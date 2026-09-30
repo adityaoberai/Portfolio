@@ -22,16 +22,28 @@ import {
 	Batch,
 	buildBedroom,
 	buildCharacterBody,
+	buildCityLights,
 	buildCollection,
+	buildCorkboard,
+	buildDecor,
 	buildDesk,
+	buildDoorFrame,
+	buildDoorSlab,
+	buildLanyards,
 	buildLeg,
+	buildMirror,
 	buildPhotography,
-	buildShell
+	buildShell,
+	buildWindow,
+	WINDOW
 } from './build';
+import { bengaluruHour, skyAt } from './time';
 import {
 	CAMERA_OFFSET,
 	CAMERA_TARGET,
 	CURIOSITIES,
+	DOOR_HINGE,
+	DOOR_OPEN,
 	ROOM,
 	START,
 	STATIONS,
@@ -83,7 +95,8 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	renderer.setClearColor(0x000000, 0);
 	const scene = new Scene();
 	const camera = new OrthographicCamera(-6, 6, 5, -5, 0.1, 80);
-	scene.add(new HemisphereLight('#fff5d8', '#8e9a7e', 2.5));
+	const hemisphere = new HemisphereLight('#fff5d8', '#8e9a7e', 2.5);
+	scene.add(hemisphere);
 	const sun = new DirectionalLight('#ffe7bd', 2.2);
 	sun.position.set(2, 7, 5);
 	scene.add(sun);
@@ -103,6 +116,12 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	buildPhotography(lit);
 	buildCollection(lit);
 	buildBedroom(lit);
+	buildWindow(lit);
+	buildLanyards(lit);
+	buildMirror(lit);
+	buildCorkboard(lit);
+	buildDoorFrame(lit, unlit);
+	buildDecor(lit, unlit);
 	scene.add(new Mesh(keep(lit.build()), litMaterial));
 	scene.add(new Mesh(keep(unlit.build()), unlitMaterial));
 
@@ -112,6 +131,35 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	display.position.set(0.85, 1.62, -2.755);
 	display.scale.set(1.07, 0.6, 0.02);
 	scene.add(display);
+
+	// Bengaluru through the window: sky colour and city lights follow local time there.
+	const skyMaterial = own(new MeshBasicMaterial({ color: '#b9d4c3' }));
+	const skyPane = new Mesh(unit, skyMaterial);
+	skyPane.position.set(WINDOW.x, WINDOW.y, -2.945);
+	skyPane.scale.set(WINDOW.width, WINDOW.height, 0.01);
+	scene.add(skyPane);
+	const lightsBatch = new Batch();
+	buildCityLights(lightsBatch);
+	const cityLightsMaterial = own(new MeshBasicMaterial({ vertexColors: true }));
+	const cityLights = new Mesh(keep(lightsBatch.build()), cityLightsMaterial);
+	scene.add(cityLights);
+	function applySky() {
+		const sky = skyAt(bengaluruHour());
+		skyMaterial.color.set(sky.sky);
+		cityLights.visible = Boolean(sky.lights);
+		if (sky.lights) cityLightsMaterial.color.set(sky.lights);
+		hemisphere.intensity = sky.hemisphere;
+		sun.intensity = sky.sun;
+	}
+	applySky();
+
+	// The door swings open while its station is focused.
+	const door = new Group();
+	door.position.set(...DOOR_HINGE);
+	const doorBatch = new Batch();
+	buildDoorSlab(doorBatch);
+	door.add(new Mesh(keep(doorBatch.build()), litMaterial));
+	scene.add(door);
 
 	// Character: one merged body, two swinging legs.
 	const character = new Group();
@@ -194,7 +242,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	let pointerStart: { x: number; y: number; id: number } | null = null;
 
 	// Camera framing tween: target point and zoom.
-	const view = { target: new Vector3(...CAMERA_TARGET), zoom: 1 };
+	const view = { target: new Vector3(...CAMERA_TARGET), zoom: 1, door: 0 };
 	let tween: { from: typeof view; to: typeof view; start: number } | null = null;
 
 	const position = (): Point => ({ x: character.position.x, z: character.position.z });
@@ -246,9 +294,10 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		camera.lookAt(view.target);
 		camera.zoom = view.zoom;
 		camera.updateProjectionMatrix();
+		door.rotation.y = view.door;
 	}
 	function framing(station: StationLayout | null) {
-		if (!station) return { target: new Vector3(...CAMERA_TARGET), zoom: 1 };
+		if (!station) return { target: new Vector3(...CAMERA_TARGET), zoom: 1, door: 0 };
 		const zoom = FOCUS_ZOOM;
 		const width = (camera.right - camera.left) / zoom;
 		const height = (camera.top - camera.bottom) / zoom;
@@ -259,7 +308,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		// Leave room for the details sheet: right side on wide screens, bottom on narrow.
 		if (canvas.clientWidth >= 820) focusPoint.addScaledVector(rightAxis, width * 0.2);
 		else focusPoint.addScaledVector(upAxis, -height * 0.18);
-		return { target: focusPoint, zoom };
+		return { target: focusPoint, zoom, door: station.id === 'door' ? DOOR_OPEN : 0 };
 	}
 	function frameTo(station: StationLayout | null) {
 		const to = framing(station);
@@ -267,10 +316,11 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			tween = null;
 			view.target.copy(to.target);
 			view.zoom = to.zoom;
+			view.door = to.door;
 			applyView();
 		} else {
 			tween = {
-				from: { target: view.target.clone(), zoom: view.zoom },
+				from: { target: view.target.clone(), zoom: view.zoom, door: view.door },
 				to,
 				start: performance.now()
 			};
@@ -337,6 +387,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			const k = ease(t);
 			view.target.lerpVectors(tween.from.target, tween.to.target, k);
 			view.zoom = tween.from.zoom + (tween.to.zoom - tween.from.zoom) * k;
+			view.door = tween.from.door + (tween.to.door - tween.from.door) * k;
 			applyView();
 			if (t >= 1) tween = null;
 			else animating = true;
@@ -481,10 +532,14 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		if (tween) {
 			view.target.copy(tween.to.target);
 			view.zoom = tween.to.zoom;
+			view.door = tween.to.door;
 			tween = null;
 			applyView();
 		}
-		if (!document.hidden) requestFrame();
+		if (!document.hidden) {
+			applySky();
+			requestFrame();
+		}
 	}
 	function contextLost(event: Event) {
 		event.preventDefault();
@@ -505,6 +560,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			const to = framing(focused);
 			view.target.copy(to.target);
 			view.zoom = to.zoom;
+			view.door = to.door;
 		}
 		applyView();
 		renderer.setPixelRatio(

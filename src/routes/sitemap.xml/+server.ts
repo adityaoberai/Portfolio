@@ -7,6 +7,7 @@ const pages = [
 	'/world',
 	'/index',
 	'/about',
+	'/now',
 	'/work',
 	'/projects',
 	'/community',

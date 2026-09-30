@@ -18,6 +18,7 @@ export type SectionId =
 	| 'photography'
 	| 'collection'
 	| 'about'
+	| 'now'
 	| 'resume'
 	| 'contact';
 
@@ -85,6 +86,13 @@ export const sections: Section[] = [
 		href: '/about',
 		external: false,
 		summary: 'From student hackathons to leading developer relations, and what I care about.'
+	},
+	{
+		id: 'now',
+		label: 'Now',
+		href: '/now',
+		external: false,
+		summary: 'What I’m working on, writing, photographing, and collecting at the moment.'
 	},
 	{
 		id: 'resume',

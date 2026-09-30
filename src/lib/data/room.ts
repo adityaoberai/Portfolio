@@ -64,6 +64,56 @@ export const stations: Station[] = [
 		world: 'collect',
 		summary: `Slabs, binders, and ${collection.favourite} in pride of place.`,
 		...link('collection')
+	},
+	{
+		id: 'corkboard',
+		number: '05',
+		object: 'Corkboard',
+		short: 'corkboard',
+		area: 'Community',
+		world: 'gather',
+		summary: 'Tickets, photos, and notes from the communities I’ve helped build.',
+		...link('community')
+	},
+	{
+		id: 'lanyards',
+		number: '06',
+		object: 'Conference wall',
+		short: 'conference wall',
+		area: 'Speaking',
+		world: 'speak',
+		summary: 'Lanyards and badges from DevRelCon, All Things Open, RenderATL, and more.',
+		...link('speaking')
+	},
+	{
+		id: 'mirror',
+		number: '07',
+		object: 'Mirror',
+		short: 'mirror',
+		area: 'About',
+		world: 'personal',
+		summary: 'Who I am, how I got here, and what I care about.',
+		...link('about')
+	},
+	{
+		id: 'window',
+		number: '08',
+		object: 'Window',
+		short: 'window',
+		area: 'Now',
+		world: 'personal',
+		summary: 'Bengaluru outside; what I’m up to right now.',
+		...link('now')
+	},
+	{
+		id: 'door',
+		number: '09',
+		object: 'Door',
+		short: 'door',
+		area: 'Elsewhere & contact',
+		world: 'personal',
+		summary: 'GitHub, LinkedIn, the newsletter, Pexels, Collectr, and how to reach me.',
+		...link('contact')
 	}
 ];
 
@@ -77,5 +127,17 @@ export const curiosities: Record<CuriosityId, { label: string; line: string }> =
 	plush: {
 		label: 'Blastoise plush',
 		line: 'A Blastoise plush. The one on the shelf has competition.'
+	},
+	mug: {
+		label: 'Superman mug',
+		line: 'A Superman mug. I once wrote a whole essay about why he still matters.'
+	},
+	suitcase: {
+		label: 'Suitcase',
+		line: 'Luggage tags from Yokohama, London, Toronto, and Atlanta. Still room for more.'
+	},
+	football: {
+		label: 'Football',
+		line: 'A football by the door, a little scuffed. It has seen some games.'
 	}
 };

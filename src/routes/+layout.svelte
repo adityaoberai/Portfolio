@@ -7,7 +7,9 @@
 	import SiteFooter from '$lib/components/SiteFooter.svelte';
 
 	const { children } = $props();
-	const isV3 = $derived(['', '/world', '/index'].includes(page.url.pathname.replace(/\/$/, '')));
+	// Routes rebuilt for V3 use their own header; the rest still use the V2 shell.
+	const v3Routes = ['', '/world', '/index', '/now'];
+	const isV3 = $derived(v3Routes.includes(page.url.pathname.replace(/\/$/, '')));
 </script>
 
 <svelte:head>

@@ -239,6 +239,14 @@
 			{/each}
 		</ul>
 	</nav>
+	<details class="little-things">
+		<summary>Little things in the room</summary>
+		<ul>
+			{#each Object.values(curiosities) as item (item.label)}
+				<li><strong>{item.label}</strong> · {item.line}</li>
+			{/each}
+		</ul>
+	</details>
 	<div class="room-footer">
 		<p>A work in progress, just like the person who lives here.</p>
 		<a href="/index">Prefer a list? Here's the Index →</a>
@@ -502,6 +510,31 @@
 		color: #304e42;
 		text-decoration: underline;
 		text-underline-offset: 4px;
+	}
+	.little-things {
+		max-width: 1400px;
+		margin: 8px auto 0;
+		padding: 12px 0;
+		border-top: 1px solid #dedbcf;
+		color: #4f5746;
+	}
+	.little-things summary {
+		min-height: 44px;
+		display: flex;
+		align-items: center;
+		cursor: pointer;
+		font:
+			13px system-ui,
+			sans-serif;
+		color: #304e42;
+	}
+	.little-things ul {
+		display: grid;
+		gap: 8px;
+		margin: 6px 0 0;
+		padding: 0 0 0 18px;
+		font-size: 15px;
+		line-height: 1.5;
 	}
 	.room-footer {
 		max-width: 1400px;

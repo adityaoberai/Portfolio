@@ -188,7 +188,7 @@ test('WebGL failure and disabled JavaScript preserve the content and Index escap
 	);
 	await expect(
 		staticPage.getByRole('navigation', { name: 'In the room' }).getByRole('link')
-	).toHaveCount(4);
+	).toHaveCount(9);
 	await staticPage.getByRole('status').getByRole('link', { name: 'Explore the Index' }).click();
 	await expect(staticPage.getByRole('heading', { level: 1 })).toContainText(
 		'bring people together'
@@ -208,4 +208,44 @@ test('context loss exposes the fallback without losing the Index switch', async 
 		.getByRole('link', { name: 'Index' })
 		.click();
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('bring people together');
+});
+
+test('every station in the room opens from the guide', async ({ browser }) => {
+	const context = await browser.newContext({ reducedMotion: 'reduce' });
+	const page = await context.newPage();
+	await openRoom(page);
+	for (const [name, heading] of [
+		['desk', 'Developer Relations Lead at Appwrite'],
+		['notebook', 'Pages from the notebook'],
+		['camera', 'Fujifilm X-T30 II'],
+		['Pokémon shelf', 'Blastoise gets the top shelf.'],
+		['corkboard', 'Pinned to the corkboard'],
+		['conference wall', 'Lanyards from the road'],
+		['mirror', 'Making complicated things make sense.'],
+		['window', 'Right now'],
+		['door', 'Elsewhere']
+	]) {
+		await page.getByRole('button', { name: `Inspect the ${name}`, exact: true }).click();
+		await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
+		await page.keyboard.press('Escape');
+		await expect(page.getByRole('dialog')).not.toBeVisible();
+	}
+	await context.close();
+});
+
+test('the little things are listed for keyboards and screen readers', async ({ page }) => {
+	await openRoom(page);
+	await settle(page);
+	const mug = await anchor(page, 'mug');
+	await page.mouse.click(mug.x, mug.y);
+	await expect(page.locator('.note')).toContainText('Superman');
+	await page.getByText('Little things in the room').click();
+	await expect(page.getByText('A Superman mug.', { exact: false }).last()).toBeVisible();
+});
+
+test('/now is a readable page that fills in the Bengaluru time', async ({ page }) => {
+	await page.goto('/now');
+	await expect(page.getByRole('heading', { level: 1, name: 'Right now' })).toBeVisible();
+	await expect(page.getByText('Working on')).toBeVisible();
+	await expect(page.locator('.lede')).toContainText('here');
 });

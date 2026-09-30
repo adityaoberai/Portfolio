@@ -74,3 +74,16 @@ test('every station can be reached and is the nearest at its own approach point'
 test('nothing is near in the middle of the room', () => {
 	assert.equal(nearest({ x: 0.5, z: 1.8 }, STATIONS), undefined);
 });
+
+test('the window follows the time in Bengaluru', async () => {
+	const { bengaluruHour, skyAt } = await import('../src/lib/world/time.ts');
+	// 2026-09-30T14:30:00Z is 8:00 pm in Bengaluru (UTC+5:30).
+	assert.equal(bengaluruHour(new Date('2026-09-30T14:30:00Z')), 20);
+	assert.equal(skyAt(20).phase, 'night');
+	assert.equal(skyAt(9).phase, 'day');
+	assert.equal(skyAt(6).phase, 'dawn');
+	assert.equal(skyAt(17.5).phase, 'golden');
+	assert.equal(skyAt(19).phase, 'dusk');
+	assert.equal(skyAt(2).phase, 'night');
+	assert.equal(skyAt(9).lights, null);
+});

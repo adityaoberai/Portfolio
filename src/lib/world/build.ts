@@ -285,3 +285,213 @@ export function buildLeg(b: Batch) {
 	// Pivot at the hip: the leg hangs below its origin.
 	b.box('#394a45', [0, -0.185, 0], [0.18, 0.37, 0.2]);
 }
+
+// Window onto Bengaluru: frame, skyline, gulmohar trees, and the purple metro line.
+// The sky pane and the building lights are separate meshes (see scene.ts).
+export const WINDOW = { x: -2.2, y: 1.95, width: 1.26, height: 1.16 };
+const skylineBase = WINDOW.y - WINDOW.height / 2;
+const towers: [number, number, number][] = [
+	[-2.72, 0.18, 0.42],
+	[-2.5, 0.14, 0.62],
+	[-2.3, 0.22, 0.36],
+	[-2.05, 0.12, 0.78],
+	[-1.84, 0.2, 0.5],
+	[-1.66, 0.12, 0.3]
+];
+
+export function buildWindow(lit: Batch) {
+	lit.box('#a17b58', [WINDOW.x, WINDOW.y, -2.98], [1.42, 1.32, 0.06]);
+	towers.forEach(([x, w, h], i) =>
+		lit.box(i % 2 ? '#7f958b' : '#6f857c', [x, skylineBase + h / 2, -2.938], [w, h, 0.006])
+	);
+	lit.box('#7f958b', [-2.05, skylineBase + 0.8, -2.938], [0.06, 0.05, 0.006]);
+	for (const [x, y] of [
+		[-2.62, 1.5],
+		[-1.74, 1.47]
+	]) {
+		lit.add('sphere', '#6d8f5a', [x, y, -2.934], [0.17, 0.11, 0.01]);
+		for (const [dx, dy] of [
+			[-0.07, 0.03],
+			[0.05, 0.05],
+			[0.02, -0.03]
+		])
+			lit.add('sphere', '#d0573a', [x + dx, y + dy, -2.93], [0.025, 0.02, 0.004]);
+	}
+	lit.box('#7b5aa6', [WINDOW.x, 1.57, -2.931], [WINDOW.width, 0.035, 0.006]);
+	for (const x of [-2.6, -2.2, -1.8]) lit.box('#8c8f86', [x, 1.47, -2.932], [0.025, 0.19, 0.005]);
+	lit.box('#e9dbbb', [WINDOW.x, WINDOW.y, -2.925], [0.05, 1.18, 0.03]);
+	lit.box('#e9dbbb', [WINDOW.x, WINDOW.y, -2.925], [1.28, 0.05, 0.03]);
+	lit.box('#b48a61', [WINDOW.x, 1.3, -2.86], [1.6, 0.08, 0.32]);
+	lit.cylinder('#b87554', [-1.72, 1.41, -2.86], 0.08, 0.14);
+	lit.add('sphere', '#7e965f', [-1.72, 1.55, -2.86], [0.12, 0.15, 0.12]);
+}
+
+// Lit windows in the towers; the mesh colour switches them on after dark.
+export function buildCityLights(b: Batch) {
+	towers.forEach(([x, w, h]) => {
+		for (let y = skylineBase + 0.08; y < skylineBase + h - 0.05; y += 0.1)
+			for (const dx of w > 0.15 ? [-w / 4, w / 4] : [0])
+				b.box('#ffffff', [x + dx, y, -2.931], [0.028, 0.034, 0.004]);
+	});
+}
+
+export function buildLanyards(lit: Batch) {
+	lit.box('#6b5a48', [-0.65, 2.62, -2.97], [1.35, 0.05, 0.05]);
+	const straps = ['#c9573c', '#3d6f9e', '#d6a64a', '#5f8f73', '#8a5aa8'];
+	straps.forEach((strap, i) => {
+		const x = -1.15 + i * 0.25;
+		const drop = [0, 0.08, 0.03, 0.12, 0.05][i];
+		const badgeY = 1.78 - drop;
+		const length = 2.6 - badgeY - 0.1;
+		lit.box('#4a3d30', [x, 2.6, -2.94], [0.03, 0.06, 0.04]);
+		for (const side of [-1, 1])
+			lit.box(
+				strap,
+				[x + side * 0.045, badgeY + 0.1 + length / 2, -2.96],
+				[0.03, length, 0.01],
+				[0, 0, -side * 0.12]
+			);
+		lit.group([x, badgeY, -2.955], [0, 0, (i - 2) * 0.04], () => {
+			lit.box('#f6f1e4', [0, 0, 0], [0.2, 0.27, 0.012]);
+			lit.box(strap, [0, 0.1, 0.008], [0.2, 0.06, 0.004]);
+			for (const y of [-0.01, -0.05, -0.09])
+				lit.box('#9a9280', [0, y, 0.008], [0.13, 0.012, 0.004]);
+		});
+	});
+	// A talk poster at eye level.
+	lit.box('#e8dcc0', [-0.65, 1.1, -2.985], [0.62, 0.48, 0.01]);
+	lit.add('sphere', '#d9774f', [-0.8, 1.16, -2.978], [0.12, 0.12, 0.004]);
+	for (const y of [1.2, 1.12, 1.04]) lit.box('#5c5446', [-0.52, y, -2.978], [0.22, 0.025, 0.004]);
+}
+
+export function buildMirror(lit: Batch) {
+	lit.group([-3.38, 0, -0.95], [0, 0, 0.08], () => {
+		lit.box('#8f6a4c', [0, 0.97, 0], [0.08, 1.92, 0.82]);
+		lit.box('#d6e3df', [0.045, 0.99, 0], [0.02, 1.76, 0.66]);
+		for (const [y, z] of [
+			[1.35, -0.12],
+			[1.05, 0.12]
+		])
+			lit.box('#f1f7f4', [0.057, y, z], [0.005, 0.55, 0.05], [0.5, 0, 0]);
+		lit.box('#6f4f37', [0.12, 0.03, 0], [0.3, 0.06, 0.7]);
+	});
+}
+
+export function buildCorkboard(lit: Batch) {
+	lit.box('#8f6a4c', [-3.47, 1.85, 0.9], [0.05, 1.05, 1.55]);
+	lit.box('#c49a6c', [-3.45, 1.85, 0.9], [0.03, 0.95, 1.45]);
+	const x = -3.43;
+	const pin = (y: number, z: number) =>
+		lit.add('sphere', '#c23b3b', [x + 0.01, y, z], [0.02, 0.02, 0.02]);
+	// Photos from walks and meetups.
+	[
+		[2.1, 0.35, '#9fb7c9', 0.1],
+		[1.95, 0.72, '#e0a36a', -0.08],
+		[1.6, 1.42, '#8fae84', 0.06]
+	].forEach(([y, z, color, tilt]) => {
+		lit.group([x, y as number, z as number], [tilt as number, 0, 0], () => {
+			lit.box('#faf6ec', [0, 0, 0], [0.008, 0.28, 0.23]);
+			lit.box(color as string, [0.003, 0.03, 0], [0.004, 0.18, 0.18]);
+		});
+		pin((y as number) + 0.12, z as number);
+	});
+	// Tickets, notes, a small poster, and a badge.
+	lit.box('#e0b84a', [x, 1.62, 0.4], [0.006, 0.09, 0.3], [0.15, 0, 0]);
+	lit.box('#c9573c', [x, 1.52, 0.72], [0.006, 0.09, 0.28], [-0.1, 0, 0]);
+	lit.box('#f2dc8c', [x, 1.64, 1.05], [0.006, 0.2, 0.2], [0.05, 0, 0]);
+	lit.box('#cfe0b9', [x, 2.12, 1.1], [0.006, 0.18, 0.18], [-0.08, 0, 0]);
+	pin(1.72, 1.05);
+	pin(2.19, 1.1);
+	lit.box('#e8dcc0', [x, 2.02, 1.42], [0.006, 0.34, 0.24]);
+	lit.box('#5f8f73', [x + 0.003, 2.08, 1.42], [0.004, 0.12, 0.18]);
+	pin(2.17, 1.42);
+	lit.cylinder('#5a3f8a', [x, 1.5, 1.2], 0.07, 0.008, [0, 0, Math.PI / 2]);
+	lit.cylinder('#f0b77c', [x + 0.005, 1.5, 1.2], 0.04, 0.006, [0, 0, Math.PI / 2]);
+}
+
+export function buildDoorFrame(lit: Batch, unlit: Batch) {
+	for (const z of [2.06, 2.94]) lit.box('#6f4f37', [-3.46, 1.1, z], [0.07, 2.2, 0.07]);
+	lit.box('#6f4f37', [-3.46, 2.22, 2.5], [0.07, 0.07, 0.95]);
+	unlit.decal('#b08d68', -3.05, 2.5, 0.35, 0.5, 0.013);
+	// A football scarf on a hook beside the door.
+	lit.box('#4a3d30', [-3.46, 2.05, 1.97], [0.05, 0.04, 0.04]);
+	for (let i = 0; i < 5; i++)
+		lit.box(i % 2 ? '#e6e1d3' : '#2f4f7f', [-3.44, 1.95 - i * 0.12, 1.97], [0.02, 0.12, 0.09]);
+}
+
+// Door slab in hinge-local coordinates: the hinge is the origin, the slab extends along +z.
+export function buildDoorSlab(b: Batch) {
+	b.box('#9a6f4b', [0, 1.05, 0.4], [0.05, 2.1, 0.8]);
+	for (const y of [0.55, 1.5]) b.box('#a97c56', [0.028, y, 0.4], [0.01, 0.7, 0.55]);
+	b.add('sphere', '#c9a24a', [0.05, 1.02, 0.7], [0.035, 0.035, 0.035]);
+}
+
+export function buildDecor(lit: Batch, unlit: Batch) {
+	// Superman mug on the desk.
+	lit.cylinder('#3d5f9e', [0.4, 1.12, -2.25], 0.06, 0.12);
+	lit.box('#3d5f9e', [0.47, 1.12, -2.25], [0.03, 0.07, 0.02]);
+	lit.box('#c23b3b', [0.4, 1.12, -2.188], [0.045, 0.045, 0.004], [0, 0, Math.PI / 4]);
+	lit.box('#e8c85a', [0.4, 1.12, -2.185], [0.025, 0.025, 0.004], [0, 0, Math.PI / 4]);
+	// Chargers and cables.
+	lit.box('#2f3530', [1.35, 1.065, -2.62], [0.5, 0.01, 0.02], [0, 0.3, 0]);
+	lit.box('#2f3530', [1.55, 1.07, -2.05], [0.14, 0.02, 0.08]);
+
+	// Reading corner: armchair, headphones, books, lamp.
+	lit.group([2.65, 0, 1.22], -0.55, () => {
+		lit.box('#b8644a', [0, 0.3, 0], [0.82, 0.3, 0.74]);
+		lit.box('#e2c9a4', [0, 0.49, 0.03], [0.62, 0.1, 0.6]);
+		lit.box('#a85a42', [0, 0.72, -0.31], [0.82, 0.62, 0.14]);
+		for (const x of [-0.38, 0.38]) lit.box('#a85a42', [x, 0.56, 0], [0.1, 0.22, 0.74]);
+		for (const x of [-0.32, 0.32])
+			for (const z of [-0.28, 0.28]) lit.box('#5d4a3a', [x, 0.07, z], [0.06, 0.14, 0.06]);
+		// Headphones resting on the cushion.
+		lit.box('#2b2b2a', [0.05, 0.62, 0.05], [0.26, 0.03, 0.04], [0, 0.4, 0]);
+		for (const dx of [-0.1, 0.18])
+			lit.cylinder('#2b2b2a', [dx, 0.57, 0.05 + dx * 0.4], 0.05, 0.04, [0, 0, Math.PI / 2]);
+	});
+	const books: [string, number][] = [
+		['#5e807a', 0.1],
+		['#bd8c5e', -0.15],
+		['#ddd2b0', 0.2],
+		['#8c3f36', 0]
+	];
+	books.forEach(([color, turn], i) =>
+		lit.box(color, [2.05, 0.05 + i * 0.09, 0.62], [0.36, 0.08, 0.26], [0, turn, 0])
+	);
+	lit.cylinder('#5d4a3a', [3.25, 0.02, 0.62], 0.12, 0.03);
+	lit.cylinder('#5d4a3a', [3.25, 0.75, 0.62], 0.015, 1.45);
+	lit.add('cone', '#e9d2a6', [3.25, 1.5, 0.62], [0.2, 0.22, 0.2]);
+
+	// Tripod folded against the cabinet.
+	const legs: [number, number][] = [
+		[-0.06, 0],
+		[0.04, 0.05],
+		[0.03, -0.05]
+	];
+	for (const [dx, dz] of legs)
+		lit.cylinder('#3a3a38', [2.42 + dx, 0.55, -2.2 + dz], 0.012, 1.1, [dz * 1.5, 0, dx * 1.5]);
+	lit.box('#2b2b2a', [2.42, 1.12, -2.2], [0.08, 0.06, 0.08]);
+
+	// Suitcase with travel stickers, and a football.
+	lit.box('#4f6f7a', [-1.9, 0.36, 2.85], [0.48, 0.62, 0.26]);
+	lit.box('#3c5760', [-1.9, 0.72, 2.85], [0.18, 0.05, 0.04]);
+	const stickers: [number, number, string][] = [
+		[-2.02, 0.48, '#e0b84a'],
+		[-1.8, 0.28, '#c9573c'],
+		[-1.95, 0.2, '#f6f1e4']
+	];
+	for (const [x, y, color] of stickers)
+		lit.box(color, [x, y, 2.982], [0.12, 0.09, 0.006], [0, 0, 0.2]);
+	for (const x of [-2.07, -1.73])
+		lit.cylinder('#2b2b2a', [x, 0.03, 2.85], 0.03, 0.03, [0, 0, Math.PI / 2]);
+	lit.add('sphere', '#f1eee6', [-2.35, 0.13, 2.15], [0.13, 0.13, 0.13]);
+	const patches: [number, number, number][] = [
+		[0.08, 0.06, 0.08],
+		[-0.1, 0.02, 0.07],
+		[0.02, 0.11, -0.06],
+		[0.1, -0.02, -0.07]
+	];
+	for (const [dx, dy, dz] of patches)
+		lit.add('sphere', '#2b2b2a', [-2.35 + dx, 0.13 + dy, 2.15 + dz], [0.035, 0.035, 0.035]);
+	unlit.decal('#caa77f', -2.35, 2.15, 0.14, 0.1, 0.012);
+}

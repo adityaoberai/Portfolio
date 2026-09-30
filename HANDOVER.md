@@ -10,16 +10,17 @@
 
 ## Current state (verified 2026-09-30)
 
-- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 (this state). `main` is untouched. Nothing is pushed to the remote.
+- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 `298269e`, Phase 3 (this state). `main` is untouched. Nothing is pushed to the remote.
 - Stack: SvelteKit 2.70, Svelte 5.57, TypeScript, Tailwind 4, **adapter-node 5.5.7** (replaced adapter-static), Three.js 0.186.1.
-- Phase 1 vertical slice: `/world` has four inspectable stations (desk & computer, notebook & fountain pen, Fujifilm X-T30 II, Pokémon shelf) and one curiosity (Blastoise plush). Camera pushes in toward an open station. `/index` is SSR and never loads the scene.
+- `/world` has all nine stations from the brief (desk & computer, notebook & fountain pen, Fujifilm X-T30 II, Pokémon shelf, corkboard, conference wall, mirror, window, door) and four curiosities (Blastoise plush, Superman mug, suitcase, football), plus decoration (reading corner, tripod, prints, lamp). The window follows Bengaluru time. `/now` exists. `/index` is SSR and never loads the scene.
 - `/` renders World or Index on the server from the `mode` cookie (default World). `/world` and `/index` set it. The V2 homepage is retired. Deep pages (`/work`, `/speaking`, …) are still V2 until Phase 4.
-- Validation: `npm run check` 0/0, `npm test` 12/12, `npm run test:e2e` 10/10 against the built Node server. Scene chunk 137 KB gzip (545 KB raw); 7 draw calls, 3,132 triangles at rest.
+- Validation: `npm run check` 0/0, `npm test` 13/13, `npm run test:e2e` 13/13 against the built Node server. 10 draw calls, 7,736 triangles at rest.
 - Blocked on the user: deployment host choice and a physical mid-range phone test (see the gate in `v3.md`).
 
 ## Open review items (not yet fixed)
 
-- Curiosity copy ("A Blastoise plush. The one on the shelf has competition.") is written by Claude, not Aditya. Review all curiosity lines in `src/lib/data/room.ts` before launch.
+- Copy written by Claude, not Aditya, needs his review before launch: the four curiosity lines in `src/lib/data/room.ts` (the suitcase line names Yokohama, London, Toronto, Atlanta, inferred from talks and photos; the football line is invented flavour), and the station summaries.
+- `src/lib/data/now.ts`: "Reading" and "Thinking about" are left out because there is no source for them; Aditya should supply them. `now.updated` is a manual date and must change whenever the page changes.
 - `npm run lint` fails on 47 untouched legacy files (Prettier). Not V3 work; don't reformat the repo as part of a feature change.
 - `npm audit`: 3 low findings in the SvelteKit/cookie chain; only `--force` resolves them.
 
@@ -27,7 +28,7 @@
 
 1. User: run the real-phone gate in `v3.md` and record results here.
 2. User: choose a host. If Appwrite Sites, confirm with a preview deployment that its SvelteKit SSR build works with adapter-node, or switch to the adapter it expects.
-3. Phase 3: corkboard, speaking wall, mirror, window, door, decorative objects, easter eggs. The user directed work to continue through Phases 1–5 before the phone gate; the gate still blocks milestone #10.
+3. Phase 4: rebuild the deep pages in the V3 style (Work, Projects, Writing, Photography, Collection, Community, Speaking, About, Contact, Résumé). The user directed work to continue through Phases 1–5 before the phone gate; the gate still blocks milestone #10.
 
 ## Change log
 
@@ -205,3 +206,23 @@
 - `tests/content.test.mjs` (new): one artifact per source record with unique ids (confirms the 86), known worlds and a link for every artifact, photo titles, and every station has layout, meaning, and a section. `package.json` `test` script runs it.
 - `tests/ts-hooks.mjs`: also resolves JSON imports that have no import attribute (Vite allows them; Node does not).
 - `src/lib/data/photography.ts`: proper-noun casing now works on phrases, fixing "CN tower" → "CN Tower" (found by the new test).
+
+### 2026-09-30 — Phase 3: complete environmental storytelling
+
+- `src/lib/world/layout.ts`: five new stations (corkboard, lanyards/conference wall, mirror, window, door) with approach points, hitboxes, and focus points; three new curiosities (mug, suitcase, football); footprints for the armchair, plant, and suitcase; door hinge and opening angle.
+- `src/lib/world/build.ts`: builders for the window (frame, Bengaluru skyline, gulmohar trees, purple Namma Metro line, sill plant), city lights, conference wall (five lanyards with badges, a talk poster), leaning mirror (stylised glass, no real reflection, per the brief), corkboard (photos, tickets, notes, poster, badge, pins), door frame with doormat and football scarf, hinge-local door slab, and decor (Superman mug, cables, armchair with headphones, book stack, floor lamp, tripod, suitcase with stickers, football). Rewrote the part of `buildDecor` that a truncated shell heredoc cut off.
+- `src/lib/world/time.ts` (new): Bengaluru hour (Asia/Kolkata) and a five-phase sky palette. The window sky, city lights, and room light intensity are set on load and when the tab becomes visible again; nothing animates continuously.
+- `src/lib/world/scene.ts`: builds the new objects into the merged meshes; separate meshes for the sky pane, city lights, and door (10 draw calls, 7,736 triangles); the door swings open as part of the station push-in tween and closes on release; `applySky` on load and visibility return.
+- `src/lib/data/about.ts` (new): the About page's own words, shared by the mirror now and `/about` in Phase 4.
+- `src/lib/data/now.ts` (new): "Right now" items derived from existing records (work, latest essay, 2026 talks, photo subjects, collection, Bengaluru) and `bengaluruTime()`. Reading and Thinking about are omitted (no source).
+- `src/lib/data/sections.ts`: added the Now section (`/now`).
+- `src/lib/data/room.ts`: five new stations (numbered 05–09) and three curiosity lines. The conference wall summary names events rather than cities, since DevRelCon Tokyo 2021 may have been online.
+- `src/lib/components/world/StationPanel.svelte`: corkboard (community initiatives plus community programs from work, people-first: what and who, not numbers), conference wall (featured talks as badges, invite link), mirror (headline, portrait, intro, what I care about), window (current Bengaluru time and the Now list), door (email, socials, newsletter, Pexels, Collectr, sponsors).
+- `src/lib/components/world/WorldView.svelte`: "Little things in the room" disclosure, so curiosities work by keyboard and without JavaScript.
+- `src/routes/now/+page.svelte` (new): prerendered Now page; the Bengaluru time is filled in on the client.
+- `src/routes/+layout.svelte`: V3 routes are now a named list and include `/now`.
+- `src/routes/sitemap.xml/+server.ts`: added `/now`.
+- `tests/movement.test.mjs`: time-of-day test (13 unit tests total).
+- `tests/browser/world.spec.ts`: guide link count 4 → 9; every station opens from the guide; curiosity mug and the little-things list; `/now` renders and fills the time (13 browser tests total).
+- `v3.md`: contract notes the time-of-day window and the door swing.
+- Ran Prettier on the files above.
