@@ -1,11 +1,15 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	const path = $derived(page.url.pathname.replace(/\/$/, ''));
+	// At `/`, the server picked the mode from the visitor's cookie.
+	const current = $derived(
+		path === '/world' || path === '/index' ? path.slice(1) : path === '' ? page.data.mode : null
+	);
 </script>
 
 <nav class="mode-switch" aria-label="Website mode">
-	<a href="/world" aria-current={path === '/world' ? 'page' : undefined}>World</a>
-	<a href="/index" aria-current={path === '/index' ? 'page' : undefined}>Index</a>
+	<a href="/world" aria-current={current === 'world' ? 'page' : undefined}>World</a>
+	<a href="/index" aria-current={current === 'index' ? 'page' : undefined}>Index</a>
 </nav>
 
 <style>

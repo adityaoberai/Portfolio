@@ -10,16 +10,15 @@
 
 ## Current state (verified 2026-09-30)
 
-- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 (this state). `main` is untouched. Nothing is pushed to the remote.
+- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 (this state). `main` is untouched. Nothing is pushed to the remote.
 - Stack: SvelteKit 2.70, Svelte 5.57, TypeScript, Tailwind 4, **adapter-node 5.5.7** (replaced adapter-static), Three.js 0.186.1.
 - Phase 1 vertical slice: `/world` has four inspectable stations (desk & computer, notebook & fountain pen, Fujifilm X-T30 II, Pokémon shelf) and one curiosity (Blastoise plush). Camera pushes in toward an open station. `/index` is SSR and never loads the scene.
-- `/` is still the V2 homepage. Cookie-based mode selection is Phase 2.
-- Validation: `npm run check` 0/0, `npm test` 8/8, `npm run test:e2e` 7/7 against the built Node server. Scene chunk 137 KB gzip (545 KB raw); 7 draw calls, 3,132 triangles at rest.
+- `/` renders World or Index on the server from the `mode` cookie (default World). `/world` and `/index` set it. The V2 homepage is retired. Deep pages (`/work`, `/speaking`, …) are still V2 until Phase 4.
+- Validation: `npm run check` 0/0, `npm test` 12/12, `npm run test:e2e` 10/10 against the built Node server. Scene chunk 137 KB gzip (545 KB raw); 7 draw calls, 3,132 triangles at rest.
 - Blocked on the user: deployment host choice and a physical mid-range phone test (see the gate in `v3.md`).
 
 ## Open review items (not yet fixed)
 
-- `/world` and `/index` are not in `sitemap.xml`. Add them when `/` switches modes (Phase 2).
 - Curiosity copy ("A Blastoise plush. The one on the shelf has competition.") is written by Claude, not Aditya. Review all curiosity lines in `src/lib/data/room.ts` before launch.
 - `npm run lint` fails on 47 untouched legacy files (Prettier). Not V3 work; don't reformat the repo as part of a feature change.
 - `npm audit`: 3 low findings in the SvelteKit/cookie chain; only `--force` resolves them.
@@ -28,7 +27,7 @@
 
 1. User: run the real-phone gate in `v3.md` and record results here.
 2. User: choose a host. If Appwrite Sites, confirm with a preview deployment that its SvelteKit SSR build works with adapter-node, or switch to the adapter it expects.
-3. Phase 2: cookie mode selection at `/`, shared artifact model across World and Index. The user directed work to continue through Phases 1–5 before the phone gate; the gate still blocks milestone #10.
+3. Phase 3: corkboard, speaking wall, mirror, window, door, decorative objects, easter eggs. The user directed work to continue through Phases 1–5 before the phone gate; the gate still blocks milestone #10.
 
 ## Change log
 
@@ -182,3 +181,27 @@
 - `tests/browser/world.spec.ts`: 7 tests, adding E-to-inspect, direct object clicks, curiosity note, guide buttons without WebGL, SSR guide links without JavaScript, focus return to the guide button, and a `settle` helper that waits for camera easing.
 - `v3.md`: status line and the performance/input contract updated (merged geometry, push-in, footprints, guide buttons, focus return).
 - Ran Prettier on every file above.
+
+### 2026-09-30 — Phase 2: Index, mode persistence, shared content
+
+- `src/lib/server/mode.ts` (new): `readMode` (default World) and `rememberMode` (one-year `mode` cookie, `SameSite=Lax`, `HttpOnly`, `Secure` only over HTTPS so plain-HTTP previews still work).
+- `src/routes/+page.server.ts`: replaced the V2 Pexels build-time loader with the SSR mode read; sets `Vary: Cookie` and `Cache-Control: private, no-cache`; `prerender = false`. `PEXELS_API_KEY` is no longer used anywhere.
+- `src/routes/+page.svelte`: replaced the V2 homepage with World or Index, chosen by the server.
+- `src/routes/world/+page.server.ts`, `src/routes/index/+page.server.ts` (new): set the preference on visit. Removed `src/routes/world/+page.ts` and `src/routes/index/+page.ts` (their `prerender = false` moved into the server files).
+- `src/lib/components/index/IndexView.svelte` (new): Index extracted for reuse at `/`, rebuilt on shared data: intro, "At a glance" proof points (`highlights.ts`), all ten sections with live counts, one featured artifact per type, contact footer.
+- `src/routes/index/+page.svelte`: now metadata plus `IndexView`.
+- `src/lib/data/sections.ts` (new): single list of section destinations and summaries (counts computed from data). Writing, Photography, and Collection still point off-site until Phase 4 adds their pages.
+- `src/lib/data/artifacts.ts`: full artifact model derived from `work`, `projects`, `talks`, `podcasts`, `writing`, `photography`, `community`, `collection` (86 artifacts: 17 work, 7 projects, 12 talks, 18 podcasts, 5 essays, 21 photos, 5 community, 1 collectible). Only world tags are new; multi-world tags follow the brief's examples (Writers' Room → gather + write + photograph; RenderATL → speak + build + write). Added `context` field, `worldLabels`, `inWorld`, `ofType`, `featured`, `artifactById`.
+- `src/lib/components/world/StationPanel.svelte`: reads artifacts instead of raw data files.
+- `src/lib/data/room.ts`: station links now come from `sections.ts`.
+- `src/lib/data/photography.ts`: added `withWidth` to request other CDN sizes.
+- `src/lib/components/ModeSwitch.svelte`: at `/`, marks the mode the server chose.
+- `src/routes/+layout.svelte`: `/` uses the V3 shell (no V2 header/footer).
+- `src/routes/sitemap.xml/+server.ts`: added `/world` and `/index` (closes that review item).
+- Removed the V2 homepage-only pieces: `src/lib/components/PhotoGallery.svelte`, `src/lib/data/photos.ts`, `static/photos/placeholder-{1..4}.svg`.
+- `tests/browser/mode.spec.ts` (new): first visit gets World with `Vary: Cookie`; `/index` then `/` renders Index without the scene bundle; the switch's client-side navigation updates the cookie; no-JavaScript SSR honours the cookie.
+- `v3.md`: deployment section now records the implemented mode selection and the shared content model.
+- Ran Prettier on the files above. It also reformatted untouched V2 files under `src/lib`; I reverted those so this commit only holds Phase 2 changes.
+- `tests/content.test.mjs` (new): one artifact per source record with unique ids (confirms the 86), known worlds and a link for every artifact, photo titles, and every station has layout, meaning, and a section. `package.json` `test` script runs it.
+- `tests/ts-hooks.mjs`: also resolves JSON imports that have no import attribute (Vite allows them; Node does not).
+- `src/lib/data/photography.ts`: proper-noun casing now works on phrases, fixing "CN tower" → "CN Tower" (found by the new test).

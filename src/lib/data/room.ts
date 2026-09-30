@@ -1,7 +1,7 @@
 import type { CuriosityId, StationId } from '$lib/world/layout';
 import type { World } from './artifacts';
 import { collection } from './collection';
-import { pexelsProfile } from './photography';
+import { sectionById, type SectionId } from './sections';
 
 // What each object in the room means. Shared by the room, its DOM guide, and Index.
 export interface Station {
@@ -12,9 +12,17 @@ export interface Station {
 	area: string;
 	world: World;
 	summary: string;
+	section: SectionId;
 	href: string;
 	external: boolean;
 }
+
+// Deep links come from the shared section list.
+const link = (section: SectionId) => ({
+	section,
+	href: sectionById[section].href,
+	external: sectionById[section].external
+});
 
 export const stations: Station[] = [
 	{
@@ -25,8 +33,7 @@ export const stations: Station[] = [
 		area: 'Work & build',
 		world: 'build',
 		summary: 'Developer relations at Appwrite, launches, and things I’ve built.',
-		href: '/work',
-		external: false
+		...link('work')
 	},
 	{
 		id: 'notebook',
@@ -36,8 +43,7 @@ export const stations: Station[] = [
 		area: 'Writing',
 		world: 'write',
 		summary: 'Essays on home, friendship, and being human. Plus 140+ technical articles.',
-		href: 'https://oberai.blog',
-		external: true
+		...link('writing')
 	},
 	{
 		id: 'camera',
@@ -47,8 +53,7 @@ export const stations: Station[] = [
 		area: 'Photography',
 		world: 'photograph',
 		summary: 'Street, travel, and the moments between conference sessions.',
-		href: pexelsProfile,
-		external: true
+		...link('photography')
 	},
 	{
 		id: 'shelf',
@@ -58,8 +63,7 @@ export const stations: Station[] = [
 		area: 'Collection',
 		world: 'collect',
 		summary: `Slabs, binders, and ${collection.favourite} in pride of place.`,
-		href: collection.showcaseUrl,
-		external: true
+		...link('collection')
 	}
 ];
 

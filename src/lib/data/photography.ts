@@ -11,20 +11,18 @@ export interface Photograph {
 export const cameraBody = 'Fujifilm X-T30 II';
 export const pexelsProfile = 'https://www.pexels.com/@oberai';
 
-const properNouns: Record<string, string> = {
-	bengaluru: 'Bengaluru',
-	india: 'India',
-	toronto: 'Toronto',
-	canada: 'Canada',
-	ontario: 'Ontario',
-	jaipur: 'Jaipur',
-	hawa: 'Hawa',
-	mahal: 'Mahal',
-	maruti: 'Maruti',
-	cn: 'CN',
-	blue: 'blue',
-	mountains: 'mountains'
-};
+const properNouns: [RegExp, string][] = [
+	[/\bcn tower\b/, 'CN Tower'],
+	[/\bblue mountains\b/, 'Blue Mountains'],
+	[/\bhawa mahal\b/, 'Hawa Mahal'],
+	[/\bbengaluru\b/, 'Bengaluru'],
+	[/\bindia(n?)\b/, 'India$1'],
+	[/\btoronto\b/, 'Toronto'],
+	[/\bcanada\b/, 'Canada'],
+	[/\bontario\b/, 'Ontario'],
+	[/\bjaipur\b/, 'Jaipur'],
+	[/\bmaruti\b/, 'Maruti']
+];
 const places = ['Bengaluru', 'Toronto', 'Jaipur', 'Ontario'];
 
 // Titles come from the Pexels URL slug, which is the photo's published title.
@@ -32,12 +30,9 @@ function fromUrl(url: string): Photograph | null {
 	const match = /\/photo\/([a-z0-9-]+)-(\d+)\/?$/.exec(url);
 	if (!match) return null;
 	const [, slug, id] = match;
-	const words = slug.split('-').map((word) => properNouns[word] ?? word);
-	if (slug.includes('blue-mountains')) {
-		const i = words.indexOf('blue');
-		words.splice(i, 2, 'Blue', 'Mountains');
-	}
-	const title = words.join(' ').replace(/^\w/, (c) => c.toUpperCase());
+	let title = slug.replaceAll('-', ' ');
+	for (const [pattern, name] of properNouns) title = title.replace(pattern, name);
+	title = title.replace(/^\w/, (c) => c.toUpperCase());
 	return { id, title, place: places.find((place) => title.includes(place)), href: url };
 }
 
@@ -51,3 +46,8 @@ export function photoSrc(photo: Photograph, width: number) {
 }
 
 export const photoPlaces = [...new Set(photographs.map((photo) => photo.place).filter(Boolean))];
+
+// Requests a different size of the same CDN image.
+export function withWidth(src: string | undefined, width: number) {
+	return src ? src.replace(/([?&])w=\d+/, `$1w=${width}`) : '';
+}

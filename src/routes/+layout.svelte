@@ -7,7 +7,7 @@
 	import SiteFooter from '$lib/components/SiteFooter.svelte';
 
 	const { children } = $props();
-	const isV3 = $derived(['/world', '/index'].includes(page.url.pathname.replace(/\/$/, '')));
+	const isV3 = $derived(['', '/world', '/index'].includes(page.url.pathname.replace(/\/$/, '')));
 </script>
 
 <svelte:head>
