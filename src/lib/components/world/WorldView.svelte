@@ -42,8 +42,10 @@
 		'arrowright'
 	]);
 	const nothingFocused = () => !document.activeElement || document.activeElement === document.body;
+	// `focusVisible` is newer than TypeScript's DOM types, so pass it as a plain object.
+	const quietFocus = { preventScroll: true, focusVisible: false };
 	function focusRoom() {
-		canvas.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
+		canvas.focus(quietFocus);
 	}
 	let arrived = false;
 	function focusOnArrival() {

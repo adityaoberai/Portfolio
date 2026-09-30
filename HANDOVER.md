@@ -294,3 +294,7 @@
 - Regenerated `static/room-still.jpg` and `og/room.jpg` for the larger framing; `og/og.html` zoom lowered from 1.3 to 1.04 to match; `static/og.png` re-rendered.
 - `v3.md`: input contract covers focus on arrival, key routing, E to close, and the desktop framing.
 - Ran Prettier on the files above.
+
+### 2026-10-01 — Lint fix after the focus commit
+
+- `2db0f96` was committed with `npm run lint` failing: ESLint's `no-undef` rejected the `as FocusOptions` cast in `src/lib/components/world/WorldView.svelte` (I had read a blank `tail` line as a pass). Replaced the cast with a plain options object. Lint, type check, and the full test suite rerun below.
