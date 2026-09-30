@@ -23,6 +23,17 @@ export const about = {
 			text: "not audiences but communities, places where people know each other's names, answer each other's questions, and stay long after the swag runs out."
 		}
 	],
+	beyond: [
+		{
+			text: "When I'm not working, I'm usually holding a camera. Photography started as a conference habit (hallways, cities, people mid-laugh) and turned into a serious pursuit; my archive lives on Pexels, free for anyone to use.",
+			link: { label: 'Photography', href: '/photography' }
+		},
+		{
+			text: "I write about developer relations, developer tools, and whatever I'm currently figuring out at oberai.blog.",
+			link: { label: 'Writing', href: '/writing' }
+		},
+		{ text: 'And I still show up at hackathons, these days usually on the judging side.' }
+	] as { text: string; link?: { label: string; href: string } }[],
 	howIWork: [
 		{
 			title: 'Evidence over adjectives',

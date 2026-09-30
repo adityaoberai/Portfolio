@@ -1,6 +1,6 @@
 import { collection } from './collection';
 import { communityInitiatives } from './community';
-import { photographs, pexelsProfile } from './photography';
+import { photographs } from './photography';
 import { podcasts } from './podcasts';
 import { projects } from './projects';
 import { site } from './site';
@@ -55,8 +55,8 @@ export const sections: Section[] = [
 	{
 		id: 'writing',
 		label: 'Writing',
-		href: 'https://oberai.blog',
-		external: true,
+		href: '/writing',
+		external: false,
 		summary: `Personal essays (latest: “${writingSamples[0].title}”) and 140+ technical articles.`
 	},
 	{
@@ -69,15 +69,15 @@ export const sections: Section[] = [
 	{
 		id: 'photography',
 		label: 'Photography',
-		href: pexelsProfile,
-		external: true,
+		href: '/photography',
+		external: false,
 		summary: `Street and travel photographs from Bengaluru, Toronto, Jaipur and beyond. ${photographs.length} on Pexels.`
 	},
 	{
 		id: 'collection',
 		label: 'Collection',
-		href: collection.showcaseUrl,
-		external: true,
+		href: '/collection',
+		external: false,
 		summary: `Pokémon cards. ${collection.favourite} gets pride of place.`
 	},
 	{

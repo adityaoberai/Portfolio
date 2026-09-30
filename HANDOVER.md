@@ -10,11 +10,12 @@
 
 ## Current state (verified 2026-09-30)
 
-- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 `298269e`, Phase 3 (this state). `main` is untouched. Nothing is pushed to the remote.
+- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 `298269e`, Phase 3 `e71d7cc`, Phase 4 (this state). `main` is untouched. Nothing is pushed to the remote.
 - Stack: SvelteKit 2.70, Svelte 5.57, TypeScript, Tailwind 4, **adapter-node 5.5.7** (replaced adapter-static), Three.js 0.186.1.
 - `/world` has all nine stations from the brief (desk & computer, notebook & fountain pen, Fujifilm X-T30 II, Pokémon shelf, corkboard, conference wall, mirror, window, door) and four curiosities (Blastoise plush, Superman mug, suitcase, football), plus decoration (reading corner, tripod, prints, lamp). The window follows Bengaluru time. `/now` exists. `/index` is SSR and never loads the scene.
-- `/` renders World or Index on the server from the `mode` cookie (default World). `/world` and `/index` set it. The V2 homepage is retired. Deep pages (`/work`, `/speaking`, …) are still V2 until Phase 4.
-- Validation: `npm run check` 0/0, `npm test` 13/13, `npm run test:e2e` 13/13 against the built Node server. 10 draw calls, 7,736 triangles at rest.
+- `/` renders World or Index on the server from the `mode` cookie (default World). `/world` and `/index` set it.
+- Every page is V3 now: one header (WORLD / INDEX switch everywhere, section nav on deep pages), one footer, one container width. Deep pages: `/work`, `/projects`, `/speaking`, `/writing`, `/community`, `/photography`, `/collection`, `/about`, `/contact`, `/now`; `/resume` stays a PDF redirect. All V2 components are gone.
+- Validation: `npm run check` 0/0, `npm test` 13/13, `npm run test:e2e` 19/19 against the built Node server. 10 draw calls, 7,736 triangles at rest.
 - Blocked on the user: deployment host choice and a physical mid-range phone test (see the gate in `v3.md`).
 
 ## Open review items (not yet fixed)
@@ -28,7 +29,7 @@
 
 1. User: run the real-phone gate in `v3.md` and record results here.
 2. User: choose a host. If Appwrite Sites, confirm with a preview deployment that its SvelteKit SSR build works with adapter-node, or switch to the adapter it expects.
-3. Phase 4: rebuild the deep pages in the V3 style (Work, Projects, Writing, Photography, Collection, Community, Speaking, About, Contact, Résumé). The user directed work to continue through Phases 1–5 before the phone gate; the gate still blocks milestone #10.
+3. Phase 5: metadata, OG image, SEO, canonical domain, asset optimisation (the 1.26 MB portrait), accessibility audit. The user directed work to continue through Phases 1–5 before the phone gate; the gate still blocks milestone #10.
 
 ## Change log
 
@@ -226,3 +227,26 @@
 - `tests/browser/world.spec.ts`: guide link count 4 → 9; every station opens from the guide; curiosity mug and the little-things list; `/now` renders and fills the time (13 browser tests total).
 - `v3.md`: contract notes the time-of-day window and the door swing.
 - Ran Prettier on the files above.
+
+### 2026-09-30 — Phase 4: deep pages
+
+- `src/app.css`: palette retokened to V3 (paper `#f8f5ed`, ink `#1f2620`, forest-green accent `#304e42` instead of V2's madder red), so any remaining utility classes (404/error pages) match. Added `--container` (1280px) and `--gutter`, plus `.v3-page` and `.v3-section` for deep pages.
+- `src/app.html`: `theme-color` updated to the V3 paper colour.
+- `src/routes/+layout.svelte`: rewritten. Every page gets `V3Header` (section nav everywhere except World and Index) and `V3Footer`; the V2 header/footer and page-enter animation are gone.
+- `src/lib/components/V3Header.svelte`: identity links to `/` (preferred mode); optional section nav with `aria-current`; shared container width.
+- `src/lib/components/V3Footer.svelte` (new): name and role, "two ways in" (room or Index), email, socials, newsletter, Now, Résumé.
+- `src/lib/components/PageIntro.svelte` (new): eyebrow, h1, lede, and an "In the room: the …" link to `/world#<station>`.
+- `src/lib/components/Row.svelte` (new): V3 list row (replaces V2 `IndexRow`).
+- `src/lib/components/world/WorldView.svelte`: opens `/world#<station>` once the room is ready (or directly if WebGL failed); no longer renders its own header; uses the shared container.
+- `src/lib/components/index/IndexView.svelte`, `src/routes/now/+page.svelte`: no longer render their own header; shared container.
+- Rebuilt in V3 style, reusing Aditya's existing copy: `src/routes/work/+page.svelte` (themes with anchors and a table of contents), `projects` (anchors per project, why/outcome/built-with), `community` (people first: what, why, who, then impact; plus Appwrite community programs), `speaking` (badges, copyable bio with a live-region confirmation, full archive, `#podcasts`), `about` (from `about.ts`, including new "Beyond work"), `contact` (email, speaking invite, Elsewhere rows).
+- New pages: `src/routes/writing/+page.svelte` (essays plus professional writing), `src/routes/photography/+page.svelte` (all 21 photos from the Pexels CDN with `srcset`, lazy below the fold), `src/routes/collection/+page.svelte` (Blastoise slab, Collectr showcase; no invented cards).
+- Copy checked against sources: removed a line implying every photo was shot on the X-T30 II, a Claude-written joke in the Writing lede, an overclaim about what Collectr contains, a "Book a call" label on `/meet` (it is a meeting-room link, not a booking page), and a portrait caption asserting a location.
+- `src/lib/data/sections.ts`: Writing, Photography, Collection now point on-site, so the room guide, stations, Index, and Now follow.
+- `src/lib/data/about.ts`: added "Beyond work".
+- `src/lib/data/site.ts`: removed `NavItem`/`primaryNav` (only the V2 header used them).
+- `src/routes/sitemap.xml/+server.ts`: added `/writing`, `/photography`, `/collection`.
+- Removed V2 components: `SiteHeader`, `SiteFooter`, `SectionHeader`, `IndexRow`, `ProjectCard`, `TalkCard`, `CommunityCard`, `ContactCTA`, `ExternalLink`.
+- `/resume` intentionally stays a 302 to the PDF: it is an existing short link people share, and an HTML résumé would duplicate the PDF. Recorded in `v3.md`.
+- `tests/browser/pages.spec.ts` (new): every deep page (status, h1, nav state, mode switch, no scene bundle), phone width, artifact anchors, "In the room" deep link, redirects with real status codes, sitemap coverage. 19 browser tests total.
+- Ran Prettier on the files above; reverted its incidental changes to untouched files (`PageMeta`, `NotFound`, `+error`, `404`, `+layout.ts`).

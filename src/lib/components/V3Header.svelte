@@ -1,21 +1,54 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import ModeSwitch from './ModeSwitch.svelte';
+	import { sections } from '$lib/data/sections';
+
+	// Deep pages get a section nav; World and Index have their own wayfinding.
+	let { nav = false }: { nav?: boolean } = $props();
+	const links = sections.filter((s) => !['resume', 'now'].includes(s.id));
+	const path = $derived(page.url.pathname.replace(/\/$/, ''));
 </script>
 
 <header class="v3-header">
-	<a href="/index" class="identity">Aditya Oberai<span>Bengaluru, India</span></a>
-	<ModeSwitch />
+	<div class="bar">
+		<a href="/" class="identity">Aditya Oberai<span>Bengaluru, India</span></a>
+		<ModeSwitch />
+	</div>
+	{#if nav}
+		<nav aria-label="Sections">
+			<ul>
+				{#each links as link (link.id)}
+					<li>
+						<a
+							href={link.href}
+							aria-current={path === link.href || path.startsWith(`${link.href}/`)
+								? 'page'
+								: undefined}>{link.label}</a
+						>
+					</li>
+				{/each}
+			</ul>
+		</nav>
+	{/if}
 </header>
 
 <style>
 	.v3-header {
+		background: var(--color-paper);
+		border-bottom: 1px solid var(--color-hairline);
+	}
+	.bar,
+	nav {
+		max-width: var(--container);
+		margin-inline: auto;
+		padding-inline: var(--gutter);
+	}
+	.bar {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
 		gap: 14px;
-		padding: 22px clamp(20px, 4vw, 64px);
-		background: #f8f5ed;
-		border-bottom: 1px solid #dedbcf;
+		padding-block: 22px;
 	}
 	.identity {
 		font-size: 24px;
@@ -30,14 +63,49 @@
 			sans-serif;
 		letter-spacing: 0.13em;
 		text-transform: uppercase;
-		color: #606456;
+		color: var(--color-secondary);
+	}
+	nav {
+		padding-bottom: 10px;
+	}
+	ul {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0 22px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	nav a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 36px;
+		font:
+			13px system-ui,
+			sans-serif;
+		color: var(--color-secondary);
+	}
+	nav a:hover {
+		color: var(--color-accent);
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+	nav a[aria-current='page'] {
+		color: var(--color-ink);
+		text-decoration: underline;
+		text-decoration-color: var(--color-accent);
+		text-decoration-thickness: 2px;
+		text-underline-offset: 6px;
 	}
 	@media (max-width: 480px) {
-		.v3-header {
-			padding: 16px;
+		.bar {
+			padding-block: 16px;
 		}
 		.identity {
 			font-size: 21px;
+		}
+		ul {
+			gap: 0 16px;
 		}
 	}
 </style>

@@ -1,8 +1,7 @@
 <script lang="ts">
 	import PageMeta from '$lib/components/PageMeta.svelte';
-	import SectionHeader from '$lib/components/SectionHeader.svelte';
-	import IndexRow from '$lib/components/IndexRow.svelte';
-	import TalkCard from '$lib/components/TalkCard.svelte';
+	import PageIntro from '$lib/components/PageIntro.svelte';
+	import Row from '$lib/components/Row.svelte';
 	import { talks, speakingTopics, speakerBio } from '$lib/data/talks';
 	import { podcasts } from '$lib/data/podcasts';
 	import { site } from '$lib/data/site';
@@ -27,62 +26,57 @@
 	path="/speaking"
 />
 
-<div class="mx-auto max-w-4xl px-6 py-16 md:px-8 md:py-24">
-	<header class="max-w-2xl">
-		<h1 class="text-h1">Talks, stages, and the occasional microphone.</h1>
-		<p class="mt-6 text-lede italic text-secondary">
+<div class="v3-page">
+	<PageIntro
+		eyebrow="Speaking · the conference wall"
+		title="Talks, stages, and the occasional microphone."
+		station="lanyards"
+	>
+		<p>
 			I speak about developer relations, communities, and building with AI, and I've organized a
 			conference or two myself. If you're putting an event together, I'd love to hear about it.
 		</p>
-	</header>
+	</PageIntro>
 
-	<section class="pt-16 md:pt-24">
-		<SectionHeader number="01" label="Featured talks" />
-		<div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-			{#each featured as talk (talk.event + talk.title)}
-				<TalkCard {talk} />
+	<section class="v3-section" aria-labelledby="featured-title">
+		<h2 id="featured-title"><span class="n">01</span>Featured talks</h2>
+		<ul class="badges">
+			{#each featured as talk (talk.event + talk.year)}
+				<li>
+					<span class="badge-head">{talk.event} · {talk.year}</span>
+					<h3>{talk.title}</h3>
+					<p>{talk.description}</p>
+					{#if talk.recording}<a href={talk.recording}>Watch the recording ↗</a>
+					{:else if talk.slides}<a href={talk.slides}>See the slides ↗</a>{/if}
+				</li>
 			{/each}
-		</div>
+		</ul>
 	</section>
 
-	<section class="pt-16 md:pt-24">
-		<SectionHeader number="02" label="Speaker bio" />
-		<div class="mt-6 max-w-2xl rounded-md border border-hairline bg-surface p-6 md:p-8">
-			<p class="eyebrow">For organizers · copy freely</p>
-			<div class="mt-4 flex flex-col gap-3 text-small">
-				{#each speakerBio.split('\n\n') as paragraph (paragraph)}
-					<p>{paragraph}</p>
-				{/each}
+	<section class="v3-section" aria-labelledby="bio-title">
+		<h2 id="bio-title"><span class="n">02</span>For organizers</h2>
+		<div class="bio">
+			<p class="bio-label">Speaker bio · copy freely</p>
+			{#each speakerBio.split('\n\n') as paragraph (paragraph)}
+				<p>{paragraph}</p>
+			{/each}
+			<div class="bio-actions">
+				<button type="button" onclick={copyBio}>{copied ? 'Copied!' : 'Copy bio'}</button>
+				<a href="/pic">Headshot</a>
+				<a href="mailto:{site.email}?subject=Speaking invitation">Invite me to speak ↗</a>
 			</div>
-			<div class="mt-6 flex flex-wrap items-center gap-4">
-				<button type="button" class="btn-secondary cursor-pointer" onclick={copyBio}>
-					{copied ? 'Copied!' : 'Copy bio'}
-				</button>
-				<a href="/pic" class="prose-link text-small">Headshot</a>
-			</div>
+			<span class="sr-only" aria-live="polite">{copied ? 'Bio copied to clipboard' : ''}</span>
 		</div>
-	</section>
-
-	<section class="pt-16 md:pt-24">
-		<SectionHeader number="03" label="Invite me" />
-		<p class="mt-5 max-w-2xl text-body">
-			Have a stage and an audience of developers? Tell me about the event, the audience, and the
-			date. I'll get back to you quickly.
-		</p>
-		<p class="mt-4 max-w-2xl text-body">
+		<p class="topics">
 			I speak about {speakingTopics.join(', ')}, and the places where they overlap.
 		</p>
-		<p class="mt-6">
-			<a href="mailto:{site.email}?subject=Speaking invitation" class="btn-primary">
-				Invite me to speak
-			</a>
-		</p>
 	</section>
-	<section class="pt-16 md:pt-24">
-		<SectionHeader number="04" label="Talk archive" />
-		<div class="-mx-4 mt-6 divide-y divide-hairline border-b border-t border-hairline">
+
+	<section class="v3-section" aria-labelledby="archive-title">
+		<h2 id="archive-title"><span class="n">03</span>Every talk</h2>
+		<div class="list">
 			{#each talks as talk (talk.event + talk.title)}
-				<IndexRow
+				<Row
 					meta={String(talk.year)}
 					title={talk.title}
 					subtitle={talk.event}
@@ -92,16 +86,14 @@
 				/>
 			{/each}
 		</div>
-		<p class="meta mt-4">
-			Also: organized DevRelCon Bengaluru 2024, the first-ever DevRelCon in India.
-		</p>
+		<p class="note">Also: organized DevRelCon Bengaluru 2024, the first-ever DevRelCon in India.</p>
 	</section>
 
-	<section class="pt-16 md:pt-24">
-		<SectionHeader number="05" label="Podcasts and streams" />
-		<div class="-mx-4 mt-6 divide-y divide-hairline border-b border-t border-hairline">
+	<section class="v3-section" id="podcasts" aria-labelledby="podcasts-title">
+		<h2 id="podcasts-title"><span class="n">04</span>Podcasts and streams</h2>
+		<div class="list">
 			{#each podcasts as episode (episode.url)}
-				<IndexRow
+				<Row
 					meta={String(episode.year)}
 					title={episode.title}
 					subtitle={episode.show}
@@ -112,3 +104,106 @@
 		</div>
 	</section>
 </div>
+
+<style>
+	.badges {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+		gap: 16px;
+		margin: 20px 0 0;
+		padding: 0;
+		list-style: none;
+	}
+	.badges li {
+		padding: 0 20px 18px;
+		background: #fffdf6;
+		border: 1px solid var(--color-hairline-strong);
+		border-radius: 10px;
+		overflow: hidden;
+	}
+	.badge-head {
+		display: block;
+		margin: 0 -20px 14px;
+		padding: 10px 20px;
+		background: var(--color-accent);
+		color: #fffaf0;
+		font:
+			11px/1.4 system-ui,
+			sans-serif;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+	.badges h3 {
+		font-size: 20px;
+		line-height: 1.3;
+		font-weight: 500;
+	}
+	.badges p {
+		margin-top: 8px;
+		font-size: 15px;
+		line-height: 1.55;
+		color: var(--color-secondary);
+	}
+	.badges a,
+	.bio-actions a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 40px;
+		margin-top: 6px;
+		color: var(--color-accent);
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+	.bio {
+		max-width: 720px;
+		margin-top: 20px;
+		padding: 24px;
+		background: var(--color-surface);
+		border: 1px solid var(--color-hairline);
+		border-radius: 6px;
+	}
+	.bio p {
+		margin-top: 10px;
+		font-size: 16px;
+		line-height: 1.6;
+	}
+	.bio .bio-label {
+		margin-top: 0;
+		font:
+			11px/1.5 system-ui,
+			sans-serif;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--color-secondary);
+	}
+	.bio-actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 4px 24px;
+		margin-top: 16px;
+	}
+	.bio-actions button {
+		min-height: 44px;
+		padding: 0 18px;
+		background: var(--color-accent);
+		color: #fffaf0;
+		border-radius: 4px;
+		cursor: pointer;
+	}
+	.topics,
+	.note {
+		max-width: 720px;
+		margin-top: 18px;
+		font-size: 16px;
+		line-height: 1.6;
+		color: var(--color-secondary);
+	}
+	.list {
+		margin-top: 16px;
+		border-top: 1px solid var(--color-hairline);
+	}
+	#podcasts {
+		scroll-margin-top: 24px;
+	}
+</style>

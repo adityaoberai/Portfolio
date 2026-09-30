@@ -1,38 +1,34 @@
 <script lang="ts">
 	import PageMeta from '$lib/components/PageMeta.svelte';
-	import IndexRow from '$lib/components/IndexRow.svelte';
+	import PageIntro from '$lib/components/PageIntro.svelte';
+	import Row from '$lib/components/Row.svelte';
 	import { site } from '$lib/data/site';
-	import { socialLinks } from '$lib/data/links';
+	import { socialLinks, sponsorLink } from '$lib/data/links';
+	import { pexelsProfile } from '$lib/data/photography';
+	import { collection } from '$lib/data/collection';
 
+	const domain = (url: string) => new URL(url).hostname.replace(/^www\./, '');
 	const rows = [
 		...socialLinks.map(({ name, handle, url }) => ({
-			meta: name.toUpperCase(),
+			meta: name,
 			title: `@${handle}`,
-			href: url,
-			external: true,
-			domain: new URL(url).hostname.replace(/^www\./, '')
+			subtitle: domain(url),
+			href: url
 		})),
 		{
-			meta: 'WRITING',
-			title: 'Substack newsletter',
-			href: 'https://oberai.blog',
-			external: true,
-			domain: 'oberai.blog'
+			meta: 'Writing',
+			title: 'The newsletter',
+			subtitle: 'oberai.blog',
+			href: 'https://oberai.blog'
 		},
+		{ meta: 'Photos', title: 'Pexels archive', subtitle: 'pexels.com', href: pexelsProfile },
 		{
-			meta: 'PHOTOS',
-			title: 'Pexels archive',
-			href: 'https://www.pexels.com/@oberai',
-			external: true,
-			domain: 'pexels.com'
+			meta: 'Cards',
+			title: 'Collectr showcase',
+			subtitle: 'getcollectr.com',
+			href: collection.showcaseUrl
 		},
-		{
-			meta: 'Resume',
-			title: 'resume.pdf',
-			href: site.resume,
-			external: false,
-			domain: 'oberai.dev'
-		}
+		{ meta: 'Support', title: 'GitHub Sponsors', subtitle: 'github.com', href: sponsorLink }
 	];
 </script>
 
@@ -42,26 +38,54 @@
 	path="/contact"
 />
 
-<div class="mx-auto max-w-2xl px-6 py-16 md:px-8 md:py-24">
-	<h1 class="text-h1">Say hello.</h1>
-	<p class="mt-6 text-lede italic text-secondary">
-		Whether it's a speaking invitation, a consulting question, or a community collaboration, my
-		inbox is open. And I actually read it.
+<div class="v3-page">
+	<PageIntro eyebrow="Contact · the door" title="Say hello." station="door">
+		<p>
+			Whether it's a speaking invitation, a consulting question, or a community collaboration, my
+			inbox is open. And I actually read it.
+		</p>
+	</PageIntro>
+
+	<p class="mail"><a href="mailto:{site.email}">{site.email}</a></p>
+	<p class="also">
+		<a href="mailto:{site.email}?subject=Speaking invitation">Speaking invitation ↗</a>
+		<a href="/resume">Résumé (PDF) →</a>
 	</p>
 
-	<p class="mt-10">
-		<a href="mailto:{site.email}" class="prose-link text-[1.3125rem]">{site.email}</a>
-	</p>
-
-	<div class="-mx-4 mt-12 divide-y divide-hairline border-b border-t border-hairline">
-		{#each rows as row (row.meta)}
-			<IndexRow
-				meta={row.meta}
-				title={row.title}
-				domain={row.domain}
-				href={row.href}
-				external={row.external}
-			/>
-		{/each}
-	</div>
+	<section class="v3-section" aria-labelledby="elsewhere-title">
+		<h2 id="elsewhere-title"><span class="n">01</span>Elsewhere</h2>
+		<div class="list">
+			{#each rows as row (row.href)}
+				<Row meta={row.meta} title={row.title} subtitle={row.subtitle} href={row.href} external />
+			{/each}
+		</div>
+	</section>
 </div>
+
+<style>
+	.mail {
+		font-size: clamp(24px, 3vw, 32px);
+	}
+	.mail a,
+	.also a {
+		color: var(--color-accent);
+		text-decoration: underline;
+		text-underline-offset: 5px;
+	}
+	.also {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0 28px;
+		margin: 12px 0 40px;
+	}
+	.also a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+	}
+	.list {
+		max-width: 760px;
+		margin-top: 16px;
+		border-top: 1px solid var(--color-hairline);
+	}
+</style>

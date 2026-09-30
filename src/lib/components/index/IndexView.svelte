@@ -1,5 +1,4 @@
 <script lang="ts">
-	import V3Header from '$lib/components/V3Header.svelte';
 	import { site } from '$lib/data/site';
 	import { highlights } from '$lib/data/highlights';
 	import { sections } from '$lib/data/sections';
@@ -36,7 +35,6 @@
 		}));
 </script>
 
-<V3Header />
 <div class="index-page">
 	<section class="intro" aria-labelledby="index-title">
 		<div>
@@ -105,9 +103,9 @@
 
 <style>
 	.index-page {
-		max-width: 1160px;
+		max-width: var(--container);
 		margin: auto;
-		padding: 0 clamp(20px, 5vw, 64px);
+		padding: 0 var(--gutter);
 	}
 	.intro {
 		display: grid;

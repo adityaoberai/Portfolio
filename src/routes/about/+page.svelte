@@ -1,6 +1,7 @@
 <script lang="ts">
 	import PageMeta from '$lib/components/PageMeta.svelte';
-	import ExternalLink from '$lib/components/ExternalLink.svelte';
+	import PageIntro from '$lib/components/PageIntro.svelte';
+	import { about } from '$lib/data/about';
 	import { site } from '$lib/data/site';
 </script>
 
@@ -10,125 +11,134 @@
 	path="/about"
 />
 
-<article class="mx-auto max-w-2xl px-6 py-16 md:px-8 md:py-24">
-	<h1 class="text-h1">Making complicated things make sense.</h1>
-	<p class="mt-6 text-lede italic text-secondary">
-		That's the thread through everything I do: developer relations, writing, speaking, teaching, and
-		the occasional photograph.
-	</p>
+<div class="v3-page">
+	<PageIntro eyebrow="About · the mirror" title={about.headline} station="mirror">
+		<p>{about.standfirst}</p>
+	</PageIntro>
 
-	<!-- The photographic plate -->
-	<figure class="mx-auto mt-10 w-60 md:float-right md:ml-8 md:mt-2">
-		<div class="rounded-md border border-hairline p-1.5">
-			<img
-				src={site.portrait}
-				alt="Aditya Oberai"
-				width="240"
-				height="240"
-				loading="eager"
-				class="w-full rounded-[3px]"
-			/>
-		</div>
-		<figcaption class="eyebrow mt-2 text-center">Plate I · The author</figcaption>
-	</figure>
+	<article class="story">
+		<figure>
+			<img src={site.portrait} alt="Aditya Oberai" width="240" height="300" />
+		</figure>
+		<p class="first">{about.intro}</p>
 
-	<p class="drop-cap mt-10 text-body">
-		I'm Aditya Oberai, and I lead Developer Relations at Appwrite, an open-source backend platform.
-		My job sits at the intersection of engineering and communication: product launches,
-		documentation, education, and community. The throughline is simple: when a developer meets a
-		tool, I want that first conversation to go well.
-	</p>
+		<section aria-labelledby="journey-title">
+			<h2 id="journey-title"><span class="n">01</span>Career journey</h2>
+			{#each about.journey as paragraph (paragraph)}<p>{paragraph}</p>{/each}
+		</section>
 
-	<section class="mt-14">
-		<h2 class="eyebrow">
-			<span class="text-accent">01</span> <span aria-hidden="true">·</span> Career journey
-		</h2>
-		<p class="mt-5 text-body">
-			My path into developer relations started at hackathons. As a computer science student, I spent
-			weekends building things against deadlines and helping other students do the same, first as a
-			participant, then as a mentor and organizer in communities like Major League Hacking, which
-			named me one of its Top 50 Hackers in 2021. That same year, a project called CodeCapture,
-			built so students without computers could learn to code, won the Education category at the
-			Microsoft Imagine Cup's India chapter. It taught me something that stuck: the technology was
-			the easy half. Explaining it was the work.
+		<section aria-labelledby="care-title">
+			<h2 id="care-title"><span class="n">02</span>What I care about</h2>
+			<p>Three things, mostly.</p>
+			<ul>
+				{#each about.careAbout as item (item.title)}
+					<li><em>{item.title}</em>: {item.text}</li>
+				{/each}
+			</ul>
+		</section>
+
+		<section aria-labelledby="how-title">
+			<h2 id="how-title"><span class="n">03</span>How I work</h2>
+			<ul>
+				{#each about.howIWork as item (item.title)}
+					<li><em>{item.title}</em>: {item.text}</li>
+				{/each}
+			</ul>
+		</section>
+
+		<section aria-labelledby="beyond-title">
+			<h2 id="beyond-title"><span class="n">04</span>Beyond work</h2>
+			{#each about.beyond as item (item.text)}
+				<p>
+					{item.text}
+					{#if item.link}<a href={item.link.href}>{item.link.label} →</a>{/if}
+				</p>
+			{/each}
+		</section>
+
+		<p class="formal">
+			Prefer the formal version? <a href="/resume">Résumé (PDF)</a> ·
+			<a href="/resume/docx">Word document</a>
 		</p>
-		<p class="mt-4 text-body">
-			I joined Appwrite in 2021 as a Developer Advocate, when both the platform and its community
-			were young. Over four years I answered thousands of questions on Discord and GitHub, wrote
-			more than 140 articles, launched an education program that reached 15,000+ students, ran
-			hackathons for 7,000+ developers, and helped onboard 70,000+ new community members through
-			initiatives like Hacktoberfest. In December 2025, I stepped into leading Developer Relations
-			at Appwrite, owning our public-facing product releases, content strategy, developer docs, and
-			AI ecosystem tools that help developers build with Appwrite through tools like Claude Code and
-			Cursor.
-		</p>
-	</section>
+	</article>
+</div>
 
-	<section class="mt-14">
-		<h2 class="eyebrow">
-			<span class="text-accent">02</span> <span aria-hidden="true">·</span> What I care about
-		</h2>
-		<p class="mt-5 text-body">Three things, mostly.</p>
-		<ul class="mt-4 list-disc space-y-3 pl-5 text-body">
-			<li>
-				<em>Clear communication</em>: documentation, blog posts, and launch announcements are
-				products in their own right, and they deserve the same care as the code they describe.
-			</li>
-			<li>
-				<em>Education</em>: Projects like CodeCapture and most of my writing exist because someone,
-				somewhere, is learning this for the first time.
-			</li>
-			<li>
-				<em>Communities</em>: not audiences but communities, places where people know each other's
-				names, answer each other's questions, and stay long after the swag runs out.
-			</li>
-		</ul>
-	</section>
-
-	<section class="mt-14">
-		<h2 class="eyebrow">
-			<span class="text-accent">03</span> <span aria-hidden="true">·</span> How I work
-		</h2>
-		<ul class="mt-5 list-disc space-y-3 pl-5 text-body">
-			<li>
-				<em>Evidence over adjectives</em>: I'd rather show you a launch, an article, or a number
-				than call myself passionate.
-			</li>
-			<li>
-				<em>Teaching over selling</em>: if the product is good, explaining it honestly is the best
-				marketing there is.
-			</li>
-			<li>
-				<em>Writing things down</em>: most problems in developer relations turn out to be
-				documentation problems wearing a costume.
-			</li>
-		</ul>
-	</section>
-
-	<section class="mt-14">
-		<h2 class="eyebrow">
-			<span class="text-accent">04</span> <span aria-hidden="true">·</span> Beyond work
-		</h2>
-		<p class="mt-5 text-body">
-			When I'm not working, I'm usually holding a camera. Photography started as a conference habit
-			(hallways, cities, people mid-laugh) and turned into a serious pursuit; my archive lives on <ExternalLink
-				href="https://www.pexels.com/@oberai">Pexels</ExternalLink
-			>, free for anyone to use.
-		</p>
-		<p class="mt-4 text-body">
-			I write about developer relations, developer tools, and whatever I'm currently figuring out at <ExternalLink
-				href="https://oberai.blog">oberai.blog</ExternalLink
-			>.
-		</p>
-		<p class="mt-4 text-body">
-			And I still show up at hackathons, these days usually on the judging side.
-		</p>
-	</section>
-
-	<div class="mt-14 border-t border-hairline pt-10">
-		<p class="text-body text-secondary">Prefer the formal version?</p>
-		<p class="mt-4">
-			<a href={site.resume} class="btn-secondary" download>Download resume</a>
-		</p>
-	</div>
-</article>
+<style>
+	.story {
+		max-width: 720px;
+		padding-bottom: 16px;
+		border-top: 1px solid var(--color-hairline);
+	}
+	figure {
+		float: right;
+		width: 220px;
+		margin: 32px 0 16px 32px;
+	}
+	figure img {
+		display: block;
+		width: 100%;
+		height: auto;
+		aspect-ratio: 4 / 5;
+		object-fit: cover;
+		border-radius: 110px 110px 6px 6px;
+		border: 6px solid #8f6a4c;
+	}
+	.story p,
+	.story li {
+		font-size: 19px;
+		line-height: 1.7;
+		color: var(--color-ink-soft);
+	}
+	.story p {
+		margin-top: 16px;
+	}
+	.first {
+		padding-top: 16px;
+		font-size: 21px !important;
+		color: var(--color-ink) !important;
+	}
+	section {
+		margin-top: 40px;
+	}
+	h2 {
+		font-size: 26px;
+		letter-spacing: -0.02em;
+		font-weight: 500;
+	}
+	h2 .n {
+		margin-right: 12px;
+		font:
+			12px system-ui,
+			sans-serif;
+		color: var(--color-secondary);
+		vertical-align: middle;
+	}
+	ul {
+		display: grid;
+		gap: 10px;
+		margin: 14px 0 0;
+		padding-left: 20px;
+	}
+	em {
+		font-style: italic;
+		color: var(--color-ink);
+	}
+	.story a {
+		color: var(--color-accent);
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+	.formal {
+		clear: both;
+		margin-top: 48px !important;
+		padding-top: 24px;
+		border-top: 1px solid var(--color-hairline);
+	}
+	@media (max-width: 650px) {
+		figure {
+			float: none;
+			width: 180px;
+			margin: 28px 0 0;
+		}
+	}
+</style>

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
-	import V3Header from '$lib/components/V3Header.svelte';
 	import StationPanel from './StationPanel.svelte';
 	import { curiosities, stationById, stations } from '$lib/data/room';
 	import type { CuriosityId, StationId } from '$lib/world/layout';
@@ -22,6 +21,20 @@
 	let returnFocus: HTMLElement | null = null;
 
 	const near = $derived(roomState?.near ? stationById[roomState.near] : null);
+
+	// Deep pages link to /world#<station>; open it once the room is ready, or directly if it failed.
+	let hashHandled = false;
+	function openFromHash() {
+		if (hashHandled) return;
+		hashHandled = true;
+		const id = window.location.hash.slice(1) as StationId;
+		if (!(id in stationById)) return;
+		if (room && status === 'ready') room.visit(id);
+		else void showStation(id);
+	}
+	$effect(() => {
+		if (status !== 'loading') openFromHash();
+	});
 
 	async function showStation(id: StationId) {
 		// Focus returns to whatever opened the station: the canvas, or a guide button.
@@ -116,7 +129,6 @@
 	});
 </script>
 
-<V3Header />
 <section class="world-page" aria-labelledby="world-title">
 	<div class="welcome">
 		<div>
@@ -267,11 +279,11 @@
 
 <style>
 	.world-page {
-		background: #f8f5ed;
-		padding: 32px clamp(16px, 4vw, 64px) 24px;
+		max-width: var(--container);
+		margin: auto;
+		padding: 32px var(--gutter) 24px;
 	}
 	.welcome {
-		max-width: 1400px;
 		margin: 0 auto 24px;
 		display: flex;
 		align-items: end;
@@ -294,7 +306,6 @@
 		display: none;
 	}
 	.room-frame {
-		max-width: 1400px;
 		margin: auto;
 		height: clamp(460px, 62vh, 760px);
 		position: relative;
@@ -393,7 +404,6 @@
 		line-height: 1.45;
 	}
 	.room-toolbar {
-		max-width: 1400px;
 		margin: auto;
 		display: flex;
 		justify-content: space-between;
@@ -452,7 +462,6 @@
 		padding: 8px 0;
 	}
 	.guide {
-		max-width: 1400px;
 		margin: 28px auto 0;
 	}
 	.guide ul {
@@ -512,7 +521,6 @@
 		text-underline-offset: 4px;
 	}
 	.little-things {
-		max-width: 1400px;
 		margin: 8px auto 0;
 		padding: 12px 0;
 		border-top: 1px solid #dedbcf;
@@ -537,7 +545,6 @@
 		line-height: 1.5;
 	}
 	.room-footer {
-		max-width: 1400px;
 		margin: 18px auto 0;
 		padding-top: 18px;
 		border-top: 1px solid #dedbcf;

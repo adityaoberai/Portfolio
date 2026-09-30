@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import PageMeta from '$lib/components/PageMeta.svelte';
-	import V3Header from '$lib/components/V3Header.svelte';
 	import { bengaluruTime, now } from '$lib/data/now';
 
 	// Prerendered: the time is filled in on the visitor's device.
@@ -22,7 +21,6 @@
 	path="/now"
 	description="What Aditya Oberai is working on, writing, photographing, and collecting right now."
 />
-<V3Header />
 <article class="now-page">
 	<p class="eyebrow">Now · the view from the window</p>
 	<h1>Right now</h1>

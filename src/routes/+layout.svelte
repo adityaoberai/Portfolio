@@ -3,13 +3,12 @@
 	import '@fontsource-variable/newsreader/opsz-italic.css';
 	import '../app.css';
 	import { page } from '$app/state';
-	import SiteHeader from '$lib/components/SiteHeader.svelte';
-	import SiteFooter from '$lib/components/SiteFooter.svelte';
+	import V3Header from '$lib/components/V3Header.svelte';
+	import V3Footer from '$lib/components/V3Footer.svelte';
 
 	const { children } = $props();
-	// Routes rebuilt for V3 use their own header; the rest still use the V2 shell.
-	const v3Routes = ['', '/world', '/index', '/now'];
-	const isV3 = $derived(v3Routes.includes(page.url.pathname.replace(/\/$/, '')));
+	// World and Index carry their own wayfinding; every other page gets the section nav.
+	const home = $derived(['', '/world', '/index'].includes(page.url.pathname.replace(/\/$/, '')));
 </script>
 
 <svelte:head>
@@ -32,11 +31,9 @@
 	>
 		Skip to content
 	</a>
-	{#if !isV3}<SiteHeader />{/if}
-	{#key page.url.pathname}
-		<main id="main" tabindex="-1" class:page-enter={!isV3} class="flex-1 focus:outline-none">
-			{@render children()}
-		</main>
-	{/key}
-	{#if !isV3}<SiteFooter />{/if}
+	<V3Header nav={!home} />
+	<main id="main" tabindex="-1" class="flex-1 focus:outline-none">
+		{@render children()}
+	</main>
+	<V3Footer />
 </div>

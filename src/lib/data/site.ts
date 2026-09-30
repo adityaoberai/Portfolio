@@ -11,18 +11,3 @@ export const site = {
 	portrait: '/aditya.jpg',
 	resume: '/resume.pdf'
 };
-
-export type NavItem = {
-	label: string;
-	href: string;
-};
-
-export const primaryNav: NavItem[] = [
-	{ label: 'Home', href: '/' },
-	{ label: 'About', href: '/about' },
-	{ label: 'Work', href: '/work' },
-	{ label: 'Projects', href: '/projects' },
-	{ label: 'Community', href: '/community' },
-	{ label: 'Speaking', href: '/speaking' },
-	{ label: 'Contact', href: '/contact' }
-];
