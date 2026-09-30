@@ -19,6 +19,7 @@
 	let lowQuality = $state(false);
 	let roomState = $state<RoomState>();
 	let diagnostics = $state(false);
+	let coarse = $state(false);
 	let open = $state<StationId | null>(null);
 	let hover = $state<{ label: string; x: number; y: number } | null>(null);
 	let note = $state('');
@@ -26,6 +27,42 @@
 	let returnFocus: HTMLElement | null = null;
 
 	const near = $derived(roomState?.near ? stationById[roomState.near] : null);
+
+	// Keyboard play should work the moment the room appears. Focus it on arrival, unless the
+	// visitor has already focused something; no focus ring for this programmatic focus.
+	const roomKeys = new Set([
+		'w',
+		'a',
+		's',
+		'd',
+		'e',
+		'arrowup',
+		'arrowleft',
+		'arrowdown',
+		'arrowright'
+	]);
+	const nothingFocused = () => !document.activeElement || document.activeElement === document.body;
+	function focusRoom() {
+		canvas.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
+	}
+	let arrived = false;
+	function focusOnArrival() {
+		if (arrived) return;
+		arrived = true;
+		if (nothingFocused() && !dialog.open) focusRoom();
+	}
+	// If focus drifts to the page itself, movement keys still reach the room. Focused
+	// controls, the menu, and open stations are never interrupted, and Tab still leaves.
+	function forwardRoomKeys(event: KeyboardEvent) {
+		if (status !== 'ready' || !nothingFocused() || dialog.open) return;
+		if (menu.matches(':popover-open') || event.altKey || event.ctrlKey || event.metaKey) return;
+		if (!roomKeys.has(event.key.toLowerCase())) return;
+		event.preventDefault();
+		focusRoom();
+		canvas.dispatchEvent(
+			new KeyboardEvent('keydown', { key: event.key, repeat: event.repeat, cancelable: true })
+		);
+	}
 
 	// Deep pages link to /world#<station>; open it once the room is ready, or directly if it failed.
 	let hashHandled = false;
@@ -38,6 +75,7 @@
 		else void showStation(id);
 	}
 	$effect(() => {
+		if (status === 'ready') focusOnArrival();
 		if (status !== 'loading') openFromHash();
 	});
 
@@ -49,6 +87,16 @@
 		hover = null;
 		await tick();
 		if (!dialog.open) dialog.showModal();
+	}
+	// E opens a station from the room, so E closes it too (Escape still works).
+	// Ignore key repeat, so holding E after opening doesn't close it straight away, and stop the
+	// event here so it can't reach the room and reopen the station it just closed.
+	function closeOnE(event: KeyboardEvent) {
+		if (event.key.toLowerCase() !== 'e' || event.repeat) return;
+		if (event.altKey || event.ctrlKey || event.metaKey) return;
+		event.preventDefault();
+		event.stopPropagation();
+		dialog.close();
 	}
 	function closeStation() {
 		open = null;
@@ -89,10 +137,13 @@
 			menuButton.getBoundingClientRect().top,
 			hintEl?.getBoundingClientRect().top ?? height
 		);
-		room.setInsets({
-			top: topEl.getBoundingClientRect().bottom + 8,
-			bottom: narrow ? Math.max(24, height - lowest + 12) : 24
-		});
+		const titleBottom = topEl.getBoundingClientRect().bottom;
+		room.setInsets(
+			narrow
+				? { top: titleBottom + 8, bottom: Math.max(24, height - lowest + 12), units: 9.4 }
+				: // On wide screens the title sits left of the room's top, so it can overlap.
+					{ top: titleBottom * 0.5, bottom: 24, units: 8.6 }
+		);
 	}
 	$effect(() => {
 		if (status === 'ready' && hintEl) measureInsets();
@@ -108,6 +159,8 @@
 			room?.setReducedMotion(reducedMotion);
 		};
 		motion.addEventListener('change', updateMotion);
+		coarse = window.matchMedia('(pointer: coarse)').matches;
+		window.addEventListener('keydown', forwardRoomKeys);
 		const observer = new ResizeObserver(measureInsets);
 		observer.observe(frameEl);
 		observer.observe(topEl);
@@ -146,6 +199,7 @@
 			window.clearTimeout(timeout);
 			window.clearTimeout(noteTimer);
 			motion.removeEventListener('change', updateMotion);
+			window.removeEventListener('keydown', forwardRoomKeys);
 			room?.destroy();
 		};
 	});
@@ -223,11 +277,17 @@
 			{#if near}
 				<span class="eyebrow">{near.number} / {near.area}</span>
 				<span class="hint-title">{near.object}</span>
-				<span class="hint-key"><kbd>E</kbd> or tap it to look closer</span>
+				<span class="hint-key"
+					>{#if coarse}Tap it to look closer{:else}Press <kbd>E</kbd> to look closer{/if}</span
+				>
 			{:else}
 				<span class="eyebrow">Start anywhere</span>
 				<span class="hint-title">Walk up to something.</span>
-				<span class="hint-key">Or open the menu to pick.</span>
+				<span class="hint-key"
+					>{#if coarse}Tap the floor to walk, or open the menu.{:else}<kbd>W</kbd><kbd>A</kbd><kbd
+							>S</kbd
+						><kbd>D</kbd> or arrows to walk, or open the menu.{/if}</span
+				>
 			{/if}
 		</div>
 	{/if}
@@ -310,9 +370,18 @@
 	</p>
 </section>
 
-<dialog bind:this={dialog} class="sheet" onclose={closeStation} aria-labelledby="station-title">
+<dialog
+	bind:this={dialog}
+	class="sheet"
+	onclose={closeStation}
+	onkeydown={closeOnE}
+	aria-labelledby="station-title"
+>
 	{#if open}
 		<div class="sheet-top">
+			{#if !coarse}<span class="sheet-hint" aria-hidden="true"
+					><kbd>E</kbd> or <kbd>Esc</kbd> to close</span
+				>{/if}
 			<button class="close" onclick={() => dialog.close()} aria-label="Close and return to the room"
 				>Close ×</button
 			>
@@ -748,7 +817,15 @@
 	.sheet-top {
 		display: flex;
 		justify-content: flex-end;
+		align-items: center;
+		gap: 12px;
 		margin-bottom: 8px;
+	}
+	.sheet-hint {
+		font:
+			12px system-ui,
+			sans-serif;
+		color: #5f6555;
 	}
 	.close {
 		min-height: 44px;

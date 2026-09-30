@@ -10,7 +10,7 @@
 
 ## Current state (verified 2026-10-01)
 
-- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 `298269e`, Phase 3 `e71d7cc`, Phase 4 `9b8afb4`, Phase 5 `4b772bd`, then a full-page World follow-up (this state). `main` is untouched. Nothing is pushed to the remote.
+- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 `298269e`, Phase 3 `e71d7cc`, Phase 4 `9b8afb4`, Phase 5 `4b772bd`, full-page World `1b0e26b`, then focus, desktop size, and E-to-close (this state). `main` is untouched. Nothing is pushed to the remote.
 - Stack: SvelteKit 2.70, Svelte 5.57, TypeScript, Tailwind 4, **adapter-node 5.5.7** (replaced adapter-static), Three.js 0.186.1.
 - `/world` has all nine stations from the brief (desk & computer, notebook & fountain pen, Fujifilm X-T30 II, Pokémon shelf, corkboard, conference wall, mirror, window, door) and four curiosities (Blastoise plush, Superman mug, suitcase, football), plus decoration (reading corner, tripod, prints, lamp). The window follows Bengaluru time. `/now` exists. `/index` is SSR and never loads the scene.
 - `/` renders World or Index on the server from the `mode` cookie (default World). `/world` and `/index` set it.
@@ -282,4 +282,15 @@
 - `scripts/derive-assets.mjs`: hides the new overlays when capturing. Regenerated `static/room-still.jpg` (69 KB, full-page framing), `og/room.jpg`, and the portrait copies (byte-identical). `og/og.html`: zooms the full-page capture so the room still fills the card; `static/og.png` re-rendered.
 - `v3.md`: input contract and launch checklist describe the full-page layout and the menu.
 - Re-ran `npm run perf` on the full-page room: FCP 312 ms, room ready 1.74 s (was 1.47 s with the smaller canvas), walking p50/p95 16.7 ms with one 100 ms spike, zero idle frames. `v3.md` numbers updated.
+- Ran Prettier on the files above.
+
+### 2026-10-01 — Focus on arrival, larger desktop room, E closes stations (user requests)
+
+- User asked to "automatically enforce focus when someone joins": implemented as keyboard play working immediately. `src/lib/components/world/WorldView.svelte` focuses the canvas once the room is ready (`focusVisible: false`, `preventScroll`), unless something is already focused or a deep link opened a station. A window-level listener routes movement keys and E to the room when focus is on the page itself (not when a control is focused, the menu is open, or a station is open). Tab still leaves the room. Not applied to Index or deep pages.
+- The room hint now names the controls for the device: keys on desktop ("WASD or arrows to walk", "Press E to look closer"), taps on touch screens.
+- User asked for a much larger room on desktop: on wide screens WorldView reserves half the title height (the title sits left of the room's top) and `src/lib/world/scene.ts` fits 8.6 vertical units instead of 9.4 (`setInsets` gained a `units` field). On 1440×900 the room grew from ~540px to ~730px tall; checked at 1024×768, 1280×720, 1440×900, and 1920×1080 for title, hint, and menu-button clearance. Phone framing unchanged.
+- User asked for E to close the station sheets as well: `closeOnE` on the dialog closes on E (ignores key repeat so holding E after opening doesn't close it; stops propagation so the closing E can't reach the room and reopen the station). The sheet shows "E or Esc to close" on keyboard devices.
+- `tests/browser/world.spec.ts`: the E test now holds E (no instant close), closes with E, checks it does not reopen, and reopens with E; new tests for focus on arrival (keys work without a click, keys routed after focus drifts to the page, focused links keep focus) and for not stealing focus from a deep-linked station or on `/index`. 24 browser tests total.
+- Regenerated `static/room-still.jpg` and `og/room.jpg` for the larger framing; `og/og.html` zoom lowered from 1.3 to 1.04 to match; `static/og.png` re-rendered.
+- `v3.md`: input contract covers focus on arrival, key routing, E to close, and the desktop framing.
 - Ran Prettier on the files above.

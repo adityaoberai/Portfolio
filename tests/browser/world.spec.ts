@@ -96,8 +96,20 @@ test('walking up to a station and pressing E inspects it', async ({ page }) => {
 	await page.mouse.click(target.x, target.y);
 	const canvas = page.locator('canvas');
 	await expect(canvas).toHaveAttribute('data-near', 'shelf');
-	await page.keyboard.press('e');
+	// Holding E opens the station once; the key repeat must not close it again.
+	await page.keyboard.down('e');
 	await expect(page.getByRole('heading', { name: 'Blastoise gets the top shelf.' })).toBeVisible();
+	await page.keyboard.down('e');
+	await page.keyboard.up('e');
+	await expect(page.getByRole('dialog')).toBeVisible();
+	// E closes what E opened, returns to the room, and does not reopen it.
+	await page.keyboard.press('e');
+	await expect(page.getByRole('dialog')).not.toBeVisible();
+	await expect(canvas).toBeFocused();
+	await page.waitForTimeout(300);
+	await expect(page.getByRole('dialog')).not.toBeVisible();
+	await page.keyboard.press('e');
+	await expect(page.getByRole('dialog')).toBeVisible();
 	await page.getByRole('button', { name: 'Back to the room' }).click();
 	await expect(canvas).toBeFocused();
 });
@@ -268,4 +280,41 @@ test('/now is a readable page that fills in the Bengaluru time', async ({ page }
 	await expect(page.getByRole('heading', { level: 1, name: 'Right now' })).toBeVisible();
 	await expect(page.getByText('Working on')).toBeVisible();
 	await expect(page.locator('.lede')).toContainText('here');
+});
+
+test('arriving focuses the room, so the keyboard works without a click', async ({ page }) => {
+	await openRoom(page);
+	const canvas = page.locator('canvas');
+	await expect(canvas).toBeFocused();
+	const start = await canvas.getAttribute('data-x');
+	await page.keyboard.down('d');
+	await page.waitForTimeout(300);
+	await page.keyboard.up('d');
+	await expect(canvas).not.toHaveAttribute('data-x', start!);
+	// If focus drifts to the page itself, movement keys still reach the room.
+	await page.evaluate(() => (document.activeElement as HTMLElement).blur());
+	const next = await canvas.getAttribute('data-x');
+	await page.keyboard.down('a');
+	await page.waitForTimeout(300);
+	await page.keyboard.up('a');
+	await expect(canvas).toBeFocused();
+	await expect(canvas).not.toHaveAttribute('data-x', next!);
+	// Focused controls keep focus; Tab still leaves the room.
+	await page.getByRole('link', { name: 'Index', exact: true }).focus();
+	await page.keyboard.press('d');
+	await expect(page.getByRole('link', { name: 'Index', exact: true })).toBeFocused();
+});
+
+test('arrival never steals focus from a deep-linked station or other pages', async ({
+	browser
+}) => {
+	const context = await browser.newContext({ reducedMotion: 'reduce' });
+	const page = await context.newPage();
+	await page.goto('/world#door');
+	await expect(page.getByRole('heading', { name: 'Elsewhere' })).toBeVisible();
+	expect(await page.evaluate(() => Boolean(document.activeElement?.closest('dialog')))).toBe(true);
+	await page.goto('/index');
+	await page.waitForLoadState('networkidle');
+	expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
+	await context.close();
 });

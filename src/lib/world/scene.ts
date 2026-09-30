@@ -232,7 +232,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	let reducedMotion = options.reducedMotion;
 	let lowQuality = options.lowQuality;
 	// Screen space covered by overlaid UI (CSS px); the room is framed in what's left.
-	let insets = { top: 0, bottom: 0 };
+	let insets = { top: 0, bottom: 0, units: 9.4 };
 	let paused = false;
 	let disposed = false;
 	let frame = 0;
@@ -553,7 +553,8 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		const { width, height } = canvas.getBoundingClientRect();
 		if (!width || !height) return;
 		const free = Math.max(height * 0.4, height - insets.top - insets.bottom);
-		const freeHeight = Math.max(9.4, 11.4 / (width / free));
+		// The room is ~9.5 × 8 units on screen; `units` sets how snugly it fills the free height.
+		const freeHeight = Math.max(insets.units, 11.4 / (width / free));
 		const unitsPerPx = freeHeight / free;
 		const viewHeight = unitsPerPx * height;
 		const aspect = width / height;
@@ -637,8 +638,13 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			lowQuality = value;
 			resize();
 		},
-		setInsets(value: { top: number; bottom: number }) {
-			if (value.top === insets.top && value.bottom === insets.bottom) return;
+		setInsets(value: { top: number; bottom: number; units: number }) {
+			if (
+				value.top === insets.top &&
+				value.bottom === insets.bottom &&
+				value.units === insets.units
+			)
+				return;
 			insets = value;
 			resize();
 		},
