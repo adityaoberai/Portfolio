@@ -1,194 +1,194 @@
 <script lang="ts">
+	// Renders a station's panel from src/lib/data/world.ts: title, lead, then its
+	// blocks in order, then links. No copy lives here.
 	import type { StationId } from '$lib/world/layout';
-	import { stationById } from '$lib/data/room';
-	import { artifactById, deskArtifact, ofType, shelfArtifact } from '$lib/data/artifacts';
-	import { workThemes } from '$lib/data/work';
-	import { site } from '$lib/data/site';
-	import { cameraBody, pexelsProfile, photoPlaces, withWidth } from '$lib/data/photography';
-	import { talks } from '$lib/data/talks';
-	import { about } from '$lib/data/about';
-	import { bengaluruTime, now } from '$lib/data/now';
-	import { socialLinks, sponsorLink } from '$lib/data/links';
-	import { collection } from '$lib/data/collection';
+	import { panels, stationById } from '$lib/data/room';
+	import { withWidth } from '$lib/data/photography';
+	import { bengaluruTime } from '$lib/data/now';
 	import Slab from './Slab.svelte';
 	import Portrait from '$lib/components/Portrait.svelte';
 
 	let { id }: { id: StationId } = $props();
 	const station = $derived(stationById[id]);
-
-	// Every list below is a view over the shared artifacts that Index also reads.
-	const devrel = workThemes[0];
-	const deskItems = ofType('work')
-		.filter((a) => a.context === devrel.title)
-		.slice(0, 3);
-	const built = artifactById.get('project-relief-atl');
-	const articles = artifactById.get('work-140-published-articles');
-	const essays = ofType('essay').slice(0, 3);
-	const sheet = ofType('photo').slice(0, 6);
-	// People first: initiatives, then the community programs from work.
-	const pins = [...ofType('community'), ...ofType('work').filter((a) => a.context === 'Community')];
-	const featuredTalks = talks.filter((t) => t.featured);
-	const elsewhere = [
-		...socialLinks.map((link) => ({ label: link.name, detail: `@${link.handle}`, href: link.url })),
-		{ label: 'Newsletter', detail: 'oberai.blog', href: 'https://oberai.blog' },
-		{ label: 'Photography', detail: 'Pexels', href: pexelsProfile },
-		{ label: 'Collection', detail: 'Collectr', href: collection.showcaseUrl },
-		{ label: 'Sponsor', detail: 'GitHub Sponsors', href: sponsorLink }
-	];
+	const panel = $derived(panels[id]);
+	const fill = (text: string) => text.replace('{time}', bengaluruTime());
+	const external = (href: string) => /^(https?:|mailto:)/.test(href);
 </script>
 
-<p class="eyebrow">{station.number} / {station.object} · {station.area}</p>
+{#snippet itemLink(href: string | undefined, label: string)}
+	{#if href}<a class="item-link" {href}>{label} {external(href) ? '↗' : '→'}</a>{/if}
+{/snippet}
 
-{#if id === 'desk'}
-	<h2 id="station-title">{site.role}</h2>
-	<p class="lead">{devrel.summary}</p>
-	<ul class="entries">
-		{#each deskItems as item (item.id)}
-			<li>
-				<h3>{item.title}</h3>
-				<p>{item.description}</p>
-				{#if item.externalUrl}<a href={item.externalUrl}>Take a look ↗</a>{/if}
-			</li>
-		{/each}
-		{#if built}
-			<li>
-				<p class="kicker">Recently built</p>
-				<h3>{built.title}</h3>
-				<p>{built.description} {built.context}</p>
-			</li>
-		{/if}
-	</ul>
-	<div class="links">
-		<a href={deskArtifact.href}>More about my work →</a><a href="/projects">All projects →</a>
-	</div>
-{:else if id === 'notebook'}
-	<h2 id="station-title">Pages from the notebook</h2>
-	<p class="lead">
-		The personal essays live on oberai.blog; the professional writing lives on the Appwrite blog.
+{#if station && panel}
+	<p class="eyebrow">
+		{panel.eyebrow ?? `${station.number} / ${station.object} · ${station.area}`}
 	</p>
-	<ol class="pages">
-		{#each essays as essay (essay.id)}
-			<li>
-				<span class="date">{essay.date}</span>
-				<a href={essay.externalUrl}><h3>{essay.title}</h3></a>
-				<p>{essay.description}</p>
-			</li>
-		{/each}
-	</ol>
-	{#if articles}
-		<p class="aside">
-			<strong>{articles.title}</strong>: {articles.description}
-			{#if articles.externalUrl}<a href={articles.externalUrl}>On the Appwrite blog ↗</a>{/if}
-		</p>
-	{/if}
-	<div class="links"><a href={station.href}>Read everything on oberai.blog ↗</a></div>
-{:else if id === 'camera'}
-	<h2 id="station-title">{cameraBody}</h2>
-	<p class="lead">{station.summary}</p>
-	<p class="exif">
-		<span>{cameraBody}</span>{#each photoPlaces as place (place)}<span>{place}</span>{/each}
-	</p>
-	<ul class="contact-sheet" aria-label="Contact sheet">
-		{#each sheet as photo, i (photo.id)}
-			<li>
-				<a href={photo.externalUrl}>
-					<img
-						src={withWidth(photo.image, 360)}
-						alt={photo.title}
-						loading="lazy"
-						decoding="async"
-						width="360"
-						height="270"
-					/>
-					<span>{String(i + 1).padStart(2, '0')}</span>
-				</a>
-			</li>
-		{/each}
-	</ul>
-	<div class="links"><a href={pexelsProfile}>The full archive on Pexels ↗</a></div>
-{:else if id === 'shelf'}
-	<h2 id="station-title">{shelfArtifact.title} gets the top shelf.</h2>
-	<p class="lead">
-		{shelfArtifact.description} The shelf holds a few slabs and binders; the whole collection is catalogued
-		on Collectr.
-	</p>
-	<div class="slab-row"><Slab name={shelfArtifact.title} /></div>
-	<div class="links"><a href={shelfArtifact.externalUrl}>Open the binder on Collectr ↗</a></div>
-{:else if id === 'corkboard'}
-	<h2 id="station-title">Pinned to the corkboard</h2>
-	<p class="lead">
-		Spaces I’ve helped build for people to write, walk, meet, and make things together. Who they’re
-		for matters more than how big they got.
-	</p>
-	<ul class="pins">
-		{#each pins as pin (pin.id)}
-			<li>
-				<h3>{pin.title}</h3>
-				<p>{pin.description}</p>
-				{#if pin.type === 'community' && pin.context}<p class="who">For: {pin.context}</p>{/if}
-				{#if pin.href}<a href={pin.href}>Read more →</a>{/if}
-			</li>
-		{/each}
-	</ul>
-	<div class="links"><a href={station.href}>All community work →</a></div>
-{:else if id === 'lanyards'}
-	<h2 id="station-title">Lanyards from the road</h2>
-	<p class="lead">{talks.length} talks and counting. A few of the badges I kept:</p>
-	<ul class="badges">
-		{#each featuredTalks as talk (talk.event + talk.year)}
-			<li>
-				<span class="badge-head">{talk.event} · {talk.year}</span>
-				<h3>{talk.title}</h3>
-				{#if talk.recording}<a href={talk.recording}>Watch the recording ↗</a>
-				{:else if talk.slides}<a href={talk.slides}>See the slides ↗</a>{/if}
-			</li>
-		{/each}
-	</ul>
-	<div class="links">
-		<a href={station.href}>Every talk and podcast →</a>
-		<a href="mailto:{site.email}?subject=Speaking invitation">Invite me to speak ↗</a>
-	</div>
-{:else if id === 'mirror'}
-	<h2 id="station-title">{about.headline}</h2>
-	<p class="lead">{about.standfirst}</p>
-	<div class="reflection">
-		<Portrait width={120} height={150} />
-		<p>{about.intro}</p>
-	</div>
-	<h3 class="subhead">What I care about</h3>
-	<ul class="entries">
-		{#each about.careAbout as item (item.title)}
-			<li><p><strong>{item.title}</strong>: {item.text}</p></li>
-		{/each}
-	</ul>
-	<div class="links"><a href={station.href}>The longer story →</a></div>
-{:else if id === 'window'}
-	<h2 id="station-title">Right now</h2>
-	<p class="lead">It’s {bengaluruTime()} in Bengaluru.</p>
-	<dl class="now">
-		{#each now.items as item (item.label)}
-			<div>
-				<dt>{item.label}</dt>
-				<dd>
-					{#if item.href}<a href={item.href}>{item.text}</a>{:else}{item.text}{/if}
-				</dd>
+	<h2 id="station-title">{panel.title}</h2>
+	{#if panel.lead}<p class="lead">{fill(panel.lead)}</p>{/if}
+
+	{#each panel.blocks as block, b (b)}
+		{#if block.type === 'items'}
+			{#if block.heading}<h3 class="subhead">{block.heading}</h3>{/if}
+			{#if block.style === 'list'}
+				<ul class="entries">
+					{#each block.artifacts as item (item.id)}
+						<li>
+							{#if block.show.date && item.date}<span class="date">{item.date}</span>{/if}
+							<h3>{item.title}</h3>
+							{#if block.show.context && item.context}<p class="kicker">{item.context}</p>{/if}
+							{#if block.show.description && item.description}<p>{item.description}</p>{/if}
+							{#if block.show.link}{@render itemLink(
+									item.link,
+									block.linkLabel ?? item.externalLabel ?? 'Take a look'
+								)}{/if}
+						</li>
+					{/each}
+				</ul>
+			{:else if block.style === 'pages'}
+				<ol class="pages">
+					{#each block.artifacts as item (item.id)}
+						<li>
+							{#if block.show.date && item.date}<span class="date">{item.date}</span>{/if}
+							{#if block.show.link && item.link}<a href={item.link}><h3>{item.title}</h3></a
+								>{:else}<h3>{item.title}</h3>{/if}
+							{#if block.show.context && item.context}<p class="kicker">{item.context}</p>{/if}
+							{#if block.show.description && item.description}<p>{item.description}</p>{/if}
+						</li>
+					{/each}
+				</ol>
+			{:else if block.style === 'pins'}
+				<ul class="pins">
+					{#each block.artifacts as item (item.id)}
+						<li>
+							{#if block.show.date && item.date}<span class="date">{item.date}</span>{/if}
+							<h3>{item.title}</h3>
+							{#if block.show.description && item.description}<p>{item.description}</p>{/if}
+							{#if block.show.context && item.context}<p class="who">
+									{item.type === 'community' ? `For: ${item.context}` : item.context}
+								</p>{/if}
+							{#if block.show.link}{@render itemLink(
+									item.link,
+									block.linkLabel ?? 'Read more'
+								)}{/if}
+						</li>
+					{/each}
+				</ul>
+			{:else if block.style === 'badges'}
+				<ul class="badges">
+					{#each block.artifacts as item (item.id)}
+						<li>
+							<span class="badge-head"
+								>{[block.show.context && item.context, block.show.date && item.date]
+									.filter(Boolean)
+									.join(' · ') || item.type}</span
+							>
+							<h3>{item.title}</h3>
+							{#if block.show.description && item.description}<p>{item.description}</p>{/if}
+							{#if block.show.link}{@render itemLink(
+									item.link,
+									block.linkLabel ?? item.externalLabel ?? 'Take a look'
+								)}{/if}
+						</li>
+					{/each}
+				</ul>
+			{:else if block.style === 'photos'}
+				<ul class="contact-sheet" aria-label={block.heading ?? 'Contact sheet'}>
+					{#each block.artifacts as photo, i (photo.id)}
+						<li>
+							<a href={photo.link}>
+								<img
+									src={withWidth(photo.image, 360)}
+									alt={photo.title}
+									loading="lazy"
+									decoding="async"
+									width="360"
+									height="270"
+								/>
+								<span>{String(i + 1).padStart(2, '0')}</span>
+							</a>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		{:else if block.type === 'feature'}
+			{#if block.style === 'aside'}
+				<p class="aside">
+					<strong>{block.artifact.title}</strong>{#if block.artifact.description}: {block.artifact
+							.description}{/if}
+					{@render itemLink(
+						block.link,
+						block.linkLabel ?? block.artifact.externalLabel ?? 'Take a look'
+					)}
+				</p>
+			{:else}
+				<div class="feature">
+					{#if block.kicker}<p class="kicker">{block.kicker}</p>{/if}
+					<h3>{block.artifact.title}</h3>
+					<p>{block.artifact.description} {block.artifact.context ?? ''}</p>
+					{#if block.linkLabel}{@render itemLink(block.link, block.linkLabel)}{/if}
+				</div>
+			{/if}
+		{:else if block.type === 'slab'}
+			<div class="slab-row">
+				<Slab name={block.artifact.title} caption={block.caption} />
 			</div>
-		{/each}
-	</dl>
-	<div class="links"><a href={station.href}>The Now page →</a></div>
-{:else if id === 'door'}
-	<h2 id="station-title">Elsewhere</h2>
-	<p class="lead">The quickest way to reach me is still email.</p>
-	<p class="mail"><a href="mailto:{site.email}">{site.email}</a></p>
-	<ul class="elsewhere">
-		{#each elsewhere as link (link.label)}
-			<li>
-				<a href={link.href}><span>{link.label}</span><span class="detail">{link.detail} ↗</span></a
-				>
-			</li>
-		{/each}
-	</ul>
-	<div class="links"><a href={station.href}>Contact page →</a></div>
+		{:else if block.type === 'profile'}
+			<div class="reflection" class:no-portrait={block.portrait === false}>
+				{#if block.portrait !== false}<Portrait width={120} height={150} />{/if}
+				<p>{fill(block.text)}</p>
+			</div>
+		{:else if block.type === 'text'}
+			<p class="text">{fill(block.text)}</p>
+		{:else if block.type === 'tags'}
+			<p class="exif">
+				{#each block.tags as tag (tag)}<span>{tag}</span>{/each}
+			</p>
+		{:else if block.type === 'list'}
+			{#if block.heading}<h3 class="subhead">{block.heading}</h3>{/if}
+			<ul class="entries">
+				{#each block.items as item (item.title)}
+					<li><p><strong>{item.title}</strong>: {item.text}</p></li>
+				{/each}
+			</ul>
+		{:else if block.type === 'facts'}
+			{#if block.heading}<h3 class="subhead">{block.heading}</h3>{/if}
+			<dl class="now">
+				{#each block.rows as row (row.label)}
+					<div>
+						<dt>{row.label}</dt>
+						<dd>
+							{#if row.href}<a href={row.href}>{row.text}</a>{:else}{row.text}{/if}
+						</dd>
+					</div>
+				{/each}
+			</dl>
+		{:else if block.type === 'contact'}
+			{#if block.email}<p class="mail"><a href="mailto:{block.email}">{block.email}</a></p>{/if}
+			<ul class="elsewhere">
+				{#each block.places as place (place.label)}
+					<li>
+						<a href={place.href}
+							><span>{place.label}</span><span class="detail">{place.detail} ↗</span></a
+						>
+					</li>
+				{/each}
+			</ul>
+		{:else if block.type === 'links'}
+			<div class="links inline">
+				{#each block.links as link (link.href + link.label)}
+					<a href={link.href}>{link.label} {link.external ? '↗' : '→'}</a>
+				{/each}
+			</div>
+		{/if}
+	{/each}
+
+	{#if panel.links.length}
+		<div class="links">
+			{#each panel.links as link (link.href + link.label)}
+				<a href={link.href}>{link.label} {link.external ? '↗' : '→'}</a>
+			{/each}
+		</div>
+	{/if}
 {/if}
 
 <style>
@@ -485,6 +485,40 @@
 			grid-template-columns: 1fr;
 			gap: 4px;
 		}
+	}
+	.feature {
+		margin-top: 16px;
+		padding: 16px 0;
+		border-top: 1px solid #dedbcf;
+		border-bottom: 1px solid #dedbcf;
+	}
+	.feature p {
+		margin-top: 6px;
+		font-size: 16px;
+		line-height: 1.55;
+		color: #5a604f;
+	}
+	.text {
+		margin-top: 16px;
+		font-size: 16px;
+		line-height: 1.6;
+		color: #4f5746;
+	}
+	.item-link {
+		display: inline-block;
+		margin-top: 6px;
+		color: #304e42;
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+	.reflection.no-portrait {
+		grid-template-columns: 1fr;
+	}
+	.links.inline {
+		flex-direction: row;
+		flex-wrap: wrap;
+		gap: 4px 20px;
+		margin-top: 12px;
 	}
 	.slab-row {
 		display: flex;

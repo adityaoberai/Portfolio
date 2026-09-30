@@ -1,7 +1,11 @@
 <script lang="ts">
 	// A graded card slab drawn in CSS: case, label, and an abstract card face.
 	// No official artwork; the tilt is decorative and disabled for reduced motion.
-	let { name, grade = 'FAVOURITE' }: { name: string; grade?: string } = $props();
+	let {
+		name,
+		grade = 'FAVOURITE',
+		caption
+	}: { name: string; grade?: string; caption?: string } = $props();
 	let rx = $state(0);
 	let ry = $state(0);
 
@@ -30,7 +34,7 @@
 			<p class="card-name">{name}</p>
 		</div>
 	</div>
-	<figcaption>A {name} slab in pride of place on the shelf.</figcaption>
+	<figcaption>{caption ?? `A ${name} slab in pride of place on the shelf.`}</figcaption>
 </figure>
 
 <style>

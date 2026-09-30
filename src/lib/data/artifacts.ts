@@ -30,6 +30,8 @@ export interface Artifact {
 	image?: string;
 	href?: string;
 	externalUrl?: string;
+	/** What following `externalUrl` gets you, when that matters (a recording, slides). */
+	externalLabel?: string;
 	featured?: boolean;
 }
 
@@ -119,7 +121,12 @@ const spoken: Artifact[] = [
 		date: String(talk.year),
 		href: '/speaking',
 		externalUrl: talk.recording ?? talk.slides,
-		featured: talk.event === 'RenderATL'
+		externalLabel: talk.recording
+			? 'Watch the recording'
+			: talk.slides
+				? 'See the slides'
+				: undefined,
+		featured: talk.featured
 	})),
 	...podcasts.map((episode) => ({
 		id: `podcast-${episode.year}-${slug(episode.title)}`,

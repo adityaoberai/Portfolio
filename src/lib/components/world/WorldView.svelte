@@ -2,7 +2,8 @@
 	import { onMount, tick } from 'svelte';
 	import V3Header from '$lib/components/V3Header.svelte';
 	import StationPanel from './StationPanel.svelte';
-	import { curiosities, stationById, stations } from '$lib/data/room';
+	// All copy and content comes from src/lib/data/world.ts (resolved in room.ts).
+	import { curiosities, page as copy, stationById, stations } from '$lib/data/room';
 	import type { CuriosityId, StationId } from '$lib/world/layout';
 	import type { HoverTarget, RoomController, RoomState } from '$lib/world/scene';
 
@@ -26,7 +27,7 @@
 	let noteTimer = 0;
 	let returnFocus: HTMLElement | null = null;
 
-	const near = $derived(roomState?.near ? stationById[roomState.near] : null);
+	const near = $derived((roomState?.near && stationById[roomState.near]) || null);
 
 	// Keyboard play should work the moment the room appears. Focus it on arrival, unless the
 	// visitor has already focused something; no focus ring for this programmatic focus.
@@ -124,9 +125,12 @@
 			hover = null;
 			return;
 		}
+		const station = target.kind === 'station' ? stationById[target.id] : undefined;
 		const label =
 			target.kind === 'station'
-				? `${stationById[target.id].object} · ${stationById[target.id].area}`
+				? station
+					? `${station.object} · ${station.area}`
+					: ''
 				: curiosities[target.id].label;
 		hover = { label, x, y };
 	}
@@ -173,6 +177,7 @@
 			.then(({ createRoom }) => {
 				if (cancelled) return;
 				room = createRoom(canvas, {
+					stations: stations.map((station) => station.id),
 					reducedMotion,
 					lowQuality,
 					onInspect: (id) => void showStation(id),
@@ -233,12 +238,8 @@
 				fetchpriority="high"
 			/>
 			<div class="fallback-card">
-				<h2>{status === 'loading' ? 'Opening the room…' : 'The room couldn’t open here.'}</h2>
-				<p>
-					{status === 'loading'
-						? 'A small space for the things I make and care about.'
-						: 'Everything in it is still in the menu, and in the Index.'}
-				</p>
+				<h2>{status === 'loading' ? copy.loading.title : copy.failed.title}</h2>
+				<p>{status === 'loading' ? copy.loading.text : copy.failed.text}</p>
 				<div class="fallback-actions">
 					<a href="/index">Explore the Index →</a>
 					{#if status === 'error'}<button onclick={() => window.location.reload()}
@@ -257,8 +258,8 @@
 	<div class="overlay top" bind:this={topEl}>
 		<V3Header overlay />
 		<div class="title">
-			<p class="eyebrow">Aditya's room · Bengaluru</p>
-			<h1 id="world-title">Come spend a minute in my world.</h1>
+			<p class="eyebrow">{copy.eyebrow}</p>
+			<h1 id="world-title">{copy.title}</h1>
 		</div>
 		{#if diagnostics && roomState}<output class="diagnostics"
 				>{roomState.calls} draws · {roomState.triangles} triangles · DPR {roomState.dpr} · {roomState.frames}
@@ -280,26 +281,26 @@
 				<span class="eyebrow">{near.number} / {near.area}</span>
 				<span class="hint-title">{near.object}</span>
 				<span class="hint-key"
-					>{#if coarse}Tap it to look closer{:else}Press <kbd>E</kbd> to look closer{/if}</span
+					>{#if coarse}{copy.hint.nearTouch}{:else}Press <kbd>E</kbd>
+						{copy.hint.nearKeys}{/if}</span
 				>
 			{:else}
-				<span class="eyebrow">Start anywhere</span>
-				<span class="hint-title">Walk up to something.</span>
+				<span class="eyebrow">{copy.hint.idleKicker}</span>
+				<span class="hint-title">{copy.hint.idleTitle}</span>
 				<span class="hint-key"
-					>{#if coarse}Tap the floor to walk, or open the menu.{:else}<kbd>W</kbd><kbd>A</kbd><kbd
-							>S</kbd
-						><kbd>D</kbd> or arrows to walk, or open the menu.{/if}</span
+					>{#if coarse}{copy.hint.idleTouch}{:else}<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>
+						{copy.hint.idleKeys}{/if}</span
 				>
 			{/if}
 		</div>
 	{/if}
 
 	<button class="menu-button" popovertarget="room-menu" bind:this={menuButton}
-		><span class="bars" aria-hidden="true"><span></span></span>In the room</button
+		><span class="bars" aria-hidden="true"><span></span></span>{copy.menuTitle}</button
 	>
 	<div id="room-menu" class="menu" popover bind:this={menu}>
 		<div class="menu-head">
-			<h2 id="menu-title">In the room</h2>
+			<h2 id="menu-title">{copy.menuTitle}</h2>
 			<button
 				class="menu-close"
 				popovertarget="room-menu"
@@ -307,7 +308,7 @@
 				aria-label="Close the menu">×</button
 			>
 		</div>
-		<nav aria-label="In the room">
+		<nav aria-label={copy.menuTitle}>
 			<ul class="guide">
 				{#each stations as station (station.id)}
 					<li class:is-near={roomState?.near === station.id}>
@@ -362,8 +363,8 @@
 			</div>
 		</div>
 		<p class="menu-foot">
-			A work in progress, just like the person who lives here.
-			<a href="/index">Prefer a list? Here's the Index →</a>
+			{copy.menuFoot}
+			<a href="/index">{copy.indexLink}</a>
 		</p>
 	</div>
 

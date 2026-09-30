@@ -10,7 +10,7 @@
 
 ## Current state (verified 2026-10-01)
 
-- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 `298269e`, Phase 3 `e71d7cc`, Phase 4 `9b8afb4`, Phase 5 `4b772bd`, full-page World `1b0e26b`, then focus, desktop size, and E-to-close (this state). `main` is untouched. Nothing is pushed to the remote.
+- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 `298269e`, Phase 3 `e71d7cc`, Phase 4 `9b8afb4`, Phase 5 `4b772bd`, full-page World `1b0e26b`, focus/size/E `2db0f96` + `9797ce7`, then configurable room content (this state). `main` is untouched. Nothing is pushed to the remote.
 - Stack: SvelteKit 2.70, Svelte 5.57, TypeScript, Tailwind 4, **adapter-node 5.5.7** (replaced adapter-static), Three.js 0.186.1.
 - `/world` has all nine stations from the brief (desk & computer, notebook & fountain pen, Fujifilm X-T30 II, Pokémon shelf, corkboard, conference wall, mirror, window, door) and four curiosities (Blastoise plush, Superman mug, suitcase, football), plus decoration (reading corner, tripod, prints, lamp). The window follows Bengaluru time. `/now` exists. `/index` is SSR and never loads the scene.
 - `/` renders World or Index on the server from the `mode` cookie (default World). `/world` and `/index` set it.
@@ -298,3 +298,20 @@
 ### 2026-10-01 — Lint fix after the focus commit
 
 - `2db0f96` was committed with `npm run lint` failing: ESLint's `no-undef` rejected the `as FocusOptions` cast in `src/lib/components/world/WorldView.svelte` (I had read a blank `tail` line as a pass). Replaced the cast with a plain options object. Lint, type check, and the full test suite rerun below.
+
+### 2026-10-01 — Configurable room content (user requests)
+
+- User asked for all content in the world to be easily configurable, then for more customization of what each station shows. Everything World says and shows now comes from one typed file.
+- `src/lib/data/world.ts` (new): page copy, stations (order = menu order and numbering; `hidden` switch), each station's panel as `title`, `lead`, stacked `blocks`, and `links`, plus curiosity notes. Blocks: `items` (styles list, pages, pins, badges, photos; ids and/or queries with `type`, `world`, `context`, `featured`, `offset`, `limit`; per-item `show`, `linkLabel`, `linkTo`, `heading`), `feature` (card or aside), `slab`, `profile`, `text`, `tags`, `list`, `facts`, `contact`, `links`. The header comment documents every option. Current content reproduces the previous panels (verified in the browser; the one difference is that the conference wall now shows all four talks marked featured in `talks.ts`, not a single one).
+- `src/lib/data/room.ts`: rewritten as the resolver and validator. Numbers visible stations, resolves links (no `href` = section), picks artifacts, applies per-style defaults for `show` and `linkTo`, and throws with the station and block on unknown ids, empty queries, a `photos` block without images, unknown or duplicate stations, stations in the room with no content, or curiosities with no note. `stationById`/`panels` omit hidden stations, so deep-page "In the room" links and `/world#…` ignore them.
+- `src/lib/components/world/StationPanel.svelte`: rewritten to render any panel from blocks; no copy left in it.
+- `src/lib/components/world/WorldView.svelte`: all page copy (eyebrow, title, hints, menu title, footer, Index link, loading/failure) from the config; passes the visible station ids to the scene.
+- `src/lib/world/scene.ts`: `stations` option; only visible stations are clickable, approachable (near ring, E), or openable.
+- `src/lib/components/world/Slab.svelte`: optional `caption`.
+- `src/routes/world/+page.svelte`: meta description from the config.
+- `src/lib/data/artifacts.ts`: talk artifacts mirror `talks.ts` `featured` (four talks; the Index still starts with RenderATL) and carry `externalLabel` ("Watch the recording" / "See the slides").
+- `scripts/content.mjs` (new) and `package.json` script `content`: lists artifact ids with titles, contexts, featured flags, worlds, and each station's blocks.
+- `tests/content.test.mjs`: every visible station resolves to non-empty blocks with 01…n numbering; picks resolve ids and queries (offset, limit, dedupe, featured) and bad ids or empty queries throw with the station named. 15 unit tests.
+- Verified by hand: a mistyped id makes `npm run build` fail with `src/lib/data/world.ts, station "desk", block 2 (feature): no artifact with id "…"`; temporarily hiding the mirror removed it from the menu (renumbered 01–08), made it unclickable, and removed the `/about` room link. Both edits were reverted.
+- `v3.md`: new "Editing the room" section.
+- Ran Prettier on the files above.

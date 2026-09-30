@@ -71,6 +71,8 @@ export type HoverTarget =
 	| { kind: 'curiosity'; id: CuriosityId };
 
 interface Options {
+	/** Stations switched on in world.ts; hidden ones stay as decor only. */
+	stations: StationId[];
 	onInspect: (id: StationId) => void;
 	onCuriosity: (id: CuriosityId) => void;
 	onHover: (target: HoverTarget | null, clientX: number, clientY: number) => void;
@@ -206,7 +208,8 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		mesh.updateMatrixWorld();
 		return mesh;
 	};
-	const stationHits = [...STATIONS]
+	const active = STATIONS.filter((station) => options.stations.includes(station.id));
+	const stationHits = [...active]
 		.sort((a, b) => b.priority - a.priority)
 		.map((station) => ({ station, mesh: hitbox(station.hit.center, station.hit.size) }));
 	const curiosityHits = CURIOSITIES.map((item) => ({
@@ -371,7 +374,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 				(leg.rotation.x = moving && !reducedMotion ? Math.sin(time * 0.014 + i * Math.PI) * 0.4 : 0)
 		);
 
-		const nowNear = focused ?? nearest(position(), STATIONS);
+		const nowNear = focused ?? nearest(position(), active);
 		if (nowNear !== near) {
 			near = nowNear;
 			nearRing.visible = Boolean(near) && !focused;
@@ -425,7 +428,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		requestFrame();
 	}
 	function visit(id: StationId) {
-		const station = STATIONS.find((item) => item.id === id);
+		const station = active.find((item) => item.id === id);
 		if (!station || paused || disposed) return;
 		const here = position();
 		if (Math.hypot(here.x - station.approach.x, here.z - station.approach.z) < 0.35)
