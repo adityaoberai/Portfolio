@@ -1,4 +1,7 @@
 import { workThemes } from './work';
+import { writingSamples } from './writing';
+import { collection } from './collection';
+import { photographs, pexelsProfile } from './photography';
 
 export type ArtifactType =
 	| 'project'
@@ -24,7 +27,7 @@ export interface Artifact {
 	featured?: boolean;
 }
 
-// First shared artifact. Keep the existing record as the factual source of truth.
+// Artifacts are views over the existing records, never copies of their facts.
 const launches = workThemes[0].items[0];
 export const deskArtifact: Artifact = {
 	id: 'appwrite-launches',
@@ -37,8 +40,43 @@ export const deskArtifact: Artifact = {
 	featured: true
 };
 
-export const artifacts: Artifact[] = [deskArtifact];
+const essay = writingSamples[0];
+export const notebookArtifact: Artifact = {
+	id: 'latest-essay',
+	type: 'essay',
+	worlds: ['write', 'personal'],
+	title: essay.title,
+	description: essay.description,
+	date: essay.meta,
+	externalUrl: essay.href,
+	featured: true
+};
 
-// Supplied by Aditya in the V3 brief; this is a showcase, not a local inventory.
-export const collectionUrl =
-	'https://app.getcollectr.com/showcase/profile/9dfbe594-7f0a-467d-98d2-77179903ec6b';
+const photo = photographs[0];
+export const cameraArtifact: Artifact = {
+	id: `photo-${photo.id}`,
+	type: 'photo',
+	worlds: ['photograph', 'personal'],
+	title: photo.title,
+	externalUrl: photo.href ?? pexelsProfile,
+	featured: true
+};
+
+export const shelfArtifact: Artifact = {
+	id: 'blastoise',
+	type: 'collectible',
+	worlds: ['collect', 'personal'],
+	title: collection.favourite,
+	description: `My favourite Pokémon, so it gets pride of place.`,
+	externalUrl: collection.showcaseUrl,
+	featured: true
+};
+
+export const artifacts: Artifact[] = [
+	deskArtifact,
+	notebookArtifact,
+	cameraArtifact,
+	shelfArtifact
+];
+
+export const collectionUrl = collection.showcaseUrl;

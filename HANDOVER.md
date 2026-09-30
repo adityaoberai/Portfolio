@@ -10,18 +10,17 @@
 
 ## Current state (verified 2026-09-30)
 
-- Branch: `v3-world`, based on `12cbe80`. Phase 0 is committed on `v3-world`; later phases are committed one per phase. `main` is untouched. Nothing is pushed to the remote.
+- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 (this state). `main` is untouched. Nothing is pushed to the remote.
 - Stack: SvelteKit 2.70, Svelte 5.57, TypeScript, Tailwind 4, **adapter-node 5.5.7** (replaced adapter-static), Three.js 0.186.1.
-- Phase 0 spike is complete except the real-phone gate. `/world` has a primitive room, character, WASD/arrows, click/tap-to-move, one inspectable object (desk), reduced motion, low-power DPR, WebGL failure/context-loss fallback. `/index` is SSR and never loads the scene.
+- Phase 1 vertical slice: `/world` has four inspectable stations (desk & computer, notebook & fountain pen, Fujifilm X-T30 II, Pokémon shelf) and one curiosity (Blastoise plush). Camera pushes in toward an open station. `/index` is SSR and never loads the scene.
 - `/` is still the V2 homepage. Cookie-based mode selection is Phase 2.
-- Validation: `npm run check` 0/0, `npm test` 5/5, `npm run test:e2e` 5/5 against the built Node server. Scene chunk 133 KB gzip (531 KB raw); 88 draw calls, 1,640 triangles at rest.
+- Validation: `npm run check` 0/0, `npm test` 8/8, `npm run test:e2e` 7/7 against the built Node server. Scene chunk 137 KB gzip (545 KB raw); 7 draw calls, 3,132 triangles at rest.
 - Blocked on the user: deployment host choice and a physical mid-range phone test (see the gate in `v3.md`).
 
 ## Open review items (not yet fixed)
 
-- Focus return: using the "Inspect the desk" button focuses the canvas before the dialog opens, so closing returns focus to the canvas, not the button. Deliberate for keyboard play and asserted by the e2e test, but best practice is to return focus to the invoking control. Decide before Phase 1.
-- `scene.ts` changes the monitor's glow by mutating a cached material shared by colour key. Only the monitor uses `#acc4a2` today; any future mesh with that colour will glow with it. Give the display its own material when the room grows.
 - `/world` and `/index` are not in `sitemap.xml`. Add them when `/` switches modes (Phase 2).
+- Curiosity copy ("A Blastoise plush. The one on the shelf has competition.") is written by Claude, not Aditya. Review all curiosity lines in `src/lib/data/room.ts` before launch.
 - `npm run lint` fails on 47 untouched legacy files (Prettier). Not V3 work; don't reformat the repo as part of a feature change.
 - `npm audit`: 3 low findings in the SvelteKit/cookie chain; only `--force` resolves them.
 
@@ -29,7 +28,7 @@
 
 1. User: run the real-phone gate in `v3.md` and record results here.
 2. User: choose a host. If Appwrite Sites, confirm with a preview deployment that its SvelteKit SSR build works with adapter-node, or switch to the adapter it expects.
-3. Phase 1 vertical slice: notebook, camera, Pokémon shelf, one easter egg (four inspectable objects in total). The user directed work to continue through Phases 1–5 before the phone gate; the gate still blocks milestone #10.
+3. Phase 2: cookie mode selection at `/`, shared artifact model across World and Index. The user directed work to continue through Phases 1–5 before the phone gate; the gate still blocks milestone #10.
 
 ## Change log
 
@@ -163,3 +162,23 @@
 - User asked to commit Phase 0, then continue through every later phase with one commit per phase and a HANDOVER.md entry for every change.
 - `HANDOVER.md`: "Current state" and "Next steps" updated for the commit and the instruction to continue past the unpassed phone gate.
 - Committed all Phase 0 work listed above on `v3-world`. Not pushed.
+
+### 2026-09-30 — Phase 1: vertical slice
+
+- `src/lib/world/layout.ts` (new): room bounds, walkable area, camera offset/target, furniture footprints, station approach points/hitboxes/focus points, curiosity hitboxes. No Three.js import, so it is unit-tested. Room grew from 6.3×5.25 to 7×6.2 to make space for all nine stations.
+- `src/lib/world/movement.ts`: rewritten. Keyboard directions now follow the exact camera azimuth (Phase 0 used a 45° approximation of a 37° camera). Points are pushed out of furniture footprints to the nearest free edge, so the character slides around furniture instead of walking through it. Added `isFree` and `nearest`. Removed the desk-only constants.
+- `src/lib/world/build.ts` (new): `Batch` merges primitives with per-vertex colour into one geometry. Builders for the shell, desk (monitor, lamp, open notebook and fountain pen, chair), photography corner (cabinet, Fujifilm X-T30 II, strand of prints), Pokémon shelf (slabs, binders, sealed boxes, Blastoise figure on top), bed with Blastoise plush, plant, character.
+- `src/lib/world/scene.ts`: rewritten around stations. Static room is two merged meshes (88 → 7 draw calls). Generic hitboxes with priority (notebook wins over desk), hover label and pointer cursor for mice, curiosity clicks, nearest-station ring, monitor wakes near the desk, 480 ms camera push-in toward an open station (instant under reduced motion), stalled-path detection, `project`/`anchor` helpers for diagnostics and tests. The monitor now has its own material (closes the shared-material review item).
+- `src/lib/data/room.ts` (new): station meaning (number, object, area, world, summary, deep link) and curiosity lines.
+- `src/lib/data/photography.ts` (new): photographs derived from `pexels-photos.json`; titles from the Pexels slug, places detected from the title, CDN image URLs that need no API key. Camera body from the brief.
+- `src/lib/data/collection.ts` (new): favourite (Blastoise) and Collectr showcase URL from the brief. No card inventory is claimed.
+- `src/lib/data/artifacts.ts`: added one representative artifact per Phase 1 area (desk, notebook, camera, shelf); `collectionUrl` now comes from `collection.ts`.
+- `src/lib/components/world/WorldView.svelte` (new): the World experience, extracted from the route for reuse at `/` in Phase 2. Room hint card, hover label, curiosity note, "In the room" guide (button + deep link per station, SSR'd), side sheet on wide screens and bottom sheet on phones. Guide buttons scroll the room into view first. Focus returns to whatever opened the sheet (closes the focus-return review item). `?diagnostics=1` also exposes the controller as `window.__room` for tests.
+- `src/lib/components/world/StationPanel.svelte` (new): content for each station, built from `work.ts`, `projects.ts`, `writing.ts`, `photography.ts`, `collection.ts`.
+- `src/lib/components/world/Slab.svelte` (new): CSS graded-card slab for Blastoise with pointer tilt and sheen; no official artwork; tilt off under reduced motion.
+- `src/routes/world/+page.svelte`: now just metadata plus `WorldView`.
+- `tests/ts-hooks.mjs` (new) and `package.json` `test` script: Node resolve hook so unit tests import extensionless TypeScript modules.
+- `tests/movement.test.mjs`: 8 tests, including furniture push-out, camera-aligned "up", every approach point free and nearest to its own station.
+- `tests/browser/world.spec.ts`: 7 tests, adding E-to-inspect, direct object clicks, curiosity note, guide buttons without WebGL, SSR guide links without JavaScript, focus return to the guide button, and a `settle` helper that waits for camera easing.
+- `v3.md`: status line and the performance/input contract updated (merged geometry, push-in, footprints, guide buttons, focus return).
+- Ran Prettier on every file above.

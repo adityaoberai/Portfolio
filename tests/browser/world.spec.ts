@@ -1,4 +1,40 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+type Anchor = { x: number; y: number };
+const anchor = (page: Page, id: string) =>
+	page.evaluate(
+		(key) =>
+			(window as unknown as { __room: { anchor: (id: string) => Anchor } }).__room.anchor(key),
+		id
+	);
+const floor = (page: Page, x: number, z: number) =>
+	page.evaluate(
+		([px, pz]) =>
+			(window as unknown as { __room: { project: (p: number[]) => Anchor } }).__room.project([
+				px,
+				0,
+				pz
+			]),
+		[x, z]
+	);
+
+// Waits until the renderer has stopped drawing (movement and camera easing finished).
+async function settle(page: Page) {
+	const canvas = page.locator('canvas');
+	let previous = '';
+	for (let i = 0; i < 40; i++) {
+		const frames = (await canvas.getAttribute('data-frames')) ?? '';
+		if (frames === previous) return;
+		previous = frames;
+		await page.waitForTimeout(150);
+	}
+	throw new Error('room never settled');
+}
+
+async function openRoom(page: Page) {
+	await page.goto('/world?diagnostics=1');
+	await expect(page.locator('canvas')).toHaveClass(/\bloaded\b/);
+}
 
 test('Index is meaningful HTML and does not request the scene bundle', async ({ page }) => {
 	const scripts: string[] = [];
@@ -12,15 +48,16 @@ test('Index is meaningful HTML and does not request the scene bundle', async ({ 
 	expect(scripts.some((script) => script.includes('WebGLRenderer'))).toBe(false);
 });
 
-test('keyboard movement stops at rest, desk dialog closes and restores focus', async ({ page }) => {
+test('keyboard and floor movement stop at rest; the desk opens and focus returns', async ({
+	page
+}) => {
 	const errors: string[] = [];
 	page.on('pageerror', (error) => errors.push(error.message));
-	await page.goto('/world?diagnostics=1');
+	await openRoom(page);
 	const canvas = page.locator('canvas');
-	await expect(canvas).toHaveClass(/\bloaded\b/);
-	const rect = await canvas.boundingBox();
+	const rect = (await canvas.boundingBox())!;
 	const initial = await canvas.getAttribute('data-x');
-	await page.mouse.click(rect!.x + rect!.width * 0.5, rect!.y + rect!.height * 0.7);
+	await page.mouse.click(rect.x + rect.width * 0.5, rect.y + rect.height * 0.72);
 	await expect(canvas).not.toHaveAttribute('data-x', initial!);
 	await canvas.focus();
 	const start = await canvas.getAttribute('data-x');
@@ -28,18 +65,54 @@ test('keyboard movement stops at rest, desk dialog closes and restores focus', a
 	await page.waitForTimeout(400);
 	await page.keyboard.up('d');
 	await expect(canvas).not.toHaveAttribute('data-x', start!);
-	await page.waitForTimeout(100);
+	await page.waitForTimeout(150);
 	const frames = await canvas.getAttribute('data-frames');
-	await page.waitForTimeout(250);
+	await page.waitForTimeout(300);
 	await expect(canvas).toHaveAttribute('data-frames', frames!);
-	await page.getByRole('button', { name: 'Inspect the desk' }).click();
+
+	const button = page.getByRole('button', { name: 'Inspect the desk' });
+	await button.click();
 	await expect(page.getByRole('dialog')).toBeVisible();
-	await expect(page.getByRole('heading', { name: 'Product launches' })).toBeVisible();
+	await expect(
+		page.getByRole('heading', { name: 'Developer Relations Lead at Appwrite' })
+	).toBeVisible();
 	await page.keyboard.press('Escape');
 	await expect(page.getByRole('dialog')).not.toBeVisible();
-	await expect(canvas).toBeFocused();
-	await page.screenshot({ path: 'test-results/world-desktop.png', fullPage: true });
+	await expect(button).toBeFocused();
+	await page.screenshot({ path: 'test-results/world-desktop.png' });
 	expect(errors).toEqual([]);
+});
+
+test('walking up to a station and pressing E inspects it', async ({ page }) => {
+	await openRoom(page);
+	const target = await floor(page, -2.4, -1.9);
+	await page.mouse.click(target.x, target.y);
+	const canvas = page.locator('canvas');
+	await expect(canvas).toHaveAttribute('data-near', 'shelf');
+	await page.keyboard.press('e');
+	await expect(page.getByRole('heading', { name: 'Blastoise gets the top shelf.' })).toBeVisible();
+	await page.getByRole('button', { name: 'Back to the room' }).click();
+	await expect(canvas).toBeFocused();
+});
+
+test('clicking objects in the room opens them; curiosities leave a note', async ({ page }) => {
+	await openRoom(page);
+	await settle(page);
+	for (const [id, heading] of [
+		['camera', 'Fujifilm X-T30 II'],
+		['notebook', 'Pages from the notebook']
+	]) {
+		const point = await anchor(page, id);
+		await page.mouse.click(point.x, point.y);
+		await expect(page.getByRole('heading', { name: heading })).toBeVisible();
+		await page.keyboard.press('Escape');
+		await expect(page.getByRole('dialog')).not.toBeVisible();
+		await settle(page);
+	}
+	const plush = await anchor(page, 'plush');
+	await page.mouse.click(plush.x, plush.y);
+	await expect(page.locator('.note')).toContainText('Blastoise plush');
+	await expect(page.getByRole('dialog')).not.toBeVisible();
 });
 
 test('portrait touch input, reduced motion, and low-power DPR', async ({ browser }) => {
@@ -51,15 +124,15 @@ test('portrait touch input, reduced motion, and low-power DPR', async ({ browser
 		reducedMotion: 'reduce'
 	});
 	const page = await context.newPage();
-	await page.goto('/world?diagnostics=1');
+	await openRoom(page);
 	const canvas = page.locator('canvas');
-	await expect(canvas).toHaveClass(/\bloaded\b/);
 	await expect(page.getByRole('checkbox', { name: 'Less motion' })).toBeChecked();
-	const rect = await canvas.boundingBox();
+	const rect = (await canvas.boundingBox())!;
 	const start = await canvas.getAttribute('data-x');
-	await page.touchscreen.tap(rect!.x + rect!.width * 0.53, rect!.y + rect!.height * 0.75);
+	await page.touchscreen.tap(rect.x + rect.width * 0.5, rect.y + rect.height * 0.62);
 	await expect(canvas).not.toHaveAttribute('data-x', start!);
-	await page.touchscreen.tap(rect!.x + rect!.width * 0.68, rect!.y + rect!.height * 0.49);
+	const desk = await anchor(page, 'desk');
+	await page.touchscreen.tap(desk.x, desk.y);
 	await expect(page.getByRole('dialog')).toBeVisible();
 	await page.getByRole('button', { name: 'Back to the room' }).tap();
 	await page.getByRole('checkbox', { name: 'Low power' }).check();
@@ -69,7 +142,7 @@ test('portrait touch input, reduced motion, and low-power DPR', async ({ browser
 		width: window.innerWidth
 	}));
 	expect(size.scroll).toBeLessThanOrEqual(size.width);
-	await page.getByRole('button', { name: 'Inspect the desk' }).tap();
+	await page.getByRole('button', { name: 'Inspect the Pokémon shelf' }).tap();
 	await expect(page.getByRole('dialog')).toBeVisible();
 	await page.getByRole('button', { name: 'Back to the room' }).tap();
 	await expect(page.getByRole('dialog')).not.toBeVisible();
@@ -77,7 +150,9 @@ test('portrait touch input, reduced motion, and low-power DPR', async ({ browser
 	await context.close();
 });
 
-test('WebGL failure and disabled JavaScript preserve the Index escape', async ({ browser }) => {
+test('WebGL failure and disabled JavaScript preserve the content and Index escape', async ({
+	browser
+}) => {
 	const context = await browser.newContext();
 	await context.addInitScript(() => {
 		const getContext = HTMLCanvasElement.prototype.getContext;
@@ -92,9 +167,14 @@ test('WebGL failure and disabled JavaScript preserve the Index escape', async ({
 	const page = await context.newPage();
 	await page.goto('/world');
 	await expect(page.getByRole('heading', { name: 'The room couldn’t open here.' })).toBeVisible();
-	await page.getByRole('link', { name: 'Explore the Index' }).click();
+	// The room's contents still open without WebGL.
+	await page.getByRole('button', { name: 'Inspect the camera' }).click();
+	await expect(page.getByRole('heading', { name: 'Fujifilm X-T30 II' })).toBeVisible();
+	await page.keyboard.press('Escape');
+	await page.getByRole('status').getByRole('link', { name: 'Explore the Index' }).click();
 	await expect(page).toHaveURL(/\/index\/?$/);
 	await context.close();
+
 	const noJs = await browser.newContext({ javaScriptEnabled: false });
 	const staticPage = await noJs.newPage();
 	await staticPage.goto('/index');
@@ -107,8 +187,8 @@ test('WebGL failure and disabled JavaScript preserve the Index escape', async ({
 		'The interactive room needs JavaScript.'
 	);
 	await expect(
-		staticPage.getByRole('status').getByRole('link', { name: 'Explore the Index' })
-	).toBeVisible();
+		staticPage.getByRole('navigation', { name: 'In the room' }).getByRole('link')
+	).toHaveCount(4);
 	await staticPage.getByRole('status').getByRole('link', { name: 'Explore the Index' }).click();
 	await expect(staticPage.getByRole('heading', { level: 1 })).toContainText(
 		'bring people together'
