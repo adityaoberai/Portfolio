@@ -31,6 +31,12 @@ async function settle(page: Page) {
 	throw new Error('room never settled');
 }
 
+// Every station is listed in the floating "In the room" menu.
+async function openMenu(page: Page) {
+	await page.getByRole('button', { name: 'In the room', exact: true }).click();
+	await expect(page.getByRole('navigation', { name: 'In the room' })).toBeVisible();
+}
+
 async function openRoom(page: Page) {
 	await page.goto('/world?diagnostics=1');
 	await expect(page.locator('canvas')).toHaveClass(/\bloaded\b/);
@@ -55,9 +61,9 @@ test('keyboard and floor movement stop at rest; the desk opens and focus returns
 	page.on('pageerror', (error) => errors.push(error.message));
 	await openRoom(page);
 	const canvas = page.locator('canvas');
-	const rect = (await canvas.boundingBox())!;
 	const initial = await canvas.getAttribute('data-x');
-	await page.mouse.click(rect.x + rect.width * 0.5, rect.y + rect.height * 0.72);
+	const spot = await floor(page, 0.5, 2.2);
+	await page.mouse.click(spot.x, spot.y);
 	await expect(canvas).not.toHaveAttribute('data-x', initial!);
 	await canvas.focus();
 	const start = await canvas.getAttribute('data-x');
@@ -70,15 +76,16 @@ test('keyboard and floor movement stop at rest; the desk opens and focus returns
 	await page.waitForTimeout(300);
 	await expect(canvas).toHaveAttribute('data-frames', frames!);
 
-	const button = page.getByRole('button', { name: 'Inspect the desk' });
-	await button.click();
+	await openMenu(page);
+	await page.getByRole('button', { name: 'Inspect the desk' }).click();
 	await expect(page.getByRole('dialog')).toBeVisible();
 	await expect(
 		page.getByRole('heading', { name: 'Developer Relations Lead at Appwrite' })
 	).toBeVisible();
 	await page.keyboard.press('Escape');
 	await expect(page.getByRole('dialog')).not.toBeVisible();
-	await expect(button).toBeFocused();
+	// The menu closed when the station opened, so focus returns to the menu button.
+	await expect(page.getByRole('button', { name: 'In the room', exact: true })).toBeFocused();
 	await page.screenshot({ path: 'test-results/world-desktop.png' });
 	expect(errors).toEqual([]);
 });
@@ -126,15 +133,19 @@ test('portrait touch input, reduced motion, and low-power DPR', async ({ browser
 	const page = await context.newPage();
 	await openRoom(page);
 	const canvas = page.locator('canvas');
+	// Settings live in the menu; the OS preference is reflected there.
+	await page.getByRole('button', { name: 'In the room', exact: true }).tap();
 	await expect(page.getByRole('checkbox', { name: 'Less motion' })).toBeChecked();
-	const rect = (await canvas.boundingBox())!;
+	await page.keyboard.press('Escape');
 	const start = await canvas.getAttribute('data-x');
-	await page.touchscreen.tap(rect.x + rect.width * 0.5, rect.y + rect.height * 0.62);
+	const spot = await floor(page, 0.5, 2.2);
+	await page.touchscreen.tap(spot.x, spot.y);
 	await expect(canvas).not.toHaveAttribute('data-x', start!);
 	const desk = await anchor(page, 'desk');
 	await page.touchscreen.tap(desk.x, desk.y);
 	await expect(page.getByRole('dialog')).toBeVisible();
 	await page.getByRole('button', { name: 'Back to the room' }).tap();
+	await page.getByRole('button', { name: 'In the room', exact: true }).tap();
 	await page.getByRole('checkbox', { name: 'Low power' }).check();
 	await expect(page.locator('output')).toContainText('DPR 1 ·');
 	const size = await page.evaluate(() => ({
@@ -142,7 +153,10 @@ test('portrait touch input, reduced motion, and low-power DPR', async ({ browser
 		width: window.innerWidth
 	}));
 	expect(size.scroll).toBeLessThanOrEqual(size.width);
+	// The room is the page: nothing scrolls vertically either.
+	expect(await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)).toBe(0);
 	await page.getByRole('button', { name: 'Inspect the Pokémon shelf' }).tap();
+	await expect(page.getByRole('navigation', { name: 'In the room' })).not.toBeVisible();
 	await expect(page.getByRole('dialog')).toBeVisible();
 	await page.getByRole('button', { name: 'Back to the room' }).tap();
 	await expect(page.getByRole('dialog')).not.toBeVisible();
@@ -167,7 +181,8 @@ test('WebGL failure and disabled JavaScript preserve the content and Index escap
 	const page = await context.newPage();
 	await page.goto('/world');
 	await expect(page.getByRole('heading', { name: 'The room couldn’t open here.' })).toBeVisible();
-	// The room's contents still open without WebGL.
+	// The room's contents still open without WebGL, from the menu.
+	await openMenu(page);
 	await page.getByRole('button', { name: 'Inspect the camera' }).click();
 	await expect(page.getByRole('heading', { name: 'Fujifilm X-T30 II' })).toBeVisible();
 	await page.keyboard.press('Escape');
@@ -186,9 +201,12 @@ test('WebGL failure and disabled JavaScript preserve the content and Index escap
 	await expect(staticPage.locator('noscript .no-script')).toContainText(
 		'The interactive room needs JavaScript.'
 	);
+	// The menu is a native popover, so it opens without JavaScript too.
+	await staticPage.getByRole('button', { name: 'In the room', exact: true }).click();
 	await expect(
 		staticPage.getByRole('navigation', { name: 'In the room' }).getByRole('link')
 	).toHaveCount(9);
+	await staticPage.keyboard.press('Escape');
 	await staticPage.getByRole('status').getByRole('link', { name: 'Explore the Index' }).click();
 	await expect(staticPage.getByRole('heading', { level: 1 })).toContainText(
 		'bring people together'
@@ -225,6 +243,7 @@ test('every station in the room opens from the guide', async ({ browser }) => {
 		['window', 'Right now'],
 		['door', 'Elsewhere']
 	]) {
+		await openMenu(page);
 		await page.getByRole('button', { name: `Inspect the ${name}`, exact: true }).click();
 		await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
 		await page.keyboard.press('Escape');
@@ -239,6 +258,7 @@ test('the little things are listed for keyboards and screen readers', async ({ p
 	const mug = await anchor(page, 'mug');
 	await page.mouse.click(mug.x, mug.y);
 	await expect(page.locator('.note')).toContainText('Superman');
+	await openMenu(page);
 	await page.getByText('Little things in the room').click();
 	await expect(page.getByText('A Superman mug.', { exact: false }).last()).toBeVisible();
 });

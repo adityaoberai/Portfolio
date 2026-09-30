@@ -4,12 +4,13 @@
 	import { sections } from '$lib/data/sections';
 
 	// Deep pages get a section nav; World and Index have their own wayfinding.
-	let { nav = false }: { nav?: boolean } = $props();
+	// `overlay` floats the header over the full-page room.
+	let { nav = false, overlay = false }: { nav?: boolean; overlay?: boolean } = $props();
 	const links = sections.filter((s) => !['resume', 'now'].includes(s.id));
 	const path = $derived(page.url.pathname.replace(/\/$/, ''));
 </script>
 
-<header class="v3-header">
+<header class="v3-header" class:overlay>
 	<div class="bar">
 		<a href="/" class="identity">Aditya Oberai<span>Bengaluru, India</span></a>
 		<ModeSwitch />
@@ -36,6 +37,13 @@
 	.v3-header {
 		background: var(--color-paper);
 		border-bottom: 1px solid var(--color-hairline);
+	}
+	.overlay {
+		background: transparent;
+		border-bottom: 0;
+	}
+	.overlay .bar {
+		max-width: none;
 	}
 	.bar,
 	nav {

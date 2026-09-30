@@ -20,7 +20,8 @@ async function captureRoom(scale, path, quality) {
 	await page.goto(`${base}/world`);
 	await page.locator('canvas.loaded').waitFor();
 	await page.addStyleTag({
-		content: '.room-caption, .room-hint, .note, .hover-label { visibility: hidden !important; }'
+		content:
+			'.overlay, .room-hint, .note, .hover-label, .menu-button { visibility: hidden !important; }'
 	});
 	await page.waitForTimeout(300);
 	await page.locator('canvas').screenshot({ path, type: 'jpeg', quality });

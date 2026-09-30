@@ -7,8 +7,11 @@
 	import V3Footer from '$lib/components/V3Footer.svelte';
 
 	const { children } = $props();
+	const path = $derived(page.url.pathname.replace(/\/$/, ''));
 	// World and Index carry their own wayfinding; every other page gets the section nav.
-	const home = $derived(['', '/world', '/index'].includes(page.url.pathname.replace(/\/$/, '')));
+	const home = $derived(['', '/world', '/index'].includes(path));
+	// World fills the whole page and floats its own header, so the shell steps aside.
+	const immersive = $derived(path === '/world' || (path === '' && page.data.mode !== 'index'));
 </script>
 
 <svelte:head>
@@ -31,9 +34,9 @@
 	>
 		Skip to content
 	</a>
-	<V3Header nav={!home} />
+	{#if !immersive}<V3Header nav={!home} />{/if}
 	<main id="main" tabindex="-1" class="flex-1 focus:outline-none">
 		{@render children()}
 	</main>
-	<V3Footer />
+	{#if !immersive}<V3Footer />{/if}
 </div>

@@ -39,6 +39,11 @@ test('the room, its guide, and every station meet WCAG 2.2 AA (automated checks)
 	await page.goto('/world');
 	await expect(page.locator('canvas')).toHaveClass(/\bloaded\b/);
 	await audit(page, '/world');
+	const menuButton = page.getByRole('button', { name: 'In the room', exact: true });
+	await menuButton.click();
+	await expect(page.getByRole('navigation', { name: 'In the room' })).toBeVisible();
+	await audit(page, '/world (menu open)');
+	await page.keyboard.press('Escape');
 	for (const name of [
 		'desk',
 		'notebook',
@@ -50,6 +55,7 @@ test('the room, its guide, and every station meet WCAG 2.2 AA (automated checks)
 		'window',
 		'door'
 	]) {
+		await menuButton.click();
 		await page.getByRole('button', { name: `Inspect the ${name}`, exact: true }).click();
 		await expect(page.getByRole('dialog')).toBeVisible();
 		// Measure contrast after the sheet's fade-in, not halfway through it.

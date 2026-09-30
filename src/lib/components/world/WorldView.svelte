@@ -1,12 +1,17 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
+	import V3Header from '$lib/components/V3Header.svelte';
 	import StationPanel from './StationPanel.svelte';
 	import { curiosities, stationById, stations } from '$lib/data/room';
 	import type { CuriosityId, StationId } from '$lib/world/layout';
 	import type { HoverTarget, RoomController, RoomState } from '$lib/world/scene';
 
 	let canvas: HTMLCanvasElement;
-	let frameEl: HTMLDivElement;
+	let frameEl: HTMLElement;
+	let topEl: HTMLDivElement;
+	let hintEl = $state<HTMLDivElement>();
+	let menuButton: HTMLButtonElement;
+	let menu: HTMLDivElement;
 	let dialog: HTMLDialogElement;
 	let room: RoomController | undefined;
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
@@ -37,8 +42,8 @@
 	});
 
 	async function showStation(id: StationId) {
-		// Focus returns to whatever opened the station: the canvas, or a guide button.
-		returnFocus = document.activeElement as HTMLElement | null;
+		// Focus returns to whatever opened the station: the canvas, or the menu button.
+		returnFocus ??= document.activeElement as HTMLElement | null;
 		open = id;
 		room?.setPaused(true);
 		hover = null;
@@ -50,18 +55,14 @@
 		room?.release();
 		room?.setPaused(false);
 		returnFocus?.focus({ preventScroll: true });
+		returnFocus = null;
 	}
+	// Picking from the menu closes it; focus comes back to the menu button, which stays visible.
 	function visit(id: StationId) {
-		// Without a working scene, the same content opens directly.
-		if (!room || status !== 'ready') return void showStation(id);
-		// Bring the room into view so the walk and camera push are visible.
-		const rect = frameEl.getBoundingClientRect();
-		if (rect.top < 0 || rect.bottom > window.innerHeight)
-			frameEl.scrollIntoView({
-				block: window.innerWidth >= 820 ? 'center' : 'start',
-				behavior: reducedMotion ? 'auto' : 'smooth'
-			});
-		room.visit(id);
+		if (menu.matches(':popover-open')) menu.hidePopover();
+		returnFocus = menuButton;
+		if (room && status === 'ready') room.visit(id);
+		else void showStation(id);
 	}
 	function showCuriosity(id: CuriosityId) {
 		note = curiosities[id].line;
@@ -73,13 +74,29 @@
 			hover = null;
 			return;
 		}
-		const rect = frameEl.getBoundingClientRect();
 		const label =
 			target.kind === 'station'
 				? `${stationById[target.id].object} · ${stationById[target.id].area}`
 				: curiosities[target.id].label;
-		hover = { label, x: x - rect.left, y: y - rect.top };
+		hover = { label, x, y };
 	}
+	// Keep the room clear of the floating title, hint card, and menu button.
+	function measureInsets() {
+		if (!room || !frameEl) return;
+		const height = frameEl.clientHeight;
+		const narrow = frameEl.clientWidth < 820;
+		const lowest = Math.min(
+			menuButton.getBoundingClientRect().top,
+			hintEl?.getBoundingClientRect().top ?? height
+		);
+		room.setInsets({
+			top: topEl.getBoundingClientRect().bottom + 8,
+			bottom: narrow ? Math.max(24, height - lowest + 12) : 24
+		});
+	}
+	$effect(() => {
+		if (status === 'ready' && hintEl) measureInsets();
+	});
 
 	onMount(() => {
 		let cancelled = false;
@@ -91,6 +108,9 @@
 			room?.setReducedMotion(reducedMotion);
 		};
 		motion.addEventListener('change', updateMotion);
+		const observer = new ResizeObserver(measureInsets);
+		observer.observe(frameEl);
+		observer.observe(topEl);
 		const timeout = window.setTimeout(() => {
 			if (status === 'loading') status = 'error';
 		}, 15000);
@@ -114,6 +134,7 @@
 						room = undefined;
 					}
 				});
+				measureInsets();
 				if (diagnostics) Reflect.set(window, '__room', room);
 			})
 			.catch(() => {
@@ -121,6 +142,7 @@
 			});
 		return () => {
 			cancelled = true;
+			observer.disconnect();
 			window.clearTimeout(timeout);
 			window.clearTimeout(noteTimer);
 			motion.removeEventListener('change', updateMotion);
@@ -129,148 +151,163 @@
 	});
 </script>
 
-<section class="world-page" aria-labelledby="world-title">
-	<div class="welcome">
-		<div>
-			<p class="eyebrow">A little room, a few stories</p>
-			<h1 id="world-title">Come spend a minute<br class="mobile-break" /> in my world.</h1>
-		</div>
-		<p>Make yourself at home.<br />Everything here is something I care about.</p>
-	</div>
-	<div class="room-frame" bind:this={frameEl}>
-		<div class="room-caption">
-			<span class="status-dot" aria-hidden="true"></span> Aditya's room
-			<span class="edition">/ Bengaluru</span>
-		</div>
-		<canvas
-			bind:this={canvas}
-			tabindex={status === 'ready' ? 0 : -1}
-			aria-label="Aditya's room. Use WASD or arrow keys to walk and E to inspect what's nearby, or tap the floor and objects. Every object is also listed below."
-			aria-describedby="room-instructions"
-			class:loaded={status === 'ready'}
-			data-x={roomState?.x.toFixed(3)}
-			data-z={roomState?.z.toFixed(3)}
-			data-frames={roomState?.frames}
-			data-near={roomState?.near ?? ''}
-		>
-			Explore Aditya's room through the list of objects below, or open the Index.
-		</canvas>
-		{#if status !== 'ready'}
-			<div class="fallback" role="status">
-				<img
-					class="still"
-					src="/room-still.jpg"
-					alt=""
-					width="1164"
-					height="619"
-					fetchpriority="high"
-				/>
-				<span class="fallback-symbol" aria-hidden="true">{status === 'loading' ? '◌' : '↗'}</span>
+<section class="world" aria-labelledby="world-title" bind:this={frameEl}>
+	<canvas
+		bind:this={canvas}
+		tabindex={status === 'ready' ? 0 : -1}
+		aria-label="Aditya's room. Use WASD or arrow keys to walk and E to inspect what's nearby, or tap the floor and objects. Every object is also listed in the menu."
+		aria-describedby="room-instructions"
+		class:loaded={status === 'ready'}
+		data-x={roomState?.x.toFixed(3)}
+		data-z={roomState?.z.toFixed(3)}
+		data-frames={roomState?.frames}
+		data-near={roomState?.near ?? ''}
+	>
+		Explore Aditya's room through the menu of objects, or open the Index.
+	</canvas>
+
+	{#if status !== 'ready'}
+		<div class="fallback" role="status">
+			<img
+				class="still"
+				src="/room-still.jpg"
+				alt=""
+				width="1440"
+				height="1000"
+				fetchpriority="high"
+			/>
+			<div class="fallback-card">
 				<h2>{status === 'loading' ? 'Opening the room…' : 'The room couldn’t open here.'}</h2>
 				<p>
 					{status === 'loading'
 						? 'A small space for the things I make and care about.'
-						: 'Everything in it is still listed below, and in the Index.'}
+						: 'Everything in it is still in the menu, and in the Index.'}
 				</p>
-				<a href="/index">Explore the Index →</a>
-				{#if status === 'error'}<button onclick={() => window.location.reload()}
-						>Try the room again</button
-					>{/if}
+				<div class="fallback-actions">
+					<a href="/index">Explore the Index →</a>
+					{#if status === 'error'}<button onclick={() => window.location.reload()}
+							>Try the room again</button
+						>{/if}
+				</div>
 			</div>
-		{/if}
-		<noscript
-			><p class="no-script">
-				The interactive room needs JavaScript. <a href="/index">Explore the Index →</a>
-			</p></noscript
-		>
-		{#if hover}
-			<span class="hover-label" style="left: {hover.x}px; top: {hover.y}px" aria-hidden="true"
-				>{hover.label}</span
-			>
-		{/if}
-		{#if status === 'ready'}
-			<div class="room-hint" aria-hidden="true">
-				{#if near}
-					<span class="eyebrow">{near.number} / {near.area}</span>
-					<span class="hint-title">{near.object}</span>
-					<span class="hint-key"><kbd>E</kbd> or tap it to look closer</span>
-				{:else}
-					<span class="eyebrow">Start anywhere</span>
-					<span class="hint-title">Walk up to something.</span>
-					<span class="hint-key">Or pick from the list below.</span>
-				{/if}
-			</div>
-		{/if}
-		{#if note}
-			<p class="note">{note}</p>
-		{/if}
+		</div>
+	{/if}
+	<noscript
+		><p class="no-script">
+			The interactive room needs JavaScript. <a href="/index">Explore the Index →</a>
+		</p></noscript
+	>
+
+	<div class="overlay top" bind:this={topEl}>
+		<V3Header overlay />
+		<div class="title">
+			<p class="eyebrow">Aditya's room · Bengaluru</p>
+			<h1 id="world-title">Come spend a minute in my world.</h1>
+		</div>
+		{#if diagnostics && roomState}<output class="diagnostics"
+				>{roomState.calls} draws · {roomState.triangles} triangles · DPR {roomState.dpr} · {roomState.frames}
+				rendered frames · {roomState.moving ? 'moving' : 'idle'}</output
+			>{/if}
 	</div>
-	<div class="room-toolbar">
-		<p id="room-instructions">
-			<span class="desktop-instructions"
-				><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows to walk · <kbd>E</kbd> to
-				inspect ·{' '}</span
-			>Tap the floor to move. Tap an object to explore.
-		</p>
-		<div class="settings">
-			<button onclick={() => room?.reset()} disabled={status !== 'ready'}>Reset view</button><label
-				><input
-					type="checkbox"
-					bind:checked={lowQuality}
-					onchange={() => room?.setLowQuality(lowQuality)}
-				/> Low power</label
-			><label
-				><input
-					type="checkbox"
-					bind:checked={reducedMotion}
-					onchange={() => room?.setReducedMotion(reducedMotion)}
-				/> Less motion</label
+
+	{#if hover}
+		<span class="hover-label" style="left: {hover.x}px; top: {hover.y}px" aria-hidden="true"
+			>{hover.label}</span
+		>
+	{/if}
+	{#if note}
+		<p class="note">{note}</p>
+	{/if}
+	{#if status === 'ready'}
+		<div class="room-hint" aria-hidden="true" bind:this={hintEl}>
+			{#if near}
+				<span class="eyebrow">{near.number} / {near.area}</span>
+				<span class="hint-title">{near.object}</span>
+				<span class="hint-key"><kbd>E</kbd> or tap it to look closer</span>
+			{:else}
+				<span class="eyebrow">Start anywhere</span>
+				<span class="hint-title">Walk up to something.</span>
+				<span class="hint-key">Or open the menu to pick.</span>
+			{/if}
+		</div>
+	{/if}
+
+	<button class="menu-button" popovertarget="room-menu" bind:this={menuButton}
+		><span class="bars" aria-hidden="true"><span></span></span>In the room</button
+	>
+	<div id="room-menu" class="menu" popover bind:this={menu}>
+		<div class="menu-head">
+			<h2 id="menu-title">In the room</h2>
+			<button
+				class="menu-close"
+				popovertarget="room-menu"
+				popovertargetaction="hide"
+				aria-label="Close the menu">×</button
 			>
 		</div>
+		<nav aria-label="In the room">
+			<ul class="guide">
+				{#each stations as station (station.id)}
+					<li class:is-near={roomState?.near === station.id}>
+						<span class="number">{station.number}</span>
+						<div>
+							<button class="guide-button" onclick={() => visit(station.id)}
+								>Inspect the {station.short}</button
+							>
+							<p><span class="area">{station.area}</span> · {station.summary}</p>
+							<a href={station.href}
+								>{station.area}{#if station.external}<span aria-hidden="true">&nbsp;↗</span><span
+										class="sr-only"
+									>
+										(external site)</span
+									>{:else}<span aria-hidden="true">&nbsp;→</span>{/if}</a
+							>
+						</div>
+					</li>
+				{/each}
+			</ul>
+		</nav>
+		<details class="little-things">
+			<summary>Little things in the room</summary>
+			<ul>
+				{#each Object.values(curiosities) as item (item.label)}
+					<li><strong>{item.label}</strong> · {item.line}</li>
+				{/each}
+			</ul>
+		</details>
+		<div class="controls">
+			<p id="room-instructions">
+				<span class="desktop-instructions"
+					><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows to walk · <kbd>E</kbd> to
+					inspect ·{' '}</span
+				>Tap the floor to move. Tap an object to explore.
+			</p>
+			<div class="settings">
+				<button onclick={() => room?.reset()} disabled={status !== 'ready'}>Reset view</button
+				><label
+					><input
+						type="checkbox"
+						bind:checked={lowQuality}
+						onchange={() => room?.setLowQuality(lowQuality)}
+					/> Low power</label
+				><label
+					><input
+						type="checkbox"
+						bind:checked={reducedMotion}
+						onchange={() => room?.setReducedMotion(reducedMotion)}
+					/> Less motion</label
+				>
+			</div>
+		</div>
+		<p class="menu-foot">
+			A work in progress, just like the person who lives here.
+			<a href="/index">Prefer a list? Here's the Index →</a>
+		</p>
 	</div>
+
 	<p class="sr-only" aria-live="polite">
 		{near ? `Near the ${near.short}. Press E while the room is focused to inspect it.` : ''}{note}
 	</p>
-	{#if diagnostics && roomState}<output class="diagnostics"
-			>{roomState.calls} draws · {roomState.triangles} triangles · DPR {roomState.dpr} · {roomState.frames}
-			rendered frames · {roomState.moving ? 'moving' : 'idle'}</output
-		>{/if}
-
-	<nav class="guide" aria-labelledby="guide-title">
-		<h2 id="guide-title" class="eyebrow">In the room</h2>
-		<ul>
-			{#each stations as station (station.id)}
-				<li class:is-near={roomState?.near === station.id}>
-					<span class="number">{station.number}</span>
-					<div>
-						<button class="guide-button" onclick={() => visit(station.id)}
-							>Inspect the {station.short}</button
-						>
-						<p><span class="area">{station.area}</span> · {station.summary}</p>
-						<a href={station.href}
-							>{station.area}{#if station.external}<span aria-hidden="true">&nbsp;↗</span><span
-									class="sr-only"
-								>
-									(external site)</span
-								>{:else}<span aria-hidden="true">&nbsp;→</span>{/if}</a
-						>
-					</div>
-				</li>
-			{/each}
-		</ul>
-	</nav>
-	<details class="little-things">
-		<summary>Little things in the room</summary>
-		<ul>
-			{#each Object.values(curiosities) as item (item.label)}
-				<li><strong>{item.label}</strong> · {item.line}</li>
-			{/each}
-		</ul>
-	</details>
-	<div class="room-footer">
-		<p>A work in progress, just like the person who lives here.</p>
-		<a href="/index">Prefer a list? Here's the Index →</a>
-	</div>
 </section>
 
 <dialog bind:this={dialog} class="sheet" onclose={closeStation} aria-labelledby="station-title">
@@ -286,81 +323,65 @@
 </dialog>
 
 <style>
-	.world-page {
-		max-width: var(--container);
-		margin: auto;
-		padding: 32px var(--gutter) 24px;
-	}
-	.welcome {
-		margin: 0 auto 24px;
-		display: flex;
-		align-items: end;
-		justify-content: space-between;
-		gap: 24px;
-	}
-	h1 {
-		font-size: clamp(30px, 3.5vw, 49px);
-		line-height: 1.08;
-		letter-spacing: -0.045em;
-		margin-top: 10px;
-	}
-	.welcome > p {
-		color: #676957;
-		font-size: 17px;
-		line-height: 1.5;
-		text-align: right;
-	}
-	.mobile-break {
-		display: none;
-	}
-	.room-frame {
-		margin: auto;
-		height: clamp(460px, 62vh, 760px);
-		position: relative;
+	/* The room is the page: a fixed, full-viewport stage with UI floating over it. */
+	.world {
+		position: fixed;
+		inset: 0;
 		overflow: hidden;
-		border: 1px solid #d3d5c3;
-		border-radius: 8px;
 		background: #e9ebdf;
 	}
-	.room-caption {
-		position: absolute;
-		z-index: 1;
-		top: 22px;
-		left: 24px;
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		font:
-			12px/1.5 system-ui,
-			sans-serif;
-		color: #3c5142;
-	}
-	.status-dot {
-		width: 6px;
-		height: 6px;
-		background: #64825c;
-		border-radius: 50%;
-	}
-	.edition {
-		color: #69705d;
-	}
 	canvas {
+		position: absolute;
+		inset: 0;
 		display: block;
 		width: 100%;
 		height: 100%;
 		opacity: 0;
-		touch-action: pan-y;
+		touch-action: none;
 	}
 	canvas.loaded {
 		opacity: 1;
 	}
 	canvas:focus-visible {
 		outline: 3px solid #304e42;
-		outline-offset: -4px;
+		outline-offset: -6px;
+	}
+	.overlay {
+		position: absolute;
+		z-index: 2;
+		left: 0;
+		right: 0;
+		pointer-events: none;
+	}
+	.overlay :global(a),
+	.overlay :global(button) {
+		pointer-events: auto;
+	}
+	.top {
+		top: 0;
+	}
+	.title {
+		padding: 0 var(--gutter);
+	}
+	.title .eyebrow {
+		font-size: 11px;
+	}
+	h1 {
+		max-width: 16ch;
+		margin-top: 6px;
+		font-size: clamp(26px, 3vw, 42px);
+		line-height: 1.08;
+		letter-spacing: -0.04em;
+		font-weight: 500;
+	}
+	.diagnostics {
+		display: block;
+		padding: 8px var(--gutter);
+		font: 12px monospace;
 	}
 	.hover-label {
 		position: absolute;
-		z-index: 2;
+		z-index: 3;
 		transform: translate(14px, -130%);
 		padding: 6px 10px;
 		background: #263b33;
@@ -372,10 +393,24 @@
 		white-space: nowrap;
 		pointer-events: none;
 	}
+	.note {
+		position: absolute;
+		z-index: 3;
+		right: var(--gutter);
+		bottom: 96px;
+		max-width: min(320px, calc(100% - 32px));
+		padding: 12px 14px;
+		background: #263b33;
+		color: #fffaf0;
+		border-radius: 6px;
+		font-size: 16px;
+		line-height: 1.45;
+	}
 	.room-hint {
 		position: absolute;
-		bottom: 22px;
-		left: 22px;
+		z-index: 2;
+		left: var(--gutter);
+		bottom: 24px;
 		display: grid;
 		gap: 2px;
 		padding: 14px 18px;
@@ -398,35 +433,6 @@
 			sans-serif;
 		color: #5f6555;
 	}
-	.note {
-		position: absolute;
-		z-index: 2;
-		top: 18px;
-		right: 18px;
-		max-width: min(320px, calc(100% - 36px));
-		padding: 12px 14px;
-		background: #263b33;
-		color: #fffaf0;
-		border-radius: 6px;
-		font-size: 16px;
-		line-height: 1.45;
-	}
-	.room-toolbar {
-		margin: auto;
-		display: flex;
-		justify-content: space-between;
-		flex-wrap: wrap;
-		gap: 8px 20px;
-		padding: 14px 0;
-		border-bottom: 1px solid #dedbcf;
-		color: #5e6555;
-		font:
-			12px/1.7 system-ui,
-			sans-serif;
-	}
-	.room-toolbar > p {
-		padding-top: 12px;
-	}
 	kbd {
 		font:
 			10px system-ui,
@@ -438,10 +444,185 @@
 		margin-right: 3px;
 		background: #fffdf6;
 	}
+
+	/* Floating menu button and the menu it opens (native popover: works without JS). */
+	.menu-button {
+		position: absolute;
+		z-index: 4;
+		right: var(--gutter);
+		bottom: 24px;
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		min-height: 56px;
+		padding: 0 22px 0 18px;
+		background: #304e42;
+		color: #fffaf0;
+		border-radius: 999px;
+		box-shadow: 0 8px 24px #1f2a2440;
+		font:
+			600 14px/1 system-ui,
+			sans-serif;
+		letter-spacing: 0.02em;
+		cursor: pointer;
+	}
+	.menu-button:hover {
+		background: #243d33;
+	}
+	.menu-button:focus-visible {
+		outline: 3px solid #1f2620;
+		outline-offset: 3px;
+	}
+	.bars,
+	.bars span,
+	.bars::before,
+	.bars::after {
+		display: block;
+		width: 18px;
+		height: 2px;
+		background: currentColor;
+		border-radius: 2px;
+	}
+	.bars {
+		position: relative;
+		background: none;
+	}
+	.bars::before,
+	.bars::after {
+		content: '';
+		position: absolute;
+		left: 0;
+	}
+	.bars::before {
+		top: -6px;
+	}
+	.bars::after {
+		top: 6px;
+	}
+	.menu {
+		position: fixed;
+		inset: auto var(--gutter) 96px auto;
+		width: min(420px, calc(100vw - 32px));
+		max-height: calc(100dvh - 200px);
+		margin: 0;
+		overflow-y: auto;
+		padding: 18px 22px 20px;
+		background: #faf7ed;
+		color: #283f33;
+		border: 1px solid #c9c4b6;
+		border-radius: 14px;
+		box-shadow: 0 24px 60px #1f2a2440;
+	}
+	.menu::backdrop {
+		background: transparent;
+	}
+	.menu-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+	.menu-head h2 {
+		font:
+			12px/1.5 system-ui,
+			sans-serif;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: #5f6555;
+	}
+	.menu-close {
+		width: 44px;
+		height: 44px;
+		font-size: 24px;
+		line-height: 1;
+		cursor: pointer;
+	}
+	.guide {
+		margin: 4px 0 0;
+		padding: 0;
+		list-style: none;
+	}
+	.guide li {
+		display: grid;
+		grid-template-columns: 24px 1fr;
+		gap: 8px;
+		padding: 10px 0;
+		border-top: 1px solid #dedbcf;
+	}
+	.guide li.is-near {
+		border-top-color: #304e42;
+	}
+	.number {
+		padding-top: 13px;
+		font:
+			11px system-ui,
+			sans-serif;
+		color: #5f6555;
+	}
+	.guide-button {
+		min-height: 44px;
+		font-size: 19px;
+		line-height: 1.2;
+		text-align: left;
+		cursor: pointer;
+	}
+	.guide-button:hover {
+		color: #304e42;
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+	.guide p {
+		font-size: 14px;
+		line-height: 1.45;
+		color: #5f6555;
+	}
+	.area {
+		color: #3f4d40;
+	}
+	.guide a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 36px;
+		font:
+			13px system-ui,
+			sans-serif;
+		color: #304e42;
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+	.little-things {
+		padding: 6px 0;
+		border-top: 1px solid #dedbcf;
+	}
+	.little-things summary {
+		display: flex;
+		align-items: center;
+		min-height: 44px;
+		cursor: pointer;
+		font:
+			13px system-ui,
+			sans-serif;
+		color: #304e42;
+	}
+	.little-things ul {
+		display: grid;
+		gap: 8px;
+		margin: 4px 0 8px;
+		padding-left: 18px;
+		font-size: 14px;
+		line-height: 1.5;
+	}
+	.controls {
+		padding-top: 8px;
+		border-top: 1px solid #dedbcf;
+		font:
+			12px/1.7 system-ui,
+			sans-serif;
+		color: #5f6555;
+	}
 	.settings {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 4px 20px;
+		gap: 0 18px;
 	}
 	.settings button,
 	.settings label {
@@ -456,7 +637,7 @@
 		text-underline-offset: 4px;
 	}
 	.settings button:disabled {
-		opacity: 0.4;
+		opacity: 0.45;
 		cursor: default;
 	}
 	input {
@@ -464,118 +645,27 @@
 		width: 16px;
 		height: 16px;
 	}
-	.diagnostics {
-		font: 12px monospace;
-		display: block;
-		padding: 8px 0;
-	}
-	.guide {
-		margin: 28px auto 0;
-	}
-	.guide ul {
+	.menu-foot {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-		gap: 0 28px;
-		margin: 12px 0 0;
-		padding: 0;
-		list-style: none;
-	}
-	.guide li {
-		display: grid;
-		grid-template-columns: 26px 1fr;
-		gap: 10px;
-		padding: 16px 0;
-		border-top: 1px solid #dedbcf;
-	}
-	.guide li.is-near {
-		border-top-color: #304e42;
-	}
-	.number {
+		gap: 4px;
+		margin-top: 8px;
 		padding-top: 12px;
-		font:
-			11px system-ui,
-			sans-serif;
-		color: #69705d;
-	}
-	.guide-button {
-		min-height: 44px;
-		font-size: 21px;
-		line-height: 1.2;
-		text-align: left;
-		cursor: pointer;
-	}
-	.guide-button:hover {
-		color: #304e42;
-		text-decoration: underline;
-		text-underline-offset: 4px;
-	}
-	.guide p {
-		font-size: 15px;
-		line-height: 1.5;
-		color: #606456;
-	}
-	.area {
-		color: #3f4d40;
-	}
-	.guide a {
-		display: inline-block;
-		margin-top: 4px;
-		padding: 8px 0;
-		font:
-			13px system-ui,
-			sans-serif;
-		color: #304e42;
-		text-decoration: underline;
-		text-underline-offset: 4px;
-	}
-	.little-things {
-		margin: 8px auto 0;
-		padding: 12px 0;
 		border-top: 1px solid #dedbcf;
-		color: #4f5746;
+		font-size: 14px;
+		color: #5f6555;
 	}
-	.little-things summary {
-		min-height: 44px;
-		display: flex;
-		align-items: center;
-		cursor: pointer;
-		font:
-			13px system-ui,
-			sans-serif;
-		color: #304e42;
-	}
-	.little-things ul {
-		display: grid;
-		gap: 8px;
-		margin: 6px 0 0;
-		padding: 0 0 0 18px;
-		font-size: 15px;
-		line-height: 1.5;
-	}
-	.room-footer {
-		margin: 18px auto 0;
-		padding-top: 18px;
-		border-top: 1px solid #dedbcf;
-		display: flex;
-		justify-content: space-between;
-		gap: 12px;
-		font-size: 15px;
-		color: #606456;
-	}
-	.room-footer a {
+	.menu-foot a {
 		color: #304e42;
 		text-decoration: underline;
 		text-underline-offset: 4px;
 	}
+
 	.fallback {
 		position: absolute;
 		inset: 0;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
+		display: grid;
+		place-items: center;
 		padding: 24px;
-		text-align: center;
 		background: #e9ebdf;
 	}
 	.fallback .still {
@@ -584,24 +674,34 @@
 		width: 100%;
 		height: 100%;
 		object-fit: contain;
-		opacity: 0.35;
+		opacity: 0.4;
 		filter: saturate(0.6);
 		pointer-events: none;
 	}
-	.fallback > :not(.still) {
+	.fallback-card {
 		position: relative;
-	}
-	.fallback-symbol {
-		font-size: 36px;
-		color: #5c765d;
+		max-width: 380px;
+		padding: 22px 24px;
+		text-align: center;
+		background: #faf7ebe6;
+		border: 1px solid #d2cfbb;
+		border-radius: 10px;
 	}
 	.fallback h2 {
-		font-size: 30px;
-		margin: 12px 0;
+		font-size: 26px;
+		line-height: 1.2;
 	}
 	.fallback p {
-		max-width: 340px;
-		color: #606456;
+		margin-top: 10px;
+		color: #5a604f;
+	}
+	.fallback-actions {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		align-items: center;
+		gap: 8px 16px;
+		margin-top: 18px;
 	}
 	.fallback a {
 		display: inline-block;
@@ -609,20 +709,24 @@
 		color: #fffdf6;
 		padding: 12px 22px;
 		border-radius: 100px;
-		margin-top: 24px;
 	}
 	.fallback button {
-		padding: 12px;
+		min-height: 44px;
+		padding: 0 12px;
 		text-decoration: underline;
 		cursor: pointer;
 	}
 	.no-script {
 		position: absolute;
-		bottom: 18px;
-		width: 100%;
+		z-index: 2;
+		left: 0;
+		right: 0;
+		bottom: 96px;
+		padding: 12px;
 		text-align: center;
 		background: #e9ebdf;
 	}
+
 	/* Details sheet: right side on wide screens, bottom sheet on phones. */
 	.sheet {
 		margin: 0 0 0 auto;
@@ -667,9 +771,18 @@
 		.sheet[open] {
 			animation: slide-in 260ms ease-out;
 		}
+		.menu:popover-open {
+			animation: rise 180ms ease-out;
+		}
 		@keyframes slide-in {
 			from {
 				transform: translateX(24px);
+				opacity: 0;
+			}
+		}
+		@keyframes rise {
+			from {
+				transform: translateY(8px);
 				opacity: 0;
 			}
 		}
@@ -701,48 +814,32 @@
 		}
 	}
 	@media (max-width: 650px) {
-		.world-page {
-			padding-top: 24px;
+		.menu-button {
+			right: 16px;
+			bottom: 16px;
 		}
-		.welcome {
-			align-items: start;
-			margin-bottom: 20px;
-		}
-		.welcome > p {
-			display: none;
-		}
-		.mobile-break {
-			display: block;
-		}
-		.room-frame {
-			height: min(118vw, 520px);
-		}
-		.room-caption {
-			top: 14px;
-			left: 14px;
-			font-size: 11px;
+		.menu {
+			inset: auto 16px 84px 16px;
+			width: auto;
+			max-height: calc(100dvh - 168px);
 		}
 		.room-hint {
-			left: 12px;
-			right: 12px;
-			bottom: 12px;
+			left: 16px;
+			right: 16px;
+			bottom: 84px;
 			padding: 10px 14px;
 		}
 		.hint-title {
 			font-size: 19px;
 		}
+		.note {
+			left: 16px;
+			right: 16px;
+			bottom: 190px;
+			max-width: none;
+		}
 		.desktop-instructions {
 			display: none;
-		}
-		.guide ul {
-			grid-template-columns: 1fr;
-		}
-		.room-footer {
-			flex-direction: column;
-			font-size: 14px;
-		}
-		.settings {
-			gap: 4px 16px;
 		}
 	}
 </style>

@@ -231,6 +231,8 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	let inspectOnArrival: StationLayout | null = null;
 	let reducedMotion = options.reducedMotion;
 	let lowQuality = options.lowQuality;
+	// Screen space covered by overlaid UI (CSS px); the room is framed in what's left.
+	let insets = { top: 0, bottom: 0 };
 	let paused = false;
 	let disposed = false;
 	let frame = 0;
@@ -550,12 +552,17 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		if (disposed) return;
 		const { width, height } = canvas.getBoundingClientRect();
 		if (!width || !height) return;
+		const free = Math.max(height * 0.4, height - insets.top - insets.bottom);
+		const freeHeight = Math.max(9.4, 11.4 / (width / free));
+		const unitsPerPx = freeHeight / free;
+		const viewHeight = unitsPerPx * height;
 		const aspect = width / height;
-		const viewHeight = Math.max(9.4, 11.4 / aspect);
+		// Shift the frustum so the room centres in the free area, not the whole canvas.
+		const shift = ((insets.top - insets.bottom) / 2) * unitsPerPx;
 		camera.left = (-viewHeight * aspect) / 2;
 		camera.right = (viewHeight * aspect) / 2;
-		camera.top = viewHeight / 2;
-		camera.bottom = -viewHeight / 2;
+		camera.top = viewHeight / 2 + shift;
+		camera.bottom = -viewHeight / 2 + shift;
 		if (focused && !tween) {
 			const to = framing(focused);
 			view.target.copy(to.target);
@@ -628,6 +635,11 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		},
 		setLowQuality(value: boolean) {
 			lowQuality = value;
+			resize();
+		},
+		setInsets(value: { top: number; bottom: number }) {
+			if (value.top === insets.top && value.bottom === insets.bottom) return;
+			insets = value;
 			resize();
 		},
 		destroy() {

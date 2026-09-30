@@ -10,10 +10,11 @@
 
 ## Current state (verified 2026-10-01)
 
-- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 `298269e`, Phase 3 `e71d7cc`, Phase 4 `9b8afb4`, Phase 5 (this state). `main` is untouched. Nothing is pushed to the remote.
+- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 `298269e`, Phase 3 `e71d7cc`, Phase 4 `9b8afb4`, Phase 5 `4b772bd`, then a full-page World follow-up (this state). `main` is untouched. Nothing is pushed to the remote.
 - Stack: SvelteKit 2.70, Svelte 5.57, TypeScript, Tailwind 4, **adapter-node 5.5.7** (replaced adapter-static), Three.js 0.186.1.
 - `/world` has all nine stations from the brief (desk & computer, notebook & fountain pen, Fujifilm X-T30 II, Pokémon shelf, corkboard, conference wall, mirror, window, door) and four curiosities (Blastoise plush, Superman mug, suitcase, football), plus decoration (reading corner, tripod, prints, lamp). The window follows Bengaluru time. `/now` exists. `/index` is SSR and never loads the scene.
 - `/` renders World or Index on the server from the `mode` cookie (default World). `/world` and `/index` set it.
+- World is the whole page: full-viewport room, floating header (WORLD / INDEX), and an "In the room" menu button bottom right that opens the station list, curiosities, and settings.
 - Every page is V3 now: one header (WORLD / INDEX switch everywhere, section nav on deep pages), one footer, one container width. Deep pages: `/work`, `/projects`, `/speaking`, `/writing`, `/community`, `/photography`, `/collection`, `/about`, `/contact`, `/now`; `/resume` stays a PDF redirect. All V2 components are gone.
 - Validation: `npm run check` 0/0, `npm test` 13/13, `npm run test:e2e` 22/22 (including axe WCAG 2.2 AA audits) against the built Node server, `npm run lint` passes. 10–11 draw calls, ~7.8k triangles. Launch checklist and measured performance proxy: `v3.md`, "Launch checklist".
 - Blocked on the user: deployment host choice, a physical mid-range phone test (see the gate in `v3.md`), analytics decision, and copy review.
@@ -268,4 +269,17 @@
 - `vite.config.js`: `chunkSizeWarningLimit: 600` with a comment; the only chunk over 500 KB raw is the lazy scene, whose budget is tracked in `v3.md`.
 - `scripts/perf.mjs` (new): performance proxy (phone viewport, 4× CPU throttle, software WebGL). Results recorded in `v3.md`; clearly not the real-phone gate.
 - `v3.md`: new "Launch checklist" with what is done, the measured proxy, and what still needs Aditya or the host.
+- Ran Prettier on the files above.
+
+### 2026-10-01 — Full-page World with a floating menu (user request)
+
+- User asked for the game to take the whole page, with the room's contents in a floating hamburger menu at the bottom right. Kept the WORLD / INDEX switch visible (brief requirement) and gave the button a label ("☰ In the room") so the list is discoverable.
+- `src/lib/components/world/WorldView.svelte`: rewritten as a fixed, full-viewport stage. Canvas fills the screen (`touch-action: none`, since the page no longer scrolls). Floating transparent header, title, optional diagnostics; hint card bottom left; menu button bottom right. The station guide, little things, instructions, and settings (reset, low power, less motion) moved into a native `popover` menu, which works without JavaScript and stays in the SSR HTML. The menu is capped so it never covers the header switch. Picking a station closes the menu and returns focus to the menu button afterwards. Fallback and loading states are full-page with the room still behind a message card. Removed the scroll-into-view logic (nothing scrolls now).
+- `src/lib/world/scene.ts`: `setInsets({ top, bottom })`; the frustum is sized and shifted so the room fits the space left by the overlays. WorldView measures the insets (title on top; hint and button at the bottom on narrow screens) with a ResizeObserver.
+- `src/lib/components/V3Header.svelte`: `overlay` variant (transparent, full width).
+- `src/routes/+layout.svelte`: World (`/world`, or `/` in world mode) is immersive, so the layout skips its own header and footer there.
+- `tests/browser/world.spec.ts`: an `openMenu` helper; floor clicks use projected points instead of raw canvas fractions; focus now returns to the menu button; the no-JavaScript test opens the popover menu (declarative, no JS) before counting links; the phone test also asserts no vertical scroll. `tests/browser/a11y.spec.ts`: audits the open menu and opens it before each station.
+- `scripts/derive-assets.mjs`: hides the new overlays when capturing. Regenerated `static/room-still.jpg` (69 KB, full-page framing), `og/room.jpg`, and the portrait copies (byte-identical). `og/og.html`: zooms the full-page capture so the room still fills the card; `static/og.png` re-rendered.
+- `v3.md`: input contract and launch checklist describe the full-page layout and the menu.
+- Re-ran `npm run perf` on the full-page room: FCP 312 ms, room ready 1.74 s (was 1.47 s with the smaller canvas), walking p50/p95 16.7 ms with one 100 ms spike, zero idle frames. `v3.md` numbers updated.
 - Ran Prettier on the files above.
