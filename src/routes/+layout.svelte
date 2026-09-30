@@ -7,6 +7,7 @@
 	import SiteFooter from '$lib/components/SiteFooter.svelte';
 
 	const { children } = $props();
+	const isV3 = $derived(['/world', '/index'].includes(page.url.pathname.replace(/\/$/, '')));
 </script>
 
 <svelte:head>
@@ -29,11 +30,11 @@
 	>
 		Skip to content
 	</a>
-	<SiteHeader />
+	{#if !isV3}<SiteHeader />{/if}
 	{#key page.url.pathname}
-		<main id="main" tabindex="-1" class="page-enter flex-1 focus:outline-none">
+		<main id="main" tabindex="-1" class:page-enter={!isV3} class="flex-1 focus:outline-none">
 			{@render children()}
 		</main>
 	{/key}
-	<SiteFooter />
+	{#if !isV3}<SiteFooter />{/if}
 </div>

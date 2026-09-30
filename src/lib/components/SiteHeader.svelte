@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { primaryNav, site } from '$lib/data/site';
+	import ModeSwitch from './ModeSwitch.svelte';
 
 	function isCurrent(href: string): boolean {
 		const path = page.url.pathname.replace(/\/$/, '') || '/';
@@ -30,4 +31,5 @@
 			{/each}
 		</ul>
 	</nav>
+	<div class="mt-3 flex justify-center sm:justify-end"><ModeSwitch /></div>
 </header>

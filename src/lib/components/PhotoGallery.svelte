@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import type { Photo } from '$lib/data/photos';
 
 	let { photos }: { photos: Photo[] } = $props();
@@ -25,7 +25,7 @@
 	}
 
 	// Server renders the curated order; each visit swaps in a random pick.
-	let selection = $state(pick(photos, false));
+	let selection = $state(untrack(() => pick(photos, false)));
 
 	onMount(() => {
 		selection = pick(photos, true);

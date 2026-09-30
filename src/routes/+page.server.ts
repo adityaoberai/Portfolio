@@ -1,4 +1,4 @@
-import { PEXELS_API_KEY } from '$env/static/private';
+import * as privateEnv from '$env/static/private';
 import { photos as placeholders, type Photo } from '$lib/data/photos';
 import photoUrls from '$lib/data/pexels-photos.json';
 
@@ -17,6 +17,8 @@ type PexelsPhoto = {
 // at build time. Falls back to the placeholder plates if the key is missing
 // or the API is unreachable, so the build never breaks.
 export async function load({ fetch }) {
+	// A missing optional key must also work in a clean, secret-free checkout.
+	const PEXELS_API_KEY = Reflect.get(privateEnv, 'PEXELS_API_KEY') as string | undefined;
 	if (!PEXELS_API_KEY) {
 		console.warn('PEXELS_API_KEY is empty; using placeholder photos.');
 		return { photos: placeholders };
