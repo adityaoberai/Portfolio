@@ -276,6 +276,8 @@ export interface CuriosityLayout {
 	// before the note shows. Other little things just show their note.
 	approach?: Point;
 	facing?: number;
+	// Where the camera pushes toward while its poem is open, as for a station.
+	focus?: Vec3;
 }
 
 // Environmental details: a one-line note, not a navigation destination.
@@ -289,7 +291,9 @@ export const CURIOSITIES: CuriosityLayout[] = [
 		id: 'bed',
 		hit: { center: [BED.x, 0.4, 0.825], size: [1.42, 0.8, 2.15] },
 		approach: { x: 1.75, z: 1.7 },
-		facing: Math.atan2(0.25, 1)
+		facing: Math.atan2(0.25, 1),
+		// Between the bed and the character turned away from it.
+		focus: [2.3, 0.75, 1.3]
 	},
 	{
 		id: 'cowl',

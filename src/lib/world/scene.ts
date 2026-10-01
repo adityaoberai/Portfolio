@@ -410,6 +410,8 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		Boolean(item.approach)
 	);
 	let focused: StationLayout | null = null;
+	// What the camera is pushed in on: an open station, or the bed while its poem is open.
+	let framed: { focus: Vec3; door: number } | null = null;
 	// The station whose seat the character is sitting in, if any.
 	let seated: StationLayout | null = null;
 	let pointerStart: { x: number; y: number; id: number } | null = null;
@@ -494,22 +496,23 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		camera.updateProjectionMatrix();
 		door.rotation.y = view.door;
 	}
-	function framing(station: StationLayout | null) {
-		if (!station) return { target: new Vector3(...CAMERA_TARGET), zoom: 1, door: 0 };
+	function framing(at: typeof framed) {
+		if (!at) return { target: new Vector3(...CAMERA_TARGET), zoom: 1, door: 0 };
 		const zoom = FOCUS_ZOOM;
 		const width = (camera.right - camera.left) / zoom;
 		const height = (camera.top - camera.bottom) / zoom;
 		camera.updateMatrixWorld();
 		const rightAxis = new Vector3().setFromMatrixColumn(camera.matrixWorld, 0);
 		const upAxis = new Vector3().setFromMatrixColumn(camera.matrixWorld, 1);
-		const focusPoint = new Vector3(...station.focus);
+		const focusPoint = new Vector3(...at.focus);
 		// Leave room for the details sheet: right side on wide screens, bottom on narrow.
 		if (canvas.clientWidth >= 820) focusPoint.addScaledVector(rightAxis, width * 0.2);
 		else focusPoint.addScaledVector(upAxis, -height * 0.18);
-		return { target: focusPoint, zoom, door: station.id === 'door' ? DOOR_OPEN : 0 };
+		return { target: focusPoint, zoom, door: at.door };
 	}
-	function frameTo(station: StationLayout | null) {
-		const to = framing(station);
+	function frameTo(at: typeof framed) {
+		framed = at;
+		const to = framing(at);
 		if (reducedMotion) {
 			tween = null;
 			view.target.copy(to.target);
@@ -531,7 +534,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		if (station.seat) sit(station);
 		else face(station.focus);
 		focused = station;
-		frameTo(station);
+		frameTo({ focus: station.focus, door: station.id === 'door' ? DOOR_OPEN : 0 });
 		options.onInspect(station.id);
 	}
 	function draw(time: number) {
@@ -808,8 +811,8 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		camera.right = (viewHeight * aspect) / 2;
 		camera.top = viewHeight / 2 + shift;
 		camera.bottom = -viewHeight / 2 + shift;
-		if (focused && !tween) {
-			const to = framing(focused);
+		if (framed && !tween) {
+			const to = framing(framed);
 			view.target.copy(to.target);
 			view.zoom = to.zoom;
 			view.door = to.door;
@@ -855,6 +858,12 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		anchor(id: StationId | CuriosityId) {
 			const item = [...STATIONS, ...CURIOSITIES].find((entry) => entry.id === id);
 			return item ? project(item.hit.center) : null;
+		},
+		// Push the camera in on a little thing while something about it is open (the bed's
+		// poem), the way it does for a station; `release` returns it.
+		look(id: CuriosityId) {
+			const item = CURIOSITIES.find((entry) => entry.id === id);
+			if (item?.focus) frameTo({ focus: item.focus, door: 0 });
 		},
 		// Return the camera to the overview after a station closes.
 		release() {

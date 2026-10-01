@@ -59,7 +59,7 @@ test('the room, its guide, and every station meet WCAG 2.2 AA (automated checks)
 		await expect(page.getByRole('dialog')).toBeVisible();
 		// Measure contrast after the sheet's fade-in, not halfway through it.
 		await page
-			.locator('dialog.sheet')
+			.locator('dialog[open]')
 			.evaluate((dialog) => Promise.all(dialog.getAnimations().map((a) => a.finished)));
 		await audit(page, `/world (${name} open)`);
 		await page.keyboard.press('Escape');

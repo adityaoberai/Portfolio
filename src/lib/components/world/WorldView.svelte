@@ -4,7 +4,7 @@
 	import StationPanel from './StationPanel.svelte';
 	// All copy and content comes from src/lib/data/world.ts (resolved in room.ts).
 	import { curiosities, page as copy, stationById, stations } from '$lib/data/room';
-	import type { Curiosity, Poem } from '$lib/data/world';
+	import type { Curiosity } from '$lib/data/world';
 	import type { CuriosityId, StationId } from '$lib/world/layout';
 	import type { HoverTarget, RoomController, RoomState } from '$lib/world/scene';
 
@@ -27,7 +27,9 @@
 	let hover = $state<{ label: string; x: number; y: number } | null>(null);
 	let note = $state<Curiosity | null>(null);
 	let noteTimer = 0;
-	let poem = $state<Poem | null>(null);
+	// The little thing whose poem is open (the bed's).
+	let poemOf = $state<CuriosityId | null>(null);
+	const poem = $derived((poemOf && curiosities[poemOf].poem) || null);
 	let returnFocus: HTMLElement | null = null;
 
 	const near = $derived((roomState?.near && stationById[roomState.near]) || null);
@@ -163,28 +165,31 @@
 	}
 	function showCuriosity(id: CuriosityId) {
 		const item = curiosities[id];
-		if (item.poem) return void showPoem(item.poem);
+		if (item.poem) return void showPoem(id);
 		note = item;
 		window.clearTimeout(noteTimer);
 		noteTimer = window.setTimeout(() => (note = null), 5000);
 	}
-	// The bed's poem pops up over the room and stays until it's closed.
-	async function showPoem(value: Poem) {
+	// The bed's poem opens in the sheet, like a station, with the camera pushed in on the bed;
+	// it stays until it's closed.
+	async function showPoem(id: CuriosityId) {
 		window.clearTimeout(noteTimer);
 		note = null;
-		poem = value;
+		poemOf = id;
 		room?.setPaused(true);
+		room?.look(id);
 		hover = null;
 		await tick();
 		if (!poemDialog.open) poemDialog.showModal();
 		poemDialog.focus(quietFocus);
 	}
-	function readPoem(value: Poem) {
+	function readPoem(id: CuriosityId) {
 		if (menu.matches(':popover-open')) menu.hidePopover();
-		void showPoem(value);
+		void showPoem(id);
 	}
 	function closePoem() {
-		poem = null;
+		poemOf = null;
+		room?.release();
 		room?.setPaused(false);
 		backToRoom();
 	}
@@ -410,11 +415,11 @@
 		<details class="little-things">
 			<summary>Little things in the room</summary>
 			<ul>
-				{#each Object.values(curiosities) as item (item.label)}
+				{#each Object.entries(curiosities) as [id, item] (id)}
 					<li>
-						<strong>{item.label}</strong> · {item.line}{#if item.poem}{@const poem =
-								item.poem}{' '}<button class="read-poem" onclick={() => readPoem(poem)}
-								>Read “{poem.title}”</button
+						<strong>{item.label}</strong> · {item.line}{#if item.poem}{' '}<button
+								class="read-poem"
+								onclick={() => readPoem(id as CuriosityId)}>Read “{item.poem.title}”</button
 							>{/if}
 					</li>
 				{/each}
@@ -481,36 +486,38 @@
 	{/if}
 </dialog>
 
-<!-- The bed's poem. A click outside the card closes it, like E, Escape, and the button. -->
+<!-- The bed's poem, in the same sheet as the stations. -->
 <dialog
 	bind:this={poemDialog}
-	class="poem"
+	class="sheet poem"
 	onclose={closePoem}
 	onkeydown={sheetKeys}
-	onclick={(event) => event.target === poemDialog && poemDialog.close()}
 	aria-labelledby="poem-title"
 	tabindex="-1"
 >
-	{#if poem}
-		<div class="poem-card">
-			<p class="eyebrow">{poem.author}</p>
-			<h2 id="poem-title">{poem.title}</h2>
-			<div class="verse">
-				{#each poem.stanzas as stanza, s (s)}
-					<p>
-						{#each stanza as line, i (i)}{#if i}<br
-								/>{/if}{#if poem.bold && line.startsWith(poem.bold)}<strong>{line}</strong
-								>{:else}{line}{/if}{/each}
-					</p>
-				{/each}
-			</div>
-			<div class="poem-foot">
-				<button class="back-button" onclick={() => poemDialog.close()}>← Back to the room</button>
-				{#if !coarse}<span class="sheet-hint" aria-hidden="true"
-						><kbd>E</kbd> or <kbd>Esc</kbd> to close</span
-					>{/if}
-			</div>
+	{#if poemOf && poem}
+		<div class="sheet-top">
+			{#if !coarse}<span class="sheet-hint" aria-hidden="true"
+					><kbd>E</kbd> or <kbd>Esc</kbd> to close</span
+				>{/if}
+			<button
+				class="close"
+				onclick={() => poemDialog.close()}
+				aria-label="Close and return to the room">Close ×</button
+			>
 		</div>
+		<p class="poem-eyebrow">{curiosities[poemOf].label} · {poem.author}</p>
+		<h2 id="poem-title">{poem.title}</h2>
+		<div class="verse">
+			{#each poem.stanzas as stanza, s (s)}
+				<p>
+					{#each stanza as line, i (i)}{#if i}<br
+							/>{/if}{#if poem.bold && line.startsWith(poem.bold)}<strong>{line}</strong
+							>{:else}{line}{/if}{/each}
+				</p>
+			{/each}
+		</div>
+		<button class="back-button" onclick={() => poemDialog.close()}>← Back to the room</button>
 	{/if}
 </dialog>
 
@@ -938,44 +945,28 @@
 		background: linear-gradient(90deg, #263b3a14, #263b3a4d);
 	}
 	/* The sheet takes focus only so the keyboard scrolls it; it isn't a control. */
-	.sheet:focus,
-	.poem:focus {
+	.sheet:focus {
 		outline: none;
 	}
-	/* The bed's poem: a card that pops up in the middle of the room. */
-	.poem {
-		margin: auto;
-		width: min(460px, calc(100% - 32px));
-		max-height: calc(100dvh - 32px);
-		max-width: none;
-		overflow-y: auto;
-		padding: 0;
-		background: #faf7ed;
-		color: #283f33;
-		border: 1px solid #b7bda5;
-		border-radius: 12px;
-		box-shadow: 0 24px 80px #25352947;
-	}
-	.poem::backdrop {
-		background: #263b3a59;
-	}
-	.poem-card {
-		padding: 30px 34px 26px;
-	}
-	.poem-card .eyebrow {
-		font-size: 11px;
+	/* The bed's poem, set like a station's panel heading, then the verse. */
+	.poem-eyebrow {
+		font:
+			11px/1.5 system-ui,
+			sans-serif;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: #5f6755;
 	}
 	.poem h2 {
-		margin-top: 6px;
-		font-size: clamp(24px, 3vw, 30px);
-		line-height: 1.12;
-		letter-spacing: -0.03em;
-		font-weight: 500;
+		margin-top: 14px;
+		font-size: clamp(26px, 2.6vw, 32px);
+		letter-spacing: -0.035em;
+		line-height: 1.1;
 	}
 	.verse {
-		margin-top: 20px;
+		margin-top: 18px;
 		font-size: 17px;
-		line-height: 1.55;
+		line-height: 1.5;
 	}
 	.verse p + p {
 		margin-top: 14px;
@@ -984,15 +975,8 @@
 		font-weight: 700;
 		color: #1f3328;
 	}
-	.poem-foot {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 8px 16px;
-		margin-top: 24px;
-	}
-	.poem-foot .back-button {
-		margin-top: 0;
+	.poem .back-button {
+		margin-top: 22px;
 	}
 	.read-poem {
 		text-decoration: underline;
@@ -1036,24 +1020,6 @@
 		.menu:popover-open {
 			animation: rise 180ms ease-out;
 		}
-		/* A small overshoot, so the poem pops. */
-		.poem[open] {
-			animation: pop 320ms cubic-bezier(0.2, 1.4, 0.4, 1);
-		}
-		.poem[open]::backdrop {
-			animation: fade 200ms ease-out;
-		}
-		@keyframes pop {
-			from {
-				transform: scale(0.86);
-				opacity: 0;
-			}
-		}
-		@keyframes fade {
-			from {
-				opacity: 0;
-			}
-		}
 		@keyframes slide-in {
 			from {
 				transform: translateX(24px);
@@ -1077,6 +1043,10 @@
 			border-top: 1px solid #b7bda5;
 			border-radius: 14px 14px 0 0;
 			box-shadow: 0 -18px 60px #25352926;
+		}
+		/* Taller for the poem, so it's whole on a phone. */
+		.sheet.poem {
+			max-height: 94dvh;
 		}
 		.sheet::backdrop {
 			background: #263b3a4d;
