@@ -90,19 +90,28 @@ export function onShelf(x: number, z: number): Point {
 	return { x: SHELF.x + c * x + s * z, z: SHELF.z - s * x + c * z };
 }
 
+// The camera cabinet stands against the left wall beside the desk, facing the
+// room, with a strand of prints above it; the mirror leans against the back wall
+// in the right corner. Both are drawn in their own frames (build.ts).
+export const CABINET = { x: -3.2, z: -0.8, angle: Math.PI / 2 };
+export const MIRROR = { x: 3.05, z: -2.88, angle: -Math.PI / 2 };
+
+// The bed runs along the right edge of the room, headboard at the back.
+export const BED = { x: 2.8 };
+
 export const FOOTPRINTS = {
 	desk: { x: DESK.x, z: DESK.z, halfX: DESK.length / 2, halfZ: DESK.depth / 2, angle: DESK.angle },
 	deskChair: { x: -2.4, z: -2.15, halfX: 0.26, halfZ: 0.25, angle: Math.PI / 2 - 0.3 },
-	cabinet: edges(2.6, 3.5, -3, -2.4),
-	tripod: { x: 2.42, z: -2.2, halfX: 0.08, halfZ: 0.08, angle: 0 },
+	cabinet: { x: CABINET.x, z: CABINET.z, halfX: 0.45, halfZ: 0.3, angle: CABINET.angle },
 	shelf: { x: SHELF.x, z: SHELF.z, halfX: 0.275, halfZ: 0.6, angle: SHELF.angle },
-	mirror: edges(-3.5, -3.12, -1.2, -0.5),
-	bed: edges(-3.5, -2.1, -0.25, 1.9),
+	mirror: edges(2.64, 3.46, -3, -2.62),
+	bed: edges(BED.x - 0.7, BED.x + 0.7, -0.25, 1.9),
 	football: { x: -3.2, z: 2.03, halfX: 0.13, halfZ: 0.13, angle: 0 },
 	suitcase: edges(-2.15, -1.65, 2.72, 2.98),
-	armchair: { x: 2.65, z: 1.22, halfX: 0.43, halfZ: 0.38, angle: -0.55 },
-	books: { x: 2.05, z: 0.62, halfX: 0.2, halfZ: 0.16, angle: 0 },
-	floorLamp: { x: 3.25, z: 0.62, halfX: 0.13, halfZ: 0.13, angle: 0 },
+	// The reading corner, under the corkboard where the bed was.
+	armchair: { x: -2.75, z: 1.0, halfX: 0.43, halfZ: 0.38, angle: 0.55 },
+	books: { x: -2.0, z: 1.6, halfX: 0.2, halfZ: 0.16, angle: 0 },
+	floorLamp: { x: -3.1, z: 0.3, halfX: 0.13, halfZ: 0.13, angle: 0 },
 	plant: edges(2.72, 3.28, 2.27, 2.83)
 } satisfies Record<string, Footprint>;
 
@@ -147,9 +156,9 @@ export const STATIONS: StationLayout[] = [
 	},
 	{
 		id: 'camera',
-		approach: { x: 2.95, z: -1.85 },
-		hit: { center: [3.02, 1.25, -2.72], size: [1.05, 2.5, 0.85] },
-		focus: [3.0, 1.2, -2.7],
+		approach: { x: -2.5, z: -0.8 },
+		hit: { center: [-3.2, 1.25, -0.8], size: [0.85, 2.5, 1.05] },
+		focus: [-3.18, 1.2, -0.78],
 		priority: 0
 	},
 	{
@@ -175,9 +184,9 @@ export const STATIONS: StationLayout[] = [
 	},
 	{
 		id: 'mirror',
-		approach: { x: -2.75, z: -0.85 },
-		hit: { center: [-3.3, 1.0, -0.85], size: [0.55, 2.0, 0.95] },
-		focus: [-3.35, 1.1, -0.85],
+		approach: { x: 3.05, z: -2.2 },
+		hit: { center: [3.05, 1.0, -2.85], size: [0.95, 2.0, 0.55] },
+		focus: [3.05, 1.1, -2.9],
 		priority: 0
 	},
 	{
@@ -222,7 +231,7 @@ export interface CuriosityLayout {
 
 // Environmental details: a one-line note, not a navigation destination.
 export const CURIOSITIES: CuriosityLayout[] = [
-	{ id: 'plush', hit: { center: [-2.72, 0.85, 0.15], size: [0.65, 0.6, 0.6] } },
+	{ id: 'plush', hit: { center: [BED.x - 0.08, 0.85, 0.15], size: [0.65, 0.6, 0.6] } },
 	{
 		id: 'cowl',
 		hit: {

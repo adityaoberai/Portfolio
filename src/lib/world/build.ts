@@ -14,7 +14,7 @@ import {
 	type BufferGeometry
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { DESK, FLAG, FOOTPRINTS, LAPTOP, SHELF, type Vec3 } from './layout';
+import { BED, CABINET, DESK, FLAG, FOOTPRINTS, LAPTOP, MIRROR, SHELF, type Vec3 } from './layout';
 
 type Shape = 'box' | 'cylinder' | 'sphere' | 'disc' | 'cone' | 'plane';
 
@@ -462,7 +462,15 @@ export function buildDesk(lit: Batch, unlit: Batch) {
 	});
 }
 
+// The photography corner (CABINET in layout.ts). Drawn as it stood against the
+// back wall, centred on (3.05, -2.7), then moved as one piece.
 export function buildPhotography(lit: Batch) {
+	lit.group([CABINET.x, 0, CABINET.z], CABINET.angle, () =>
+		lit.group([-3.05, 0, 2.7], 0, () => photographyCorner(lit))
+	);
+}
+
+function photographyCorner(lit: Batch) {
 	lit.box('#9c704c', [3.05, 0.45, -2.7], [0.85, 0.9, 0.6]);
 	lit.box('#86603f', [3.05, 0.45, -2.395], [0.012, 0.8, 0.01]);
 	for (const x of [2.97, 3.13]) lit.box('#6b4f36', [x, 0.55, -2.39], [0.04, 0.04, 0.02]);
@@ -589,14 +597,16 @@ export function buildCollection(lit: Batch, faces: Batch, cards: number) {
 }
 
 export function buildBedroom(lit: Batch) {
-	lit.box('#8f6a4c', [-2.8, 0.6, -0.23], [1.42, 1, 0.06]);
-	lit.box('#a9805c', [-2.8, 0.25, 0.825], [1.4, 0.4, 2.15]);
-	lit.box('#faf2da', [-2.8, 0.53, 0.84], [1.34, 0.18, 2.08]);
-	lit.box('#749287', [-2.8, 0.66, 1.15], [1.36, 0.1, 1.45]);
-	lit.box('#a7b6a1', [-2.8, 0.72, 0.45], [1.38, 0.03, 0.3]);
-	lit.box('#f0e3c7', [-2.9, 0.7, 0.07], [0.95, 0.16, 0.4]);
-	// Squirtle plush by the pillow.
-	lit.group([-2.62, 0.62, 0.28], Math.PI / 3, () => squirtle(lit), 0.72);
+	// The bed along the right edge of the room (BED in layout.ts).
+	const x = BED.x;
+	lit.box('#8f6a4c', [x, 0.6, -0.23], [1.42, 1, 0.06]);
+	lit.box('#a9805c', [x, 0.25, 0.825], [1.4, 0.4, 2.15]);
+	lit.box('#faf2da', [x, 0.53, 0.84], [1.34, 0.18, 2.08]);
+	lit.box('#749287', [x, 0.66, 1.15], [1.36, 0.1, 1.45]);
+	lit.box('#a7b6a1', [x, 0.72, 0.45], [1.38, 0.03, 0.3]);
+	lit.box('#f0e3c7', [x + 0.1, 0.7, 0.07], [0.95, 0.16, 0.4]);
+	// Squirtle plush by the pillow, facing the room.
+	lit.group([x - 0.18, 0.62, 0.28], Math.PI / 3, () => squirtle(lit), 0.72);
 
 	// Front-right plant.
 	lit.cylinder('#b87554', [3.0, 0.33, 2.55], 0.3, 0.66);
@@ -712,7 +722,8 @@ export function buildLanyards(lit: Batch) {
 }
 
 export function buildMirror(lit: Batch) {
-	lit.group([-3.38, 0, -0.85], [0, 0, 0.08], () => {
+	// Leaning back against the wall (MIRROR in layout.ts); its own +x faces out.
+	lit.group([MIRROR.x, 0, MIRROR.z], [0, MIRROR.angle, 0.08], () => {
 		lit.box('#8f6a4c', [0, 0.97, 0], [0.08, 1.92, 0.82]);
 		lit.box('#d6e3df', [0.045, 0.99, 0], [0.02, 1.76, 0.66]);
 		for (const [y, z] of [
@@ -820,21 +831,6 @@ export function buildDecor(lit: Batch, unlit: Batch, flag: Batch) {
 	lit.cylinder('#5d4a3a', [lamp.x, 0.02, lamp.z], 0.12, 0.03);
 	lit.cylinder('#5d4a3a', [lamp.x, 0.75, lamp.z], 0.015, 1.45);
 	lit.add('cone', '#e9d2a6', [lamp.x, 1.5, lamp.z], [0.2, 0.22, 0.2]);
-
-	// Tripod folded against the cabinet.
-	const legs: [number, number][] = [
-		[-0.06, 0],
-		[0.04, 0.05],
-		[0.03, -0.05]
-	];
-	const tripod = FOOTPRINTS.tripod;
-	for (const [dx, dz] of legs)
-		lit.cylinder('#3a3a38', [tripod.x + dx, 0.55, tripod.z + dz], 0.012, 1.1, [
-			dz * 1.5,
-			0,
-			dx * 1.5
-		]);
-	lit.box('#2b2b2a', [tripod.x, 1.12, tripod.z], [0.08, 0.06, 0.08]);
 
 	// Suitcase with travel stickers, and a football.
 	lit.box('#4f6f7a', [-1.9, 0.36, 2.85], [0.48, 0.62, 0.26]);
