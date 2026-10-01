@@ -15,7 +15,7 @@ const recentTalks = talks.filter((talk) => talk.year === talks[0].year);
 
 // "Right now", as seen through the window. Everything is derived from existing
 // records. Reading and Thinking about need Aditya's own answers, so they are
-// omitted until he adds them (see HANDOVER.md).
+// omitted until he adds them (see WORKLOG.md).
 export const now = {
 	basedIn: 'Bengaluru, India',
 	timeZone: 'Asia/Kolkata',

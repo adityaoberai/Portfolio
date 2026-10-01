@@ -378,7 +378,7 @@ export const world: WorldConfig = {
 		}
 	],
 
-	// Copy written by Claude for Aditya to review (see HANDOVER.md).
+	// Copy written by Claude for Aditya to review (see WORKLOG.md).
 	curiosities: {
 		plush: {
 			label: 'Blastoise plush',

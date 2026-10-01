@@ -1,4 +1,4 @@
-﻿# V3 handover
+﻿# V3 work log
 
 ## Working agreement
 
@@ -10,7 +10,7 @@
 
 ## Current state (verified 2026-10-01)
 
-- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 `298269e`, Phase 3 `e71d7cc`, Phase 4 `9b8afb4`, Phase 5 `4b772bd`, full-page World `1b0e26b`, focus/size/E `2db0f96` + `9797ce7`, configurable room content `b8ed4c3`, then solid furniture and the open doorway (this state). `main` is untouched. `origin/v3-world` was at `b8ed4c3` before this change.
+- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 `298269e`, Phase 3 `e71d7cc`, Phase 4 `9b8afb4`, Phase 5 `4b772bd`, full-page World `1b0e26b`, focus/size/E `2db0f96` + `9797ce7`, configurable room content `b8ed4c3`, solid furniture and the open doorway `99f5277`, then the rename to `WORKLOG.md` (this state). `main` is untouched. `origin/v3-world` was at `b8ed4c3` before this change.
 - Stack: SvelteKit 2.70, Svelte 5.57, TypeScript, Tailwind 4, **adapter-node 5.5.7** (replaced adapter-static), Three.js 0.186.1.
 - `/world` has all nine stations from the brief (desk & computer, notebook & fountain pen, Fujifilm X-T30 II, Pokémon shelf, corkboard, conference wall, mirror, window, door) and four curiosities (Blastoise plush, Superman mug, suitcase, football), plus decoration (reading corner, tripod, prints, lamp). The window follows Bengaluru time. `/now` exists. `/index` is SSR and never loads the scene.
 - `/` renders World or Index on the server from the `mode` cookie (default World). `/world` and `/index` set it.
@@ -334,3 +334,9 @@
 - Regenerated `static/room-still.jpg`, `og/room.jpg`, and `static/og.png` (the football moved); portrait copies unchanged.
 - `v3.md`: movement and layout notes updated (solid furniture, routing, the hallway).
 - Validation: `npm run check` 0/0, `npm test` 18/18, `npm run test:e2e` 24/24, `npm run lint` exit 0.
+
+### 2026-10-01 — HANDOVER.md renamed to WORKLOG.md (user request)
+
+- The file is a status page plus a running change log, so "handover" undersold it. Renamed with `git mv` (history follows the file) and retitled "V3 work log".
+- Updated the live references: `v3.md` (Phase 0 status, scope note, copy-review checklist item), and the comments in `src/lib/data/now.ts` and `src/lib/data/world.ts`. Earlier entries in this log still say `HANDOVER.md`; they describe what happened at the time and are left as written.
+- Claude's saved working note now points to `WORKLOG.md`.
