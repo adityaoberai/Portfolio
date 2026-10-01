@@ -17,7 +17,7 @@
 		"lint": "prettier --check . && eslint .",
 		"og": "node og/render.js",
 		"assets": "node scripts/derive-assets.mjs",
-		"cards": "node --import ./tests/ts-hooks.mjs scripts/derive-cards.mjs",
+		"images": "node --import ./tests/ts-hooks.mjs scripts/derive-images.mjs",
 		"perf": "node scripts/perf.mjs",
 		"content": "node --import ./tests/ts-hooks.mjs scripts/content.mjs"
 	},

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { artifacts, worldLabels } from '../src/lib/data/artifacts.ts';
 import { sections } from '../src/lib/data/sections.ts';
 import { stations } from '../src/lib/data/room.ts';
-import { STATIONS } from '../src/lib/world/layout.ts';
+import { FLAG, STATIONS } from '../src/lib/world/layout.ts';
 import { workThemes } from '../src/lib/data/work.ts';
 import { projects } from '../src/lib/data/projects.ts';
 import { talks } from '../src/lib/data/talks.ts';
@@ -31,15 +31,20 @@ function webpSize(path) {
 	throw new Error(`${path}: unexpected WebP chunk ${chunk}`);
 }
 
+test('the flag texture exists at the size layout.ts expects', () => {
+	assert.ok(existsSync('assets/flag/manutd-crest.png'));
+	assert.deepEqual(webpSize(`static${FLAG.texture}`), FLAG.pixels);
+});
+
 test('every favourite card has its images; the shelf texture matches the card list', () => {
 	for (const card of favouriteCards) {
 		assert.ok(existsSync(`assets/cards/${card.id}.png`), `${card.id}: original missing`);
-		assert.ok(existsSync(`static${cardImage(card)}`), `${card.id}: run npm run cards`);
+		assert.ok(existsSync(`static${cardImage(card)}`), `${card.id}: run npm run images`);
 		assert.ok(card.alt.length > 20, `${card.id}: describe the artwork`);
 	}
 	assert.equal(new Set(favouriteCards.map((c) => c.id)).size, favouriteCards.length);
 	assert.ok(shelfCards.length > 0 && shelfCards.length <= SHELF_SLOTS);
-	// One cell per shelf card, in order; a stale texture means `npm run cards` wasn't run.
+	// One cell per shelf card, in order; a stale texture means `npm run images` wasn't run.
 	assert.deepEqual(webpSize(`static${SHELF_ATLAS}`), {
 		width: SHELF_CELL.width * shelfCards.length,
 		height: SHELF_CELL.height

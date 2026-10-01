@@ -155,7 +155,31 @@ export const STATIONS: StationLayout[] = [
 	}
 ];
 
-export type CuriosityId = 'plush' | 'mug' | 'suitcase' | 'football';
+// The Pokémon shelf against the left wall, top to bottom: Blastoise on top, the
+// favourite cards in a row, the Batman cowl and LEGO DeLorean, books, then
+// binders and sealed boxes. `boards` are the centres of the five boards (0.05
+// thick); each row stands on the board below it.
+export const SHELF = {
+	x: -3.225,
+	boards: [0.05, 0.45, 0.93, 1.7, 2.28],
+	// The camera looks from the +z side, so the tall cowl stands behind the low car.
+	cowl: { x: -3.2, z: -2.5, angle: Math.PI / 2 - 0.15, scale: 2.5 },
+	delorean: { x: -3.15, z: -2.04, angle: -Math.PI / 2 + 0.3, scale: 1.2 }
+};
+const displayRow = SHELF.boards[2] + 0.025;
+
+// The Manchester United flag on the back wall, above the right of the desk. Its
+// picture (red field and crest) is a texture made by `npm run images`.
+export const FLAG = {
+	x: 1.85,
+	y: 2.35,
+	width: 1,
+	height: 0.62,
+	texture: '/room/flag.webp',
+	pixels: { width: 400, height: 248 }
+};
+
+export type CuriosityId = 'plush' | 'cowl' | 'delorean' | 'flag' | 'suitcase' | 'football';
 
 export interface CuriosityLayout {
 	id: CuriosityId;
@@ -165,7 +189,18 @@ export interface CuriosityLayout {
 // Environmental details: a one-line note, not a navigation destination.
 export const CURIOSITIES: CuriosityLayout[] = [
 	{ id: 'plush', hit: { center: [-2.72, 0.85, 0.15], size: [0.65, 0.6, 0.6] } },
-	{ id: 'mug', hit: { center: [0.4, 1.15, -2.25], size: [0.32, 0.32, 0.32] } },
+	{
+		id: 'cowl',
+		hit: { center: [SHELF.cowl.x, displayRow + 0.36, SHELF.cowl.z], size: [0.5, 0.72, 0.42] }
+	},
+	{
+		id: 'delorean',
+		hit: {
+			center: [SHELF.delorean.x, displayRow + 0.1, SHELF.delorean.z],
+			size: [0.4, 0.26, 0.48]
+		}
+	},
+	{ id: 'flag', hit: { center: [FLAG.x, FLAG.y, -2.96], size: [1.04, 0.66, 0.1] } },
 	{ id: 'suitcase', hit: { center: [-1.9, 0.38, 2.85], size: [0.62, 0.8, 0.45] } },
 	{ id: 'football', hit: { center: [-3.2, 0.14, 2.03], size: [0.42, 0.42, 0.42] } }
 ];

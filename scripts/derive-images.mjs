@@ -1,9 +1,12 @@
-// Derives the card images from the originals in assets/cards/<id>.png, using
-// Playwright's Chromium to resize and encode:
+// Derives the site's images from the originals in assets/, using Playwright's
+// Chromium to resize and encode:
 //   static/cards/<id>.webp   400 px wide, for the shelf panel and /collection
 //   static/cards/shelf.webp  one row of small faces for the room's shelf slabs
-// Card ids and their order come from src/lib/data/collection.ts.
-// Usage: npm run cards (then rebuild; `npm run assets` re-captures the room).
+//   static/room/flag.webp    the flag on the room's back wall: red field and the
+//                            crest from assets/flag/manutd-crest.png
+// Card ids and their order come from src/lib/data/collection.ts; the flag's
+// size from src/lib/world/layout.ts.
+// Usage: npm run images (then rebuild; `npm run assets` re-captures the room).
 import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 import {
@@ -13,28 +16,34 @@ import {
 	SHELF_CELL,
 	shelfCards
 } from '../src/lib/data/collection.ts';
+import { FLAG } from '../src/lib/world/layout.ts';
 
-const source = (card) => {
-	const path = `assets/cards/${card.id}.png`;
-	return `data:image/png;base64,${readFileSync(path).toString('base64')}`;
-};
+const png = (path) => `data:image/png;base64,${readFileSync(path).toString('base64')}`;
+const source = (card) => png(`assets/cards/${card.id}.png`);
 
 mkdirSync('static/cards', { recursive: true });
+mkdirSync('static/room', { recursive: true });
 const browser = await chromium.launch();
 const page = await browser.newPage();
 
-// Draws images cover-fit into cells of one canvas and returns it as WebP.
-const render = (cells, width, height, quality) =>
+// Draws images into cells of one canvas (cover-fit, or contain-fit over a
+// background colour) and returns it as WebP.
+const render = (cells, width, height, quality, background) =>
 	page.evaluate(
-		async ({ cells, width, height, quality }) => {
+		async ({ cells, width, height, quality, background }) => {
 			const canvas = Object.assign(document.createElement('canvas'), { width, height });
 			const context = canvas.getContext('2d');
 			context.imageSmoothingQuality = 'high';
+			if (background) {
+				context.fillStyle = background;
+				context.fillRect(0, 0, width, height);
+			}
 			for (const cell of cells) {
 				const image = new Image();
 				image.src = cell.src;
 				await image.decode();
-				const scale = Math.max(cell.w / image.naturalWidth, cell.h / image.naturalHeight);
+				const fit = cell.contain ? Math.min : Math.max;
+				const scale = fit(cell.w / image.naturalWidth, cell.h / image.naturalHeight);
 				const w = image.naturalWidth * scale;
 				const h = image.naturalHeight * scale;
 				context.save();
@@ -46,7 +55,7 @@ const render = (cells, width, height, quality) =>
 			}
 			return canvas.toDataURL('image/webp', quality);
 		},
-		{ cells, width, height, quality }
+		{ cells, width, height, quality, background }
 	);
 
 const write = (path, dataUrl) => {
@@ -71,4 +80,27 @@ const cells = shelfCards.map((card, i) => ({
 	h: height
 }));
 write('static/cards/shelf.webp', await render(cells, width * cells.length, height, 0.86));
+
+// The flag: the crest centred on the club's red, filling most of the height.
+const flag = FLAG.pixels;
+const crest = Math.round(flag.height * 0.8);
+write(
+	'static/room/flag.webp',
+	await render(
+		[
+			{
+				src: png('assets/flag/manutd-crest.png'),
+				x: (flag.width - crest) / 2,
+				y: (flag.height - crest) / 2,
+				w: crest,
+				h: crest,
+				contain: true
+			}
+		],
+		flag.width,
+		flag.height,
+		0.9,
+		'#c8102e'
+	)
+);
 await browser.close();

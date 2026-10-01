@@ -267,12 +267,13 @@ test('every station in the room opens from the guide', async ({ browser }) => {
 test('the little things are listed for keyboards and screen readers', async ({ page }) => {
 	await openRoom(page);
 	await settle(page);
-	const mug = await anchor(page, 'mug');
-	await page.mouse.click(mug.x, mug.y);
-	await expect(page.locator('.note')).toContainText('Superman');
+	const cowl = await anchor(page, 'cowl');
+	await page.mouse.click(cowl.x, cowl.y);
+	await expect(page.locator('.note')).toContainText('Batman');
 	await openMenu(page);
 	await page.getByText('Little things in the room').click();
-	await expect(page.getByText('A Superman mug.', { exact: false }).last()).toBeVisible();
+	await expect(page.getByText('My Batman cowl.', { exact: false }).last()).toBeVisible();
+	await expect(page.getByText('Manchester United, always.', { exact: false }).last()).toBeVisible();
 });
 
 test('/now is a readable page that fills in the Bengaluru time', async ({ page }) => {

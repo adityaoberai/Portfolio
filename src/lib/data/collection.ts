@@ -8,7 +8,7 @@ export const collection = {
 };
 
 export interface Card {
-	/** Also the file name: assets/cards/<id>.png in, static/cards/<id>.webp out. */
+	/** Also the file name: assets/cards/<id>.png in, static/cards/<id>.webp out (npm run images). */
 	id: string;
 	name: string;
 	/** The name as printed, for cards in another language. */
@@ -22,10 +22,9 @@ export interface Card {
 	note?: string;
 }
 
-// Order matters: the first card stands on the easel on the room's shelf, the next
-// six fill the other slabs, best-seen first (any more still show on the panel and
-// /collection).
-// After changing cards or their order, run `npm run cards` to rebuild the images.
+// Order matters: on the room's shelf the first four stand in a row, left to right
+// (any more still show on the panel and /collection).
+// After changing cards or their order, run `npm run images` to rebuild the images.
 export const favouriteCards: Card[] = [
 	{
 		id: 'blastoise',
@@ -73,7 +72,7 @@ export const CARD_IMAGE_WIDTH = 400;
 export const CARD_IMAGE_HEIGHT = 559;
 
 // The room's shelf: slabs that can show a card, and one small texture holding them.
-export const SHELF_SLOTS = 7;
+export const SHELF_SLOTS = 4;
 export const shelfCards = favouriteCards.slice(0, SHELF_SLOTS);
 export const SHELF_ATLAS = '/cards/shelf.webp';
 export const SHELF_CELL = { width: 160, height: 224 };

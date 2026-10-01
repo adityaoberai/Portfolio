@@ -393,9 +393,17 @@ export const world: WorldConfig = {
 			label: 'Squirtle plush',
 			line: 'A Squirtle plush by the pillow. Two evolutions from now, it gets the top shelf.'
 		},
-		mug: {
-			label: 'Superman mug',
-			line: 'A Superman mug. I once wrote a whole essay about why he still matters.'
+		cowl: {
+			label: 'Batman cowl',
+			line: 'My Batman cowl. Superman got an essay; Batman is still the favourite.'
+		},
+		delorean: {
+			label: 'LEGO DeLorean',
+			line: 'The Back to the Future time machine, in LEGO. Where we’re going, we don’t need roads.'
+		},
+		flag: {
+			label: 'Manchester United flag',
+			line: 'Manchester United, always. Glory, glory.'
 		},
 		suitcase: {
 			label: 'Suitcase',
@@ -403,7 +411,7 @@ export const world: WorldConfig = {
 		},
 		football: {
 			label: 'Football',
-			line: 'A football by the door, a little scuffed. It has seen some games.'
+			line: 'A Premier League ball by the door, a little scuffed. It has seen some games.'
 		}
 	}
 };

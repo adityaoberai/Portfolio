@@ -14,7 +14,7 @@ import {
 	type BufferGeometry
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { FOOTPRINTS, type Vec3 } from './layout';
+import { FLAG, FOOTPRINTS, SHELF, type Vec3 } from './layout';
 
 type Shape = 'box' | 'cylinder' | 'sphere' | 'disc' | 'cone' | 'plane';
 
@@ -200,6 +200,165 @@ export function squirtle(b: Batch) {
 		b.box('#4a2e28', [side * 0.03, 0.434, 0.164], [0.018, 0.008, 0.008], [0, 0, side * 0.5]);
 }
 
+// Aditya's Batman cowl (gunmetal black, tall ears, white eye slits) on a foam
+// display head, local +z facing forward. The lower face is open, as on his.
+// 0.28 tall at scale 1; on the shelf it is scaled to the size of a real head.
+export function batmanCowl(b: Batch) {
+	const cowl = '#2c2e31';
+	const lift = -0.06;
+	b.cylinder('#3a3a38', [0, 0.008, 0], 0.06, 0.015);
+	b.cylinder('#cfc8bb', [0, 0.095 + lift, 0], 0.035, 0.05);
+	b.add('sphere', '#cfc8bb', [0, 0.165 + lift, 0.008], [0.062, 0.08, 0.072]);
+	b.add('sphere', cowl, [0, 0.2 + lift, -0.008], [0.073, 0.075, 0.08]);
+	b.box(cowl, [0, 0.198 + lift, 0.07], [0.1, 0.05, 0.03]);
+	b.box('#45484c', [0, 0.222 + lift, 0.083], [0.1, 0.008, 0.008]);
+	for (const side of [-1, 1]) {
+		b.box(
+			'#e9e6df',
+			[side * 0.024, 0.205 + lift, 0.086],
+			[0.03, 0.009, 0.004],
+			[0, 0, side * 0.25]
+		);
+		b.box(cowl, [side * 0.062, 0.15 + lift, 0.025], [0.018, 0.075, 0.055]);
+		b.add(
+			'cone',
+			cowl,
+			[side * 0.036, 0.3 + lift, -0.012],
+			[0.017, 0.085, 0.017],
+			[0, 0, side * -0.12]
+		);
+	}
+}
+
+// LEGO Speed Champions DeLorean time machine (77256), local +x forward, after the
+// set: a low light-grey wedge with the black side stripe and wheel arches, dark
+// windows and mirrors, studs on the hood, the louvred nose with its headlights,
+// trans-blue time-circuit coils arching over the rear wheels and glowing along the
+// sills, the reactor and Mr. Fusion on the engine deck, the roof lights, rear
+// vents and exhausts, and the tall antenna at the back.
+export function legoDelorean(b: Batch) {
+	const grey = '#a0a5a9';
+	const dark = '#55595c';
+	const black = '#232323';
+	const glass = '#33434b';
+	const glow = '#5fcde2';
+	// Body: sills, the hood sloping down to the nose, a short cabin and roof.
+	b.box(grey, [0, 0.04, 0], [0.34, 0.035, 0.15]);
+	b.box(grey, [0.095, 0.062, 0], [0.15, 0.012, 0.14], [0, 0, -0.1]);
+	b.box(grey, [-0.04, 0.074, 0], [0.11, 0.032, 0.118]);
+	b.box(grey, [-0.045, 0.094, 0], [0.08, 0.008, 0.11]);
+	for (const z of [-0.03, 0.03]) b.cylinder('#c4c8cb', [0.1, 0.07, z], 0.008, 0.006);
+	// Windscreen, side windows, gull-wing door seams, mirrors.
+	b.box(glass, [0.035, 0.076, 0], [0.05, 0.004, 0.11], [0, 0, -0.55]);
+	for (const side of [-1, 1]) {
+		const z = side * 0.06;
+		b.box(glass, [-0.045, 0.078, z], [0.085, 0.02, 0.004]);
+		b.box(black, [0.012, 0.062, side * 0.0605], [0.003, 0.032, 0.004]);
+		b.box(black, [0.024, 0.08, side * 0.068], [0.012, 0.01, 0.014]);
+	}
+	// The black stripe along the sides, black wheel arches, black skirts.
+	b.box(black, [0, 0.053, 0], [0.335, 0.006, 0.152]);
+	b.box(black, [0, 0.03, 0], [0.13, 0.012, 0.152]);
+	for (const x of [-0.11, 0.11]) b.box(black, [x, 0.059, 0], [0.075, 0.012, 0.154]);
+	// Nose: louvred grille, headlights, a black splitter, a trans-blue bar.
+	b.box(black, [0.171, 0.045, 0], [0.006, 0.02, 0.09]);
+	for (const y of [0.04, 0.046, 0.052]) b.box(dark, [0.175, y, 0], [0.003, 0.002, 0.07]);
+	b.box(black, [0.165, 0.022, 0], [0.03, 0.006, 0.15]);
+	b.box(glow, [0.172, 0.03, 0], [0.006, 0.008, 0.14]);
+	for (const side of [-1, 1]) b.box('#e8eef0', [0.171, 0.048, side * 0.058], [0.006, 0.014, 0.026]);
+	// Engine deck: louvres, the black reactor with its glowing top, Mr. Fusion.
+	b.box(dark, [-0.125, 0.07, 0], [0.09, 0.025, 0.14]);
+	for (const z of [-0.04, 0, 0.04]) b.box('#2f3133', [-0.125, 0.084, z], [0.07, 0.004, 0.02]);
+	b.box(black, [-0.12, 0.093, 0.035], [0.05, 0.022, 0.06]);
+	b.box(glow, [-0.12, 0.105, 0.035], [0.045, 0.004, 0.05]);
+	b.cylinder('#e6e7e8', [-0.15, 0.097, -0.035], 0.014, 0.03);
+	b.cylinder(dark, [-0.15, 0.114, -0.035], 0.01, 0.006);
+	// Roof lights, rear vents and twin exhausts.
+	for (const z of [-0.02, 0.02])
+		b.cylinder('#7d8285', [-0.075, 0.102, z], 0.008, 0.025, [0, 0, Math.PI / 2]);
+	b.box(black, [-0.171, 0.062, 0], [0.006, 0.03, 0.12]);
+	for (const y of [0.055, 0.065]) b.box(dark, [-0.175, y, 0], [0.003, 0.003, 0.1]);
+	for (const z of [-0.04, 0.04])
+		b.cylinder(black, [-0.176, 0.042, z], 0.01, 0.012, [0, 0, Math.PI / 2]);
+	// Time circuits: a coil arching over each rear wheel, and the sills glowing.
+	const arc: [number, number, number][] = [
+		[-0.155, 0.066, 0.7],
+		[-0.135, 0.079, 0.35],
+		[-0.11, 0.084, 0],
+		[-0.085, 0.079, -0.35],
+		[-0.065, 0.066, -0.7]
+	];
+	for (const side of [-1, 1]) {
+		for (const [x, y, tilt] of arc)
+			b.box(glow, [x, y, side * 0.077], [0.024, 0.01, 0.006], [0, 0, tilt]);
+		b.box(glow, [0, 0.02, side * 0.076], [0.3, 0.006, 0.004]);
+	}
+	// Wheels with grey hubs.
+	for (const x of [-0.11, 0.11])
+		for (const side of [-1, 1]) {
+			b.cylinder(black, [x, 0.03, side * 0.07], 0.03, 0.026, [Math.PI / 2, 0, 0]);
+			b.cylinder('#8d9295', [x, 0.03, side * 0.0835], 0.02, 0.002, [Math.PI / 2, 0, 0]);
+		}
+	// The antenna, leaning back, with a ball at its tip.
+	b.cylinder(black, [-0.2, 0.165, 0.05], 0.003, 0.18, [0, 0, 0.45]);
+	b.add('sphere', black, [-0.239, 0.246, 0.05], [0.006, 0.006, 0.006]);
+}
+
+// The Manchester United flag pinned to the back wall: a red backing (all that
+// shows until the texture arrives), the picture with the crest, and two pins.
+export function manUtdFlag(lit: Batch, picture: Batch) {
+	const { x, y, width, height } = FLAG;
+	lit.box('#c8102e', [x, y, -2.993], [width, height, 0.008]);
+	picture.picture([x, y, -2.988], width, height, [0, 0, 0], [0, 0, 1, 1]);
+	for (const dx of [-0.48, 0.48])
+		lit.box('#d9d4c7', [x + dx, y + 0.29, -2.984], [0.02, 0.02, 0.006]);
+}
+
+// The camera's view direction and screen axes, for placing details on the side of
+// a round object that faces the camera.
+const toCamera = new Vector3(9, 10, 12).normalize();
+const screenRight = new Vector3(0, 1, 0).cross(toCamera).normalize();
+const screenUp = toCamera.clone().cross(screenRight).normalize();
+
+// White ball with its graphic as small pixel blocks: two bands either side of the
+// face the camera sees, a navy panel on top, and a navy swoosh in the middle.
+export function premierLeagueBall(b: Batch, [x, y, z]: Vec3, radius: number) {
+	b.add('sphere', '#f4f4f1', [x, y, z], [radius, radius, radius]);
+	const block = (color: string, angle: number, around: number, size = 0.032) => {
+		const a = (angle * Math.PI) / 180;
+		const t = (around * Math.PI) / 180;
+		const d = toCamera
+			.clone()
+			.multiplyScalar(Math.cos(a))
+			.add(screenRight.clone().multiplyScalar(Math.sin(a) * Math.cos(t)))
+			.add(screenUp.clone().multiplyScalar(Math.sin(a) * Math.sin(t)))
+			.multiplyScalar(radius * 0.9);
+		b.box(color, [x + d.x, y + d.y, z + d.z], [size, size, size]);
+	};
+	const band = ['#1d2a5c', '#2f7fd1', '#f07a28', '#5ab8e8', '#1d2a5c', '#2f7fd1'];
+	band.forEach((color, i) => {
+		block(color, 66, -40 + i * 16);
+		block(band[(i + 3) % band.length], 66, 140 + i * 16);
+	});
+	for (const [around, color] of [
+		[75, '#1d2a5c'],
+		[95, '#1d2a5c'],
+		[115, '#1d2a5c'],
+		[95, '#f07a28']
+	] as const)
+		block(color, color === '#f07a28' ? 30 : 44, around, 0.03);
+	// The swoosh: a navy stroke across the middle, thicker at its start.
+	const centre = toCamera.clone().multiplyScalar(radius * 0.97);
+	b.group(
+		[x + centre.x, y + centre.y - 0.012, z + centre.z],
+		Math.atan2(toCamera.x, toCamera.z),
+		() => {
+			b.box('#1d2a5c', [0.012, 0, 0], [0.075, 0.009, 0.01], [0, 0, 0.18]);
+			b.box('#1d2a5c', [-0.03, -0.004, 0], [0.025, 0.014, 0.01], [0, 0, -0.5]);
+		}
+	);
+}
+
 export function buildShell(lit: Batch, unlit: Batch) {
 	unlit.decal('#d7d8c8', 0, 0.1, 5.1, 4.4, -0.35);
 	lit.box('#ad805b', [-0.075, -0.2, 0.025], [7.15, 0.32, 6.35]);
@@ -306,13 +465,30 @@ export function buildPhotography(lit: Batch) {
 	});
 }
 
-// `faces` collects the card pictures (one textured mesh, see scene.ts); the first
-// `cards` slabs, easel first, show cell i of the shelf atlas. The rest stay abstract.
+// Placeholder spines until Aditya shares his reading list: [colour, height, thickness].
+const BOOKS: [string, number, number][] = [
+	['#5e807a', 0.36, 0.06],
+	['#bd8c5e', 0.32, 0.05],
+	['#2f4858', 0.4, 0.07],
+	['#ddd2b0', 0.34, 0.045],
+	['#8c3f36', 0.38, 0.06],
+	['#6b7f4f', 0.3, 0.05],
+	['#d9a35a', 0.35, 0.055],
+	['#3d5f7e', 0.39, 0.065],
+	['#a85a42', 0.33, 0.05],
+	['#e9e0c8', 0.37, 0.06],
+	['#4a3d30', 0.31, 0.07]
+];
+
+// The Pokémon shelf, by rows (see SHELF in layout.ts). `faces` collects the card
+// pictures (one textured mesh, see scene.ts); the first `cards` slabs show cell i
+// of the shelf atlas, left to right. Slabs past that stay abstract.
 export function buildCollection(lit: Batch, faces: Batch, cards: number) {
-	const x = -3.225;
+	const { x, boards } = SHELF;
+	const row = (board: number) => boards[board] + 0.025;
 	lit.box('#e9e0c8', [-3.49, 1.15, -2.2], [0.02, 2.3, 1.2]);
 	for (const z of [-2.78, -1.62]) lit.box('#8f6a4c', [x, 1.15, z], [0.55, 2.3, 0.04]);
-	for (const y of [0.05, 0.6, 1.15, 1.7, 2.28]) lit.box('#9f7753', [x, y, -2.2], [0.55, 0.05, 1.2]);
+	for (const y of boards) lit.box('#9f7753', [x, y, -2.2], [0.55, 0.05, 1.2]);
 
 	// Graded slabs: clear case, card, red label. The card's picture sits just in
 	// front of its yellow face, which shows until the atlas has loaded.
@@ -320,14 +496,14 @@ export function buildCollection(lit: Batch, faces: Batch, cards: number) {
 	const slab = (z: number, y: number, art: string, tilt = 0) => {
 		const face = slot < cards ? slot : -1;
 		slot++;
-		lit.group([-3.2, y, z], [0, 0, tilt], () => {
+		lit.group([-3.08, y, z], [0, 0, tilt], () => {
 			lit.box('#dfe9ec', [0, 0.17, 0], [0.04, 0.34, 0.22]);
 			lit.box('#e8c85a', [0.021, 0.15, 0], [0.006, 0.25, 0.18]);
 			if (face < 0) lit.box(art, [0.025, 0.17, 0], [0.004, 0.12, 0.14]);
 			lit.box('#c23b3b', [0.021, 0.3, 0], [0.042, 0.045, 0.2]);
 		});
 		if (face >= 0)
-			faces.group([-3.2, y, z], [0, 0, tilt], () =>
+			faces.group([-3.08, y, z], [0, 0, tilt], () =>
 				faces.picture(
 					[0.0245, 0.15, 0],
 					0.18,
@@ -337,26 +513,39 @@ export function buildCollection(lit: Batch, faces: Batch, cards: number) {
 				)
 			);
 	};
-	// Filled in order of how well the room's camera sees each slab: the favourite on
-	// an easel in the middle of the top shelf first; the two slabs nearest the
-	// shelf's front edge last, as its side panel hides them.
-	lit.box('#6b4f36', [-3.12, 1.73, -2.2], [0.14, 0.04, 0.2]);
-	slab(-2.2, 1.73, '#5b8cc4', 0.2);
-	slab(-2.55, 1.725, '#c7b58a', 0.12);
-	slab(-2.62, 1.175, '#9fb8d4', 0.1);
-	slab(-2.38, 1.175, '#e0a36a', 0.1);
-	slab(-2.02, 1.175, '#b7c98e', 0.1);
-	slab(-1.85, 1.725, '#a9c2b0', 0.12);
-	slab(-1.78, 1.175, '#d5a0b8', 0.1);
+	// Row 1: the favourite cards side by side, left to right as the camera sees
+	// them (screen-left is +z), clear of the side panel nearest the room.
+	for (const z of [-1.985, -2.22, -2.455, -2.69]) slab(z, row(3), '#9fb8d4', 0.12);
 
-	// Binders and sealed boxes.
-	lit.box('#355a8a', [-3.2, 0.81, -2.62], [0.34, 0.37, 0.07]);
-	lit.box('#e8e0c8', [-3.02, 0.84, -2.62], [0.01, 0.12, 0.05]);
-	lit.box('#8c3f36', [-3.2, 0.8, -2.52], [0.34, 0.35, 0.07]);
-	lit.box('#d8b34a', [-3.2, 0.72, -2.2], [0.36, 0.2, 0.28]);
-	lit.box('#c24a3a', [-3.2, 0.2, -2.55], [0.4, 0.26, 0.3]);
-	lit.box('#3d6f9e', [-3.2, 0.18, -2.2], [0.4, 0.22, 0.3]);
-	lit.box('#e2c35a', [-3.2, 0.16, -1.88], [0.4, 0.18, 0.26]);
+	// Row 2: the Batman cowl (sized to fit a head) and the LEGO DeLorean.
+	const { cowl, delorean } = SHELF;
+	lit.group([cowl.x, row(2), cowl.z], cowl.angle, () => batmanCowl(lit), cowl.scale);
+	lit.group(
+		[delorean.x, row(2), delorean.z],
+		delorean.angle,
+		() => legoDelorean(lit),
+		delorean.scale
+	);
+
+	// Row 3: books, spines out.
+	let z = -2.74;
+	for (const [color, height, thickness] of BOOKS) {
+		lit.box(color, [-3.25, row(1) + height / 2, z + thickness / 2], [0.26, height, thickness]);
+		lit.box(
+			'#f1e9d2',
+			[-3.119, row(1) + height * 0.78, z + thickness / 2],
+			[0.002, 0.014, thickness * 0.7]
+		);
+		z += thickness + 0.004;
+	}
+
+	// Bottom row: binders and sealed boxes.
+	lit.box('#355a8a', [-3.2, row(0) + 0.165, -2.7], [0.34, 0.33, 0.07]);
+	lit.box('#e8e0c8', [-3.02, row(0) + 0.2, -2.7], [0.01, 0.12, 0.05]);
+	lit.box('#8c3f36', [-3.2, row(0) + 0.155, -2.62], [0.34, 0.31, 0.07]);
+	lit.box('#c24a3a', [-3.2, row(0) + 0.13, -2.38], [0.4, 0.26, 0.3]);
+	lit.box('#3d6f9e', [-3.2, row(0) + 0.11, -2.06], [0.4, 0.22, 0.3]);
+	lit.box('#e2c35a', [-3.2, row(0) + 0.09, -1.78], [0.4, 0.18, 0.22]);
 
 	// Pride of place: Blastoise on top, facing the room.
 	lit.group([-3.18, 2.305, -2.2], Math.PI / 2, () => blastoise(lit));
@@ -550,10 +739,10 @@ export function buildDoorFrame(lit: Batch, unlit: Batch) {
 	lit.box('#6f4f37', [-4.24, 1.02, 1.5], [0.02, 0.32, 0.26]);
 	lit.box('#a9c2b0', [-4.228, 1.02, 1.5], [0.006, 0.24, 0.18]);
 	unlit.decal('#b08d68', -3.05, 2.5, 0.35, 0.5, 0.013);
-	// A football scarf on a hook beside the door.
+	// A Manchester United scarf on a hook beside the door.
 	lit.box('#4a3d30', [-3.46, 2.05, 1.97], [0.05, 0.04, 0.04]);
-	for (let i = 0; i < 5; i++)
-		lit.box(i % 2 ? '#e6e1d3' : '#2f4f7f', [-3.44, 1.95 - i * 0.12, 1.97], [0.02, 0.12, 0.09]);
+	const bars = ['#c8102e', '#f4f1ea', '#1f1f1f', '#f4f1ea', '#c8102e'];
+	bars.forEach((color, i) => lit.box(color, [-3.44, 1.95 - i * 0.12, 1.97], [0.02, 0.12, 0.09]));
 }
 
 // Door slab in hinge-local coordinates: the hinge is the origin, the slab extends along +z.
@@ -563,12 +752,8 @@ export function buildDoorSlab(b: Batch) {
 	b.add('sphere', '#c9a24a', [0.05, 1.02, 0.7], [0.035, 0.035, 0.035]);
 }
 
-export function buildDecor(lit: Batch, unlit: Batch) {
-	// Superman mug on the desk.
-	lit.cylinder('#3d5f9e', [0.4, 1.12, -2.25], 0.06, 0.12);
-	lit.box('#3d5f9e', [0.47, 1.12, -2.25], [0.03, 0.07, 0.02]);
-	lit.box('#c23b3b', [0.4, 1.12, -2.188], [0.045, 0.045, 0.004], [0, 0, Math.PI / 4]);
-	lit.box('#e8c85a', [0.4, 1.12, -2.185], [0.025, 0.025, 0.004], [0, 0, Math.PI / 4]);
+export function buildDecor(lit: Batch, unlit: Batch, flag: Batch) {
+	manUtdFlag(lit, flag);
 	// Chargers and cables.
 	lit.box('#2f3530', [1.35, 1.065, -2.62], [0.5, 0.01, 0.02], [0, 0.3, 0]);
 	lit.box('#2f3530', [1.55, 1.07, -2.05], [0.14, 0.02, 0.08]);
@@ -629,16 +814,9 @@ export function buildDecor(lit: Batch, unlit: Batch) {
 		lit.box(color, [x, y, 2.982], [0.12, 0.09, 0.006], [0, 0, 0.2]);
 	for (const x of [-2.07, -1.73])
 		lit.cylinder('#2b2b2a', [x, 0.03, 2.85], 0.03, 0.03, [0, 0, Math.PI / 2]);
-	// The football waits by the door, under the scarf.
+	// The football waits by the door, under the scarf: a white Nike Premier League
+	// ball with pixelated navy, blue, and orange bands and a navy swoosh.
 	const ball = FOOTPRINTS.football;
-	lit.add('sphere', '#f1eee6', [ball.x, 0.13, ball.z], [0.13, 0.13, 0.13]);
-	const patches: [number, number, number][] = [
-		[0.08, 0.06, 0.08],
-		[-0.1, 0.02, 0.07],
-		[0.02, 0.11, -0.06],
-		[0.1, -0.02, -0.07]
-	];
-	for (const [dx, dy, dz] of patches)
-		lit.add('sphere', '#2b2b2a', [ball.x + dx, 0.13 + dy, ball.z + dz], [0.035, 0.035, 0.035]);
+	premierLeagueBall(lit, [ball.x, 0.13, ball.z], 0.13);
 	unlit.decal('#caa77f', ball.x, ball.z, 0.14, 0.1, 0.014);
 }

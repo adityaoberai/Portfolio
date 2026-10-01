@@ -48,6 +48,7 @@ import {
 	CURIOSITIES,
 	DOOR_HINGE,
 	DOOR_OPEN,
+	FLAG,
 	ROOM,
 	START,
 	STATIONS,
@@ -136,7 +137,8 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	buildMirror(lit);
 	buildCorkboard(lit);
 	buildDoorFrame(lit, unlit);
-	buildDecor(lit, unlit);
+	const flag = new Batch();
+	buildDecor(lit, unlit, flag);
 	scene.add(new Mesh(keep(lit.build()), litMaterial));
 	scene.add(new Mesh(keep(unlit.build()), unlitMaterial));
 
@@ -168,23 +170,28 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	}
 	applySky();
 
-	// Favourite cards on the shelf slabs: one small atlas texture, loaded after the
-	// room is up. Until it arrives the slabs show plain card faces.
-	const faceMaterial = own(new MeshLambertMaterial({ vertexColors: true }));
-	const cardFaces = new Mesh(keep(faces.build()), faceMaterial);
-	cardFaces.visible = false;
-	scene.add(cardFaces);
-	let atlas: Texture | null = null;
-	new TextureLoader().load(SHELF_ATLAS, (texture) => {
-		if (disposed) return texture.dispose();
-		texture.colorSpace = SRGBColorSpace;
-		texture.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
-		atlas = texture;
-		faceMaterial.map = texture;
-		faceMaterial.needsUpdate = true;
-		cardFaces.visible = true;
-		requestFrame();
-	});
+	// Pictures: a batch of textured planes with one small texture, loaded after the
+	// room is up. Until it arrives, what sits behind shows instead: plain card faces
+	// on the shelf, a plain red flag.
+	const textures: Texture[] = [];
+	function pictures(batch: Batch, url: string) {
+		const material = own(new MeshLambertMaterial({ vertexColors: true }));
+		const mesh = new Mesh(keep(batch.build()), material);
+		mesh.visible = false;
+		scene.add(mesh);
+		new TextureLoader().load(url, (texture) => {
+			if (disposed) return texture.dispose();
+			texture.colorSpace = SRGBColorSpace;
+			texture.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+			textures.push(texture);
+			material.map = texture;
+			material.needsUpdate = true;
+			mesh.visible = true;
+			requestFrame();
+		});
+	}
+	pictures(faces, SHELF_ATLAS);
+	pictures(flag, FLAG.texture);
 
 	// The door swings open while its station is focused.
 	const door = new Group();
@@ -481,8 +488,14 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			),
 			camera
 		);
-		const curiosity = curiosityHits.find(({ mesh }) => raycaster.intersectObject(mesh).length);
-		if (curiosity) return { kind: 'curiosity', id: curiosity.item.id } as const;
+		// The nearest little thing wins (the cowl stands behind the DeLorean).
+		let curiosity: { id: CuriosityId; distance: number } | null = null;
+		for (const { item, mesh } of curiosityHits) {
+			const hit = raycaster.intersectObject(mesh)[0];
+			if (hit && (!curiosity || hit.distance < curiosity.distance))
+				curiosity = { id: item.id, distance: hit.distance };
+		}
+		if (curiosity) return { kind: 'curiosity', id: curiosity.id } as const;
 		// Hits are ordered by priority, then by distance so the nearest object wins.
 		let best: { id: StationId; priority: number; distance: number } | null = null;
 		for (const { station, mesh } of stationHits) {
@@ -706,7 +719,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			window.removeEventListener('blur', blur);
 			geometries.forEach((value) => value.dispose());
 			materials.forEach((value) => value.dispose());
-			atlas?.dispose();
+			textures.forEach((value) => value.dispose());
 			renderer.dispose();
 		}
 	};
