@@ -36,7 +36,7 @@ function createBases(): Record<Shape, BufferGeometry> {
 		box: new BoxGeometry(1, 1, 1),
 		cylinder: new CylinderGeometry(1, 1, 1, 10),
 		sphere: new SphereGeometry(1, 10, 6),
-		disc: new CircleGeometry(1, 28),
+		disc: new CircleGeometry(1, 64),
 		cone: new ConeGeometry(1, 1, 8),
 		plane: new PlaneGeometry(1, 1)
 	};
@@ -312,9 +312,9 @@ export function legoDelorean(b: Batch) {
 			b.cylinder(black, [x, 0.03, side * 0.07], 0.03, 0.026, [Math.PI / 2, 0, 0]);
 			b.cylinder('#8d9295', [x, 0.03, side * 0.0835], 0.02, 0.002, [Math.PI / 2, 0, 0]);
 		}
-	// The antenna, leaning back, with a ball at its tip.
-	b.cylinder(black, [-0.2, 0.165, 0.05], 0.003, 0.18, [0, 0, 0.45]);
-	b.add('sphere', black, [-0.239, 0.246, 0.05], [0.006, 0.006, 0.006]);
+	// A short antenna, leaning back, with a ball at its tip.
+	b.cylinder(black, [-0.178, 0.12, 0.05], 0.003, 0.08, [0, 0, 0.45]);
+	b.add('sphere', black, [-0.196, 0.156, 0.05], [0.006, 0.006, 0.006]);
 }
 
 // The Manchester United flag pinned to the wall (FLAG in layout.ts), in a frame
@@ -389,7 +389,10 @@ export function twoSeatSofa(b: Batch) {
 	}
 	for (const x of [-0.66, 0.66])
 		for (const z of [-0.32, 0.32]) b.box('#5d4a3a', [x, 0.04, z], [0.06, 0.08, 0.06]);
-	b.box('#5f8f73', [-0.5, 0.52, -0.08], [0.24, 0.22, 0.1], [-0.2, 0.3, 0.1]);
+	b.group([-0.44, 0.53, -0.1], [-0.18, 0.15, 0], () => {
+		b.box('#5f8f73', [0, 0, 0], [0.24, 0.22, 0.07]);
+		b.box('#6d9c80', [0, 0, 0.01], [0.2, 0.18, 0.07]);
+	});
 }
 
 export function buildShell(lit: Batch, unlit: Batch) {
@@ -397,6 +400,12 @@ export function buildShell(lit: Batch, unlit: Batch) {
 	lit.box('#ad805b', [-0.075, -0.2, 0.025], [7.15, 0.32, 6.35]);
 	lit.box('#dfc49a', [0, -0.025, 0.1], [7, 0.06, 6.2]);
 	for (let x = -3.3; x < 3.4; x += 0.55) lit.box('#cfb186', [x, 0.009, 0.1], [0.015, 0.005, 6.1]);
+	// Plank ends, staggered from board to board, about every 2.2.
+	for (let i = 0; i < 12; i++) {
+		const x = -3.025 + i * 0.55;
+		for (let z = -2.7 + ((i * 0.9) % 2.2); z < 3.1; z += 2.2)
+			lit.box('#cfb186', [x, 0.009, z], [0.535, 0.005, 0.015]);
+	}
 	lit.box('#e4ddc4', [-0.075, 1.52, -3.075], [7.15, 3.1, 0.15]);
 	// Left wall in three pieces around the doorway (z 2.1 to 2.9, 2.1 high: the door slab).
 	lit.box('#c5cdb2', [-3.575, 1.52, -0.45], [0.15, 3.1, 5.1]);
@@ -442,12 +451,13 @@ export function zephyrusG15(b: Batch) {
 // The desk in the back-left corner (DESK in layout.ts), drawn in its own frame:
 // the laptop in the middle, the lamp at the back end, the open notebook at the
 // front end, drawers underneath. The chair stands in the room's frame.
-export function buildDesk(lit: Batch, unlit: Batch) {
+export function buildDesk(lit: Batch) {
 	const { length, depth, height } = DESK;
-	unlit.group([DESK.x, 0, DESK.z], DESK.angle, () =>
-		unlit.decal('#c5aa82', 0, 0.2, length * 0.6, depth * 0.75)
-	);
 	lit.group([DESK.x, 0, DESK.z], DESK.angle, () => {
+		// A small rug under the desk and the chair (local +z is out into the room).
+		lit.box('#6f838d', [0, 0.012, 0.34], [1.7, 0.014, 1.32]);
+		lit.box('#a3b4b8', [0, 0.021, 0.34], [1.56, 0.004, 1.18]);
+
 		lit.box('#ad744c', [0, height - 0.06, 0], [length, 0.12, depth]);
 		for (const x of [-length / 2 + 0.05, length / 2 - 0.05])
 			for (const z of [-depth / 2 + 0.07, depth / 2 - 0.07])
@@ -562,14 +572,14 @@ export function buildCollection(lit: Batch, faces: Batch, cards: number) {
 			const slab = (z: number, y: number, art: string, tilt = 0) => {
 				const face = slot < cards ? slot : -1;
 				slot++;
-				lit.group([0.145, y, z], [0, 0, tilt], () => {
+				lit.group([0.17, y, z], [0, 0, tilt], () => {
 					lit.box('#dfe9ec', [0, 0.17, 0], [0.04, 0.34, 0.22]);
 					lit.box('#e8c85a', [0.021, 0.15, 0], [0.006, 0.25, 0.18]);
 					if (face < 0) lit.box(art, [0.025, 0.17, 0], [0.004, 0.12, 0.14]);
 					lit.box('#c23b3b', [0.021, 0.3, 0], [0.042, 0.045, 0.2]);
 				});
 				if (face >= 0)
-					faces.group([0.145, y, z], [0, 0, tilt], () =>
+					faces.group([0.17, y, z], [0, 0, tilt], () =>
 						faces.picture(
 							[0.0245, 0.15, 0],
 							0.18,
@@ -580,7 +590,7 @@ export function buildCollection(lit: Batch, faces: Batch, cards: number) {
 					);
 			};
 			// Row 1: the favourite cards side by side, left to right.
-			for (const z of [0.39, 0.13, -0.13, -0.39]) slab(z, row(3), '#9fb8d4', 0.12);
+			for (const z of [0.43, 0.17, -0.09, -0.35]) slab(z, row(3), '#9fb8d4', 0.12);
 
 			// Row 2: the Batman cowl (sized to fit a head) and the LEGO DeLorean.
 			const { cowl, delorean } = SHELF;
@@ -625,16 +635,19 @@ export function buildCollection(lit: Batch, faces: Batch, cards: number) {
 }
 
 export function buildBedroom(lit: Batch) {
-	// The bed along the right edge of the room (BED in layout.ts).
-	const x = BED.x;
-	lit.box('#8f6a4c', [x, 0.6, -0.23], [1.42, 1, 0.06]);
-	lit.box('#a9805c', [x, 0.25, 0.825], [1.4, 0.4, 2.15]);
-	lit.box('#faf2da', [x, 0.53, 0.84], [1.34, 0.18, 2.08]);
-	lit.box('#749287', [x, 0.66, 1.15], [1.36, 0.1, 1.45]);
-	lit.box('#a7b6a1', [x, 0.72, 0.45], [1.38, 0.03, 0.3]);
-	lit.box('#f0e3c7', [x + 0.1, 0.7, 0.07], [0.95, 0.16, 0.4]);
-	// Squirtle plush by the pillow, facing the room.
-	lit.group([x - 0.18, 0.62, 0.28], Math.PI / 3, () => squirtle(lit), 0.72);
+	// The bed in the front-right corner (BED in layout.ts), in its own frame: -z is
+	// the headboard end. The headboard is kept low, so the pillow and the plush show
+	// over it from the camera.
+	lit.group([BED.x, 0, BED.z], BED.angle, () => {
+		lit.box('#8f6a4c', [0, 0.43, -1.055], [1.42, 0.66, 0.06]);
+		lit.box('#a9805c', [0, 0.25, 0], [1.4, 0.4, BED.length]);
+		lit.box('#faf2da', [0, 0.53, 0.015], [1.34, 0.18, 2.08]);
+		lit.box('#749287', [0, 0.66, 0.325], [1.36, 0.1, 1.45]);
+		lit.box('#a7b6a1', [0, 0.72, -0.375], [1.38, 0.03, 0.3]);
+		lit.box('#f0e3c7', [0.1, 0.7, -0.755], [0.95, 0.16, 0.4]);
+		// Squirtle plush by the pillow, facing the room and the camera.
+		lit.group([-0.18, 0.62, -0.545], Math.PI / 3 - BED.angle, () => squirtle(lit), 0.72);
+	});
 }
 
 // Character parts: body is static relative to the character; legs swing.
@@ -732,8 +745,8 @@ export function buildLanyards(lit: Batch) {
 				const x = -1.15 + i * 0.25;
 				const drop = [0, 0.08, 0.03, 0.12, 0.05][i];
 				const badgeY = 1.78 - drop;
-				const length = 2.6 - badgeY - 0.1;
-				lit.box('#4a3d30', [x, 2.6, -2.94], [0.03, 0.06, 0.04]);
+				const length = 2.57 - badgeY - 0.1;
+				lit.box('#4a3d30', [x, 2.585, -2.94], [0.03, 0.03, 0.04]);
 				for (const side of [-1, 1])
 					lit.box(
 						strap,
@@ -742,10 +755,10 @@ export function buildLanyards(lit: Batch) {
 						[0, 0, -side * 0.12]
 					);
 				lit.group([x, badgeY, -2.955], [0, 0, (i - 2) * 0.04], () => {
-					lit.box('#f6f1e4', [0, 0, 0], [0.2, 0.27, 0.012]);
-					lit.box(strap, [0, 0.1, 0.008], [0.2, 0.06, 0.004]);
-					for (const y of [-0.01, -0.05, -0.09])
-						lit.box('#9a9280', [0, y, 0.008], [0.13, 0.012, 0.004]);
+					lit.box('#f6f1e4', [0, 0, 0], [0.17, 0.25, 0.012]);
+					lit.box(strap, [0, 0.09, 0.008], [0.17, 0.055, 0.004]);
+					for (const y of [-0.015, -0.05, -0.085])
+						lit.box('#9a9280', [0, y, 0.008], [0.11, 0.012, 0.004]);
 				});
 			});
 		})
@@ -795,7 +808,7 @@ function pinned(lit: Batch) {
 		});
 		pin((y as number) + 0.12, z as number);
 	});
-	// Tickets, notes, a small poster, and a badge.
+	// Tickets, notes, and a small poster.
 	lit.box('#e0b84a', [x, 1.62, 0.4], [0.006, 0.09, 0.3], [0.15, 0, 0]);
 	lit.box('#c9573c', [x, 1.52, 0.72], [0.006, 0.09, 0.28], [-0.1, 0, 0]);
 	lit.box('#f2dc8c', [x, 1.64, 1.05], [0.006, 0.2, 0.2], [0.05, 0, 0]);
@@ -805,11 +818,9 @@ function pinned(lit: Batch) {
 	lit.box('#e8dcc0', [x, 2.02, 1.42], [0.006, 0.34, 0.24]);
 	lit.box('#5f8f73', [x + 0.003, 2.08, 1.42], [0.004, 0.12, 0.18]);
 	pin(2.17, 1.42);
-	lit.cylinder('#5a3f8a', [x, 1.5, 1.2], 0.07, 0.008, [0, 0, Math.PI / 2]);
-	lit.cylinder('#f0b77c', [x + 0.005, 1.5, 1.2], 0.04, 0.006, [0, 0, Math.PI / 2]);
 }
 
-export function buildDoorFrame(lit: Batch, unlit: Batch) {
+export function buildDoorFrame(lit: Batch) {
 	for (const z of [2.06, 2.94]) lit.box('#6f4f37', [-3.46, 1.1, z], [0.07, 2.2, 0.07]);
 	lit.box('#6f4f37', [-3.46, 2.22, 2.5], [0.07, 0.07, 0.95]);
 	lit.box('#8f6a4c', [-3.575, -0.01, 2.5], [0.15, 0.03, 0.8]);
@@ -828,16 +839,31 @@ export function buildDoorFrame(lit: Batch, unlit: Batch) {
 	lit.box('#c9bd9c', [-4.245, 0.08, 1.6], [0.012, 0.16, 1.4]);
 	lit.box('#6f4f37', [-4.24, 1.02, 1.5], [0.02, 0.32, 0.26]);
 	lit.box('#a9c2b0', [-4.228, 1.02, 1.5], [0.006, 0.24, 0.18]);
-	unlit.decal('#b08d68', -3.05, 2.5, 0.35, 0.5, 0.013);
-	// A Manchester United scarf on a hook beside the door.
-	lit.box('#4a3d30', [-3.46, 2.05, 1.97], [0.05, 0.04, 0.04]);
-	const bars = ['#c8102e', '#f4f1ea', '#1f1f1f', '#f4f1ea', '#c8102e'];
-	bars.forEach((color, i) => lit.box(color, [-3.44, 1.95 - i * 0.12, 1.97], [0.02, 0.12, 0.09]));
+	// A coir doormat inside the door, with a darker border.
+	lit.box('#7d6145', [-3.2, 0.008, 2.5], [0.5, 0.012, 0.72]);
+	lit.box('#b0906a', [-3.2, 0.015, 2.5], [0.42, 0.004, 0.62]);
+	// A Manchester United bar scarf over a hook beside the door: two tails, red with
+	// white, black, and white bars near the ends, and a white fringe.
+	lit.box('#4a3d30', [-3.475, 2.01, 1.8], [0.05, 0.035, 0.035]);
+	lit.box('#c8102e', [-3.48, 2.0, 1.8], [0.016, 0.05, 0.18]);
+	for (const [z, length] of [
+		[1.755, 0.62],
+		[1.845, 0.5]
+	]) {
+		const bottom = 2.0 - length;
+		lit.box('#c8102e', [-3.48, 2.0 - length / 2, z], [0.015, length, 0.08]);
+		['#f4f1ea', '#1f1f1f', '#f4f1ea'].forEach((color, i) =>
+			lit.box(color, [-3.48, bottom + 0.2 - i * 0.05, z], [0.017, 0.05, 0.08])
+		);
+		for (const dz of [-0.025, 0, 0.025])
+			lit.box('#f4f1ea', [-3.48, bottom - 0.025, z + dz], [0.008, 0.05, 0.012]);
+	}
 }
 
 // Door slab in hinge-local coordinates: the hinge is the origin, the slab extends along +z.
 export function buildDoorSlab(b: Batch) {
-	b.box('#9a6f4b', [0, 1.05, 0.4], [0.05, 2.1, 0.8]);
+	// A little clearance under the slab, so it swings over the doormat.
+	b.box('#9a6f4b', [0, 1.06, 0.4], [0.05, 2.08, 0.8]);
 	for (const y of [0.55, 1.5]) b.box('#a97c56', [0.028, y, 0.4], [0.01, 0.7, 0.55]);
 	b.add('sphere', '#c9a24a', [0.05, 1.02, 0.7], [0.035, 0.035, 0.035]);
 }
@@ -851,7 +877,7 @@ export function buildDecor(lit: Batch, unlit: Batch, flag: Batch) {
 	lit.box('#e2cfa6', [-2.8, 0.033, sofa.z], [1.12, 0.004, 1.52]);
 	for (const dz of [-0.55, 0.55]) lit.box('#5f7f6a', [-2.8, 0.036, sofa.z + dz], [1, 0.003, 0.05]);
 	lit.group([sofa.x, 0, sofa.z], sofa.angle, () => twoSeatSofa(lit));
-	// At the foot of the bed: the suitcase with travel stickers, and the football,
+	// Beside the bed: the suitcase with travel stickers, and the football,
 	// a white Nike Premier League ball with pixelated navy, blue, and orange bands
 	// and a navy swoosh.
 	const suitcase = FOOTPRINTS.suitcase;

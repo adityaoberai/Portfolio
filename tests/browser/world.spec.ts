@@ -142,7 +142,8 @@ test('trying to sleep on the bed turns the character away, and Frost’s poem po
 	const canvas = page.locator('canvas');
 	const poem = page.getByRole('dialog', { name: 'Stopping by Woods on a Snowy Evening' });
 	// Walking up beside the bed offers it; E tries to sleep.
-	const beside = await floor(page, 1.35, 1.75);
+	// A floor spot near the bed that neither the bed nor the suitcase covers on screen.
+	const beside = await floor(page, 1.25, 1.7);
 	await page.mouse.click(beside.x, beside.y);
 	await expect(page.locator('.room-hint')).toContainText('Press E to sleep');
 	await page.keyboard.press('e');
@@ -166,11 +167,16 @@ test('trying to sleep on the bed turns the character away, and Frost’s poem po
 	// Clicking the bed from across the room walks over to it first.
 	await openRoom(page);
 	await settle(page);
-	const bed = await anchor(page, 'bed');
+	// The blanket near the foot: the plush sits over the middle of the bed on screen.
+	const bed = await page.evaluate(() =>
+		(window as unknown as { __room: { project: (p: number[]) => Anchor } }).__room.project([
+			2.8, 0.7, 1.4
+		])
+	);
 	await page.mouse.click(bed.x, bed.y);
 	await expect(poem).toBeVisible();
-	await expect(canvas).toHaveAttribute('data-x', '1.750');
-	await expect(canvas).toHaveAttribute('data-z', '1.700');
+	await expect(canvas).toHaveAttribute('data-x', '1.600');
+	await expect(canvas).toHaveAttribute('data-z', '1.850');
 	await page.getByRole('button', { name: 'Back to the room' }).click();
 	await expect(canvas).toBeFocused();
 });

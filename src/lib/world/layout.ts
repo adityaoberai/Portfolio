@@ -110,8 +110,10 @@ export const MIRROR = {
 	glass: { front: 0.055, y: 0.99, width: 0.66, height: 1.76 }
 };
 
-// The bed runs along the right edge of the room, headboard at the back.
-export const BED = { x: 2.8 };
+// The bed in the front-right corner: along the right edge, its headboard against
+// the front (both walls are cut away for the camera). Drawn in its own frame
+// (build.ts), where -z is the headboard end; `length` is the frame's.
+export const BED = { x: 2.8, z: 2.1, angle: Math.PI, length: 2.15 };
 
 export const FOOTPRINTS = {
 	desk: { x: DESK.x, z: DESK.z, halfX: DESK.length / 2, halfZ: DESK.depth / 2, angle: DESK.angle },
@@ -119,10 +121,12 @@ export const FOOTPRINTS = {
 	cabinet: { x: CABINET.x, z: CABINET.z, halfX: 0.45, halfZ: 0.3, angle: CABINET.angle },
 	shelf: { x: SHELF.x, z: SHELF.z, halfX: 0.275, halfZ: 0.6, angle: SHELF.angle },
 	mirror: edges(2.64, 3.46, -3, -2.62),
-	bed: edges(BED.x - 0.7, BED.x + 0.7, -0.25, 1.9),
-	// At the foot of the bed: the suitcase, turned a little towards the room, and the ball.
-	suitcase: { x: 2.45, z: 2.6, halfX: 0.25, halfZ: 0.13, angle: -0.25 },
-	football: { x: 3.05, z: 2.3, halfX: 0.13, halfZ: 0.13, angle: 0 },
+	bed: edges(BED.x - 0.7, BED.x + 0.7, BED.z - BED.length / 2, BED.z + BED.length / 2),
+	// Beside the head of the bed, near the front edge: the suitcase, turned a little
+	// towards the room, and the ball. Anywhere else near the bed, the bed hides them
+	// from the camera.
+	suitcase: { x: 1.75, z: 2.95, halfX: 0.25, halfZ: 0.13, angle: -0.25 },
+	football: { x: 1.25, z: 2.85, halfX: 0.13, halfZ: 0.13, angle: 0 },
 	// A two-seat sofa against the left wall under the board, on a small rug, with
 	// room for one person between it and the desk.
 	sofa: { x: -3.08, z: 0.05, halfX: 0.75, halfZ: 0.4, angle: Math.PI / 2 }
@@ -282,18 +286,20 @@ export interface CuriosityLayout {
 
 // Environmental details: a one-line note, not a navigation destination.
 export const CURIOSITIES: CuriosityLayout[] = [
-	{ id: 'plush', hit: { center: [BED.x - 0.08, 0.85, 0.15], size: [0.65, 0.6, 0.6] } },
+	// Just the plush, by the pillow, so clicks on the rest of the bed reach the bed.
+	{ id: 'plush', hit: { center: [BED.x + 0.18, 0.82, BED.z + 0.545], size: [0.45, 0.45, 0.45] } },
 	{
-		// Trying to sleep: the character walks to the bed's side by its foot (further
-		// up, the bed hides it from the camera), looks at the bed, then turns its back
-		// on it to face the room and the camera (world.ts has why). The plush on the
-		// bed wins clicks on itself (the nearest hit wins).
+		// Trying to sleep: the character walks to the bed's side, looks at the bed, then
+		// turns its back on it to face the room and the camera (world.ts has why). It
+		// stands a step out and back from the suitcase, so the bed, its headboard, and
+		// the suitcase hide no more than its feet.
+		// The plush on the bed wins clicks on itself (the nearest hit wins).
 		id: 'bed',
-		hit: { center: [BED.x, 0.4, 0.825], size: [1.42, 0.8, 2.15] },
-		approach: { x: 1.75, z: 1.7 },
-		facing: Math.atan2(0.25, 1),
+		hit: { center: [BED.x, 0.4, BED.z], size: [1.42, 0.8, BED.length] },
+		approach: { x: 1.6, z: 1.85 },
+		facing: Math.atan2(-0.4, 1),
 		// Between the bed and the character turned away from it.
-		focus: [2.3, 0.75, 1.3]
+		focus: [2.25, 0.75, 2.1]
 	},
 	{
 		id: 'cowl',

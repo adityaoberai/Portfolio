@@ -478,7 +478,7 @@ export const world: WorldConfig = {
 		},
 		football: {
 			label: 'Football',
-			line: 'A Premier League ball at the foot of the bed, a little scuffed. It has seen some games.'
+			line: 'A Premier League ball by the bed, a little scuffed. It has seen some games.'
 		},
 		// Trying to sleep turns the character away from the bed, and the poem pops
 		// up. The poem is Robert Frost's (1923, public domain); the rest is Claude's.

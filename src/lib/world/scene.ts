@@ -140,7 +140,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	const lit = new Batch();
 	const unlit = new Batch();
 	buildShell(lit, unlit);
-	buildDesk(lit, unlit);
+	buildDesk(lit);
 	buildPhotography(lit);
 	const faces = new Batch();
 	buildCollection(lit, faces, shelfCards.length);
@@ -149,7 +149,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	buildLanyards(lit);
 	buildMirror(lit);
 	buildCorkboard(lit);
-	buildDoorFrame(lit, unlit);
+	buildDoorFrame(lit);
 	const flag = new Batch();
 	buildDecor(lit, unlit, flag);
 	scene.add(new Mesh(keep(lit.build()), litMaterial));
