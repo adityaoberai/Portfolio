@@ -1,0 +1,1095 @@
+<script lang="ts">
+	import { onMount, tick } from 'svelte';
+	import V3Header from '$lib/components/V3Header.svelte';
+	import StationPanel from './StationPanel.svelte';
+	// All copy and content comes from src/lib/data/world.ts (resolved in room.ts).
+	import { curiosities, page as copy, stationById, stations } from '$lib/data/room';
+	import type { Curiosity } from '$lib/data/world';
+	import type { CuriosityId, StationId } from '$lib/world/layout';
+	import type { HoverTarget, RoomController, RoomState } from '$lib/world/scene';
+
+	let canvas: HTMLCanvasElement;
+	let frameEl: HTMLElement;
+	let topEl: HTMLDivElement;
+	let hintEl = $state<HTMLDivElement>();
+	let menuButton: HTMLButtonElement;
+	let menu: HTMLDivElement;
+	let dialog: HTMLDialogElement;
+	let poemDialog: HTMLDialogElement;
+	let room: RoomController | undefined;
+	let status = $state<'loading' | 'ready' | 'error'>('loading');
+	let reducedMotion = $state(false);
+	let lowQuality = $state(false);
+	let roomState = $state<RoomState>();
+	let diagnostics = $state(false);
+	let coarse = $state(false);
+	let open = $state<StationId | null>(null);
+	let hover = $state<{ label: string; x: number; y: number } | null>(null);
+	let note = $state<Curiosity | null>(null);
+	let noteTimer = 0;
+	// The little thing whose poem is open (the bed's).
+	let poemOf = $state<CuriosityId | null>(null);
+	const poem = $derived((poemOf && curiosities[poemOf].poem) || null);
+	let returnFocus: HTMLElement | null = null;
+
+	const near = $derived((roomState?.near && stationById[roomState.near]) || null);
+	// Something to walk up to (the bed), when no station is near.
+	const nearThing = $derived(
+		(!near && roomState?.nearCuriosity && curiosities[roomState.nearCuriosity]) || null
+	);
+
+	// Keyboard play should work the moment the room appears. Focus it on arrival, unless the
+	// visitor has already focused something; no focus ring for this programmatic focus.
+	const roomKeys = new Set([
+		'w',
+		'a',
+		's',
+		'd',
+		'e',
+		'arrowup',
+		'arrowleft',
+		'arrowdown',
+		'arrowright'
+	]);
+	const nothingFocused = () => !document.activeElement || document.activeElement === document.body;
+	// `focusVisible` is newer than TypeScript's DOM types, so pass it as a plain object.
+	const quietFocus = { preventScroll: true, focusVisible: false };
+	function focusRoom() {
+		canvas.focus(quietFocus);
+	}
+	let arrived = false;
+	function focusOnArrival() {
+		if (arrived) return;
+		arrived = true;
+		if (nothingFocused() && !dialog.open) focusRoom();
+	}
+	// If focus drifts to the page itself, movement keys still reach the room. Focused
+	// controls, the menu, and open stations are never interrupted, and Tab still leaves.
+	function forwardRoomKeys(event: KeyboardEvent) {
+		if (status !== 'ready' || !nothingFocused() || dialog.open || poemDialog.open) return;
+		if (menu.matches(':popover-open') || event.altKey || event.ctrlKey || event.metaKey) return;
+		if (!roomKeys.has(event.key.toLowerCase())) return;
+		event.preventDefault();
+		focusRoom();
+		canvas.dispatchEvent(
+			new KeyboardEvent('keydown', { key: event.key, repeat: event.repeat, cancelable: true })
+		);
+	}
+
+	// Deep pages link to /world#<station>; open it once the room is ready, or directly if it failed.
+	let hashHandled = false;
+	function openFromHash() {
+		if (hashHandled) return;
+		hashHandled = true;
+		const id = window.location.hash.slice(1) as StationId;
+		if (!(id in stationById)) return;
+		if (room && status === 'ready') room.visit(id);
+		else void showStation(id);
+	}
+	$effect(() => {
+		if (status === 'ready') focusOnArrival();
+		if (status !== 'loading') openFromHash();
+	});
+
+	// When the menu, a station, or the poem closes, the keyboard goes back to the room, so WASD
+	// works straight away; to the menu button if the room couldn't open.
+	function backToRoom() {
+		if (status === 'ready') focusRoom();
+		else menuButton.focus({ preventScroll: true });
+	}
+
+	async function showStation(id: StationId) {
+		// Focus returns to whatever opened the station: the room, or the menu (see visit).
+		const focused = document.activeElement as HTMLElement | null;
+		returnFocus ??= focused && focused !== document.body ? focused : null;
+		open = id;
+		room?.setPaused(true);
+		hover = null;
+		await tick();
+		if (!dialog.open) dialog.showModal();
+		// The sheet itself takes focus, so Space, the arrows, and Page Down scroll it (and Space
+		// can't press Close).
+		dialog.focus(quietFocus);
+	}
+	// While a sheet (a station, the poem) is open, W and S scroll it, and E closes it, since E
+	// opened it (Escape still works). Key repeat is ignored for E, so holding E after opening
+	// doesn't close it straight away, and E stops here so it can't reach the room and reopen
+	// what it just closed.
+	function sheetKeys(event: KeyboardEvent) {
+		if (event.altKey || event.ctrlKey || event.metaKey) return;
+		const sheet = event.currentTarget as HTMLDialogElement;
+		const key = event.key.toLowerCase();
+		if (key === 'w' || key === 's') {
+			event.preventDefault();
+			sheet.scrollBy({
+				top: key === 's' ? 120 : -120,
+				behavior: reducedMotion ? 'instant' : 'smooth'
+			});
+		}
+		if (key !== 'e' || event.repeat) return;
+		event.preventDefault();
+		event.stopPropagation();
+		sheet.close();
+	}
+	// The wheel over the room beside an open sheet scrolls the sheet; the room behind can't scroll.
+	function wheelToSheet(event: WheelEvent) {
+		const sheet = dialog.open ? dialog : poemDialog.open ? poemDialog : null;
+		if (!sheet) return;
+		const box = sheet.getBoundingClientRect();
+		const { clientX: x, clientY: y } = event;
+		if (x >= box.left && x <= box.right && y >= box.top && y <= box.bottom) return;
+		sheet.scrollBy({ top: event.deltaMode === 1 ? event.deltaY * 40 : event.deltaY });
+	}
+	function closeStation() {
+		open = null;
+		room?.release();
+		room?.setPaused(false);
+		if (returnFocus) returnFocus.focus({ preventScroll: true });
+		else backToRoom();
+		returnFocus = null;
+	}
+	// Picking from the menu closes it, and the keyboard goes back to the room afterwards.
+	function visit(id: StationId) {
+		if (menu.matches(':popover-open')) menu.hidePopover();
+		returnFocus = status === 'ready' ? canvas : menuButton;
+		if (room && status === 'ready') room.visit(id);
+		else void showStation(id);
+	}
+	// Closing the menu (its button, ×, Escape, a click outside) hands the keyboard back to the
+	// room, unless the visitor has moved on to something else or opened something from it.
+	function menuToggled(event: ToggleEvent) {
+		if (event.newState !== 'closed' || status !== 'ready') return;
+		if (dialog.open || poemDialog.open) return;
+		const focused = document.activeElement;
+		if (nothingFocused() || focused === menuButton || menu.contains(focused)) focusRoom();
+	}
+	function showCuriosity(id: CuriosityId) {
+		const item = curiosities[id];
+		if (item.poem) return void showPoem(id);
+		note = item;
+		window.clearTimeout(noteTimer);
+		noteTimer = window.setTimeout(() => (note = null), 5000);
+	}
+	// The bed's poem opens in the sheet, like a station, with the camera pushed in on the bed;
+	// it stays until it's closed.
+	async function showPoem(id: CuriosityId) {
+		window.clearTimeout(noteTimer);
+		note = null;
+		poemOf = id;
+		room?.setPaused(true);
+		room?.look(id);
+		hover = null;
+		await tick();
+		if (!poemDialog.open) poemDialog.showModal();
+		poemDialog.focus(quietFocus);
+	}
+	function readPoem(id: CuriosityId) {
+		if (menu.matches(':popover-open')) menu.hidePopover();
+		void showPoem(id);
+	}
+	function closePoem() {
+		poemOf = null;
+		room?.release();
+		room?.setPaused(false);
+		backToRoom();
+	}
+	function onHover(target: HoverTarget | null, x: number, y: number) {
+		if (!target) {
+			hover = null;
+			return;
+		}
+		const station = target.kind === 'station' ? stationById[target.id] : undefined;
+		const label =
+			target.kind === 'station'
+				? station
+					? `${station.object} · ${station.area}`
+					: ''
+				: curiosities[target.id].label;
+		hover = { label, x, y };
+	}
+	// Keep the room clear of the floating title, hint card, and menu button.
+	function measureInsets() {
+		if (!room || !frameEl) return;
+		const height = frameEl.clientHeight;
+		const narrow = frameEl.clientWidth < 820;
+		const lowest = Math.min(
+			menuButton.getBoundingClientRect().top,
+			hintEl?.getBoundingClientRect().top ?? height
+		);
+		const titleBottom = topEl.getBoundingClientRect().bottom;
+		room.setInsets(
+			narrow
+				? { top: titleBottom + 8, bottom: Math.max(24, height - lowest + 12), units: 9.4 }
+				: // On wide screens the title sits left of the room's top, so it can overlap.
+					{ top: titleBottom * 0.5, bottom: 24, units: 8.6 }
+		);
+	}
+	$effect(() => {
+		if (status === 'ready' && hintEl) measureInsets();
+	});
+
+	onMount(() => {
+		let cancelled = false;
+		const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+		reducedMotion = motion.matches;
+		diagnostics = new URLSearchParams(window.location.search).has('diagnostics');
+		const updateMotion = () => {
+			reducedMotion = motion.matches;
+			room?.setReducedMotion(reducedMotion);
+		};
+		motion.addEventListener('change', updateMotion);
+		coarse = window.matchMedia('(pointer: coarse)').matches;
+		window.addEventListener('keydown', forwardRoomKeys);
+		window.addEventListener('wheel', wheelToSheet, { passive: true });
+		const observer = new ResizeObserver(measureInsets);
+		observer.observe(frameEl);
+		observer.observe(topEl);
+		const timeout = window.setTimeout(() => {
+			if (status === 'loading') status = 'error';
+		}, 15000);
+		void import('$lib/world/scene')
+			.then(({ createRoom }) => {
+				if (cancelled) return;
+				room = createRoom(canvas, {
+					stations: stations.map((station) => station.id),
+					reducedMotion,
+					lowQuality,
+					onInspect: (id) => void showStation(id),
+					onCuriosity: showCuriosity,
+					onHover,
+					onState: (state) => {
+						roomState = state;
+						status = 'ready';
+						window.clearTimeout(timeout);
+					},
+					onError: () => {
+						status = 'error';
+						room?.destroy();
+						room = undefined;
+					}
+				});
+				measureInsets();
+				if (diagnostics) Reflect.set(window, '__room', room);
+			})
+			.catch(() => {
+				if (!cancelled) status = 'error';
+			});
+		return () => {
+			cancelled = true;
+			observer.disconnect();
+			window.clearTimeout(timeout);
+			window.clearTimeout(noteTimer);
+			motion.removeEventListener('change', updateMotion);
+			window.removeEventListener('keydown', forwardRoomKeys);
+			window.removeEventListener('wheel', wheelToSheet);
+			room?.destroy();
+		};
+	});
+</script>
+
+<section class="world" aria-labelledby="world-title" bind:this={frameEl}>
+	<canvas
+		bind:this={canvas}
+		tabindex={status === 'ready' ? 0 : -1}
+		aria-label="Aditya's room. Use WASD or arrow keys to walk and E to inspect what's nearby, or tap the floor and objects. Every object is also listed in the menu."
+		aria-describedby="room-instructions"
+		class:loaded={status === 'ready'}
+		data-x={roomState?.x.toFixed(3)}
+		data-z={roomState?.z.toFixed(3)}
+		data-frames={roomState?.frames}
+		data-near={roomState?.near ?? ''}
+	>
+		Explore Aditya's room through the menu of objects, or open the Index.
+	</canvas>
+
+	{#if status !== 'ready'}
+		<div class="fallback" role="status">
+			<img
+				class="still"
+				src="/room-still.jpg"
+				alt=""
+				width="1440"
+				height="1000"
+				fetchpriority="high"
+			/>
+			<div class="fallback-card">
+				<h2>{status === 'loading' ? copy.loading.title : copy.failed.title}</h2>
+				<p>{status === 'loading' ? copy.loading.text : copy.failed.text}</p>
+				<div class="fallback-actions">
+					<a href="/index">Explore the Index →</a>
+					{#if status === 'error'}<button onclick={() => window.location.reload()}
+							>Try the room again</button
+						>{/if}
+				</div>
+			</div>
+		</div>
+	{/if}
+	<noscript
+		><p class="no-script">
+			The interactive room needs JavaScript. <a href="/index">Explore the Index →</a>
+		</p></noscript
+	>
+
+	<div class="overlay top" bind:this={topEl}>
+		<V3Header overlay />
+		<div class="title">
+			<p class="eyebrow">{copy.eyebrow}</p>
+			<h1 id="world-title">{copy.title}</h1>
+		</div>
+		{#if diagnostics && roomState}<output class="diagnostics"
+				>{roomState.calls} draws · {roomState.triangles} triangles · DPR {roomState.dpr} · {roomState.frames}
+				rendered frames · {roomState.moving ? 'moving' : 'idle'}</output
+			>{/if}
+	</div>
+
+	{#if hover}
+		<span class="hover-label" style="left: {hover.x}px; top: {hover.y}px" aria-hidden="true"
+			>{hover.label}</span
+		>
+	{/if}
+	{#if note}
+		<p class="note">{note.line}</p>
+	{/if}
+	{#if status === 'ready'}
+		<div class="room-hint" aria-hidden="true" bind:this={hintEl}>
+			{#if near}
+				<span class="eyebrow">{near.number} / {near.area}</span>
+				<span class="hint-title">{near.object}</span>
+				<span class="hint-key"
+					>{#if coarse}{copy.hint.nearTouch}{:else}Press <kbd>E</kbd>
+						{copy.hint.nearKeys}{/if}</span
+				>
+			{:else if nearThing?.use}
+				<span class="eyebrow">{nearThing.label}</span>
+				<span class="hint-title">{nearThing.use.title}</span>
+				<span class="hint-key"
+					>{#if coarse}{nearThing.use.touch}{:else}Press <kbd>E</kbd>
+						{nearThing.use.keys}{/if}</span
+				>
+			{:else}
+				<span class="eyebrow">{copy.hint.idleKicker}</span>
+				<span class="hint-title">{copy.hint.idleTitle}</span>
+				<span class="hint-key"
+					>{#if coarse}{copy.hint.idleTouch}{:else}<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>
+						{copy.hint.idleKeys}{/if}</span
+				>
+			{/if}
+		</div>
+	{/if}
+
+	<button class="menu-button" popovertarget="room-menu" bind:this={menuButton}
+		><span class="bars" aria-hidden="true"><span></span></span>{copy.menuTitle}</button
+	>
+	<div id="room-menu" class="menu" popover bind:this={menu} ontoggle={menuToggled}>
+		<div class="menu-head">
+			<h2 id="menu-title">{copy.menuTitle}</h2>
+			<button
+				class="menu-close"
+				popovertarget="room-menu"
+				popovertargetaction="hide"
+				aria-label="Close the menu">×</button
+			>
+		</div>
+		<nav aria-label={copy.menuTitle}>
+			<ul class="guide">
+				{#each stations as station (station.id)}
+					<li class:is-near={roomState?.near === station.id}>
+						<span class="number">{station.number}</span>
+						<div>
+							<button class="guide-button" onclick={() => visit(station.id)}
+								>Inspect the {station.short}</button
+							>
+							<p><span class="area">{station.area}</span> · {station.summary}</p>
+							<a href={station.href}
+								>{station.area}{#if station.external}<span aria-hidden="true">&nbsp;↗</span><span
+										class="sr-only"
+									>
+										(external site)</span
+									>{:else}<span aria-hidden="true">&nbsp;→</span>{/if}</a
+							>
+						</div>
+					</li>
+				{/each}
+			</ul>
+		</nav>
+		<details class="little-things">
+			<summary>Little things in the room</summary>
+			<ul>
+				{#each Object.entries(curiosities) as [id, item] (id)}
+					<li>
+						<strong>{item.label}</strong> · {item.line}{#if item.poem}{' '}<button
+								class="read-poem"
+								onclick={() => readPoem(id as CuriosityId)}>Read “{item.poem.title}”</button
+							>{/if}
+					</li>
+				{/each}
+			</ul>
+		</details>
+		<div class="controls">
+			<p id="room-instructions">
+				<span class="desktop-instructions"
+					><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows to walk · <kbd>E</kbd> to
+					inspect ·{' '}</span
+				>Tap the floor to move. Tap an object to explore.
+			</p>
+			<div class="settings">
+				<button onclick={() => room?.reset()} disabled={status !== 'ready'}>Reset view</button
+				><label
+					><input
+						type="checkbox"
+						bind:checked={lowQuality}
+						onchange={() => room?.setLowQuality(lowQuality)}
+					/> Low power</label
+				><label
+					><input
+						type="checkbox"
+						bind:checked={reducedMotion}
+						onchange={() => room?.setReducedMotion(reducedMotion)}
+					/> Less motion</label
+				>
+			</div>
+		</div>
+		<p class="menu-foot">
+			{copy.menuFoot}
+			<a href="/index">{copy.indexLink}</a>
+		</p>
+	</div>
+
+	<p class="sr-only" aria-live="polite">
+		{near
+			? `Near the ${near.short}. Press E while the room is focused to inspect it.`
+			: nearThing?.use
+				? `Near the ${nearThing.label.toLowerCase()}. Press E while the room is focused ${nearThing.use.keys}.`
+				: ''}{note ? ` ${note.line}` : ''}
+	</p>
+</section>
+
+<dialog
+	bind:this={dialog}
+	class="sheet"
+	onclose={closeStation}
+	onkeydown={sheetKeys}
+	aria-labelledby="station-title"
+	tabindex="-1"
+>
+	{#if open}
+		<div class="sheet-top">
+			{#if !coarse}<span class="sheet-hint" aria-hidden="true"
+					><kbd>W</kbd><kbd>S</kbd> to scroll · <kbd>E</kbd> or <kbd>Esc</kbd> to close</span
+				>{/if}
+			<button class="close" onclick={() => dialog.close()} aria-label="Close and return to the room"
+				>Close ×</button
+			>
+		</div>
+		<StationPanel id={open} />
+		<button class="back-button" onclick={() => dialog.close()}>← Back to the room</button>
+	{/if}
+</dialog>
+
+<!-- The bed's poem, in the same sheet as the stations. -->
+<dialog
+	bind:this={poemDialog}
+	class="sheet poem"
+	onclose={closePoem}
+	onkeydown={sheetKeys}
+	aria-labelledby="poem-title"
+	tabindex="-1"
+>
+	{#if poemOf && poem}
+		<div class="sheet-top">
+			{#if !coarse}<span class="sheet-hint" aria-hidden="true"
+					><kbd>E</kbd> or <kbd>Esc</kbd> to close</span
+				>{/if}
+			<button
+				class="close"
+				onclick={() => poemDialog.close()}
+				aria-label="Close and return to the room">Close ×</button
+			>
+		</div>
+		<p class="poem-eyebrow">{curiosities[poemOf].label} · {poem.author}</p>
+		<h2 id="poem-title">{poem.title}</h2>
+		<div class="verse">
+			{#each poem.stanzas as stanza, s (s)}
+				<p>
+					{#each stanza as line, i (i)}{#if i}<br
+							/>{/if}{#if poem.bold && line.startsWith(poem.bold)}<strong>{line}</strong
+							>{:else}{line}{/if}{/each}
+				</p>
+			{/each}
+		</div>
+		<button class="back-button" onclick={() => poemDialog.close()}>← Back to the room</button>
+	{/if}
+</dialog>
+
+<style>
+	/* The room is the page: a fixed, full-viewport stage with UI floating over it. */
+	.world {
+		position: fixed;
+		inset: 0;
+		overflow: hidden;
+		background: #e9ebdf;
+	}
+	canvas {
+		position: absolute;
+		inset: 0;
+		display: block;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		touch-action: none;
+	}
+	canvas.loaded {
+		opacity: 1;
+	}
+	canvas:focus-visible {
+		outline: 3px solid #304e42;
+		outline-offset: -6px;
+	}
+	.overlay {
+		position: absolute;
+		z-index: 2;
+		left: 0;
+		right: 0;
+		pointer-events: none;
+	}
+	.overlay :global(a),
+	.overlay :global(button) {
+		pointer-events: auto;
+	}
+	.top {
+		top: 0;
+	}
+	.title {
+		padding: 0 var(--gutter);
+	}
+	.title .eyebrow {
+		font-size: 11px;
+	}
+	h1 {
+		max-width: 16ch;
+		margin-top: 6px;
+		font-size: clamp(26px, 3vw, 42px);
+		line-height: 1.08;
+		letter-spacing: -0.04em;
+		font-weight: 500;
+	}
+	.diagnostics {
+		display: block;
+		padding: 8px var(--gutter);
+		font: 12px monospace;
+	}
+	.hover-label {
+		position: absolute;
+		z-index: 3;
+		transform: translate(14px, -130%);
+		padding: 6px 10px;
+		background: #263b33;
+		color: #fffaf0;
+		border-radius: 4px;
+		font:
+			12px/1.3 system-ui,
+			sans-serif;
+		white-space: nowrap;
+		pointer-events: none;
+	}
+	.note {
+		position: absolute;
+		z-index: 3;
+		right: var(--gutter);
+		bottom: 96px;
+		max-width: min(320px, calc(100% - 32px));
+		padding: 12px 14px;
+		background: #263b33;
+		color: #fffaf0;
+		border-radius: 6px;
+		font-size: 16px;
+		line-height: 1.45;
+	}
+	.room-hint {
+		position: absolute;
+		z-index: 2;
+		left: var(--gutter);
+		bottom: 24px;
+		display: grid;
+		gap: 2px;
+		padding: 14px 18px;
+		background: #faf7eb;
+		border: 1px solid #d2cfbb;
+		border-radius: 6px;
+		box-shadow: 0 3px 0 #bfc5b52b;
+		pointer-events: none;
+	}
+	.room-hint .eyebrow {
+		font-size: 10px;
+	}
+	.hint-title {
+		font-size: 22px;
+		line-height: 1.25;
+	}
+	.hint-key {
+		font:
+			12px/1.6 system-ui,
+			sans-serif;
+		color: #5f6555;
+	}
+	kbd {
+		font:
+			10px system-ui,
+			sans-serif;
+		padding: 3px 4px;
+		border: 1px solid #c5c8b6;
+		border-bottom-width: 2px;
+		border-radius: 3px;
+		margin-right: 3px;
+		background: #fffdf6;
+	}
+
+	/* Floating menu button and the menu it opens (native popover: works without JS). */
+	.menu-button {
+		position: absolute;
+		z-index: 4;
+		right: var(--gutter);
+		bottom: 24px;
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		min-height: 56px;
+		padding: 0 22px 0 18px;
+		background: #304e42;
+		color: #fffaf0;
+		border-radius: 999px;
+		box-shadow: 0 8px 24px #1f2a2440;
+		font:
+			600 14px/1 system-ui,
+			sans-serif;
+		letter-spacing: 0.02em;
+		cursor: pointer;
+	}
+	.menu-button:hover {
+		background: #243d33;
+	}
+	.menu-button:focus-visible {
+		outline: 3px solid #1f2620;
+		outline-offset: 3px;
+	}
+	.bars,
+	.bars span,
+	.bars::before,
+	.bars::after {
+		display: block;
+		width: 18px;
+		height: 2px;
+		background: currentColor;
+		border-radius: 2px;
+	}
+	.bars {
+		position: relative;
+		background: none;
+	}
+	.bars::before,
+	.bars::after {
+		content: '';
+		position: absolute;
+		left: 0;
+	}
+	.bars::before {
+		top: -6px;
+	}
+	.bars::after {
+		top: 6px;
+	}
+	.menu {
+		position: fixed;
+		inset: auto var(--gutter) 96px auto;
+		width: min(420px, calc(100vw - 32px));
+		max-height: calc(100dvh - 200px);
+		margin: 0;
+		overflow-y: auto;
+		padding: 18px 22px 20px;
+		background: #faf7ed;
+		color: #283f33;
+		border: 1px solid #c9c4b6;
+		border-radius: 14px;
+		box-shadow: 0 24px 60px #1f2a2440;
+	}
+	.menu::backdrop {
+		background: transparent;
+	}
+	.menu-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+	.menu-head h2 {
+		font:
+			12px/1.5 system-ui,
+			sans-serif;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: #5f6555;
+	}
+	.menu-close {
+		width: 44px;
+		height: 44px;
+		font-size: 24px;
+		line-height: 1;
+		cursor: pointer;
+	}
+	.guide {
+		margin: 4px 0 0;
+		padding: 0;
+		list-style: none;
+	}
+	.guide li {
+		display: grid;
+		grid-template-columns: 24px 1fr;
+		gap: 8px;
+		padding: 10px 0;
+		border-top: 1px solid #dedbcf;
+	}
+	.guide li.is-near {
+		border-top-color: #304e42;
+	}
+	.number {
+		padding-top: 13px;
+		font:
+			11px system-ui,
+			sans-serif;
+		color: #5f6555;
+	}
+	.guide-button {
+		min-height: 44px;
+		font-size: 19px;
+		line-height: 1.2;
+		text-align: left;
+		cursor: pointer;
+	}
+	.guide-button:hover {
+		color: #304e42;
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+	.guide p {
+		font-size: 14px;
+		line-height: 1.45;
+		color: #5f6555;
+	}
+	.area {
+		color: #3f4d40;
+	}
+	.guide a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 36px;
+		font:
+			13px system-ui,
+			sans-serif;
+		color: #304e42;
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+	.little-things {
+		padding: 6px 0;
+		border-top: 1px solid #dedbcf;
+	}
+	.little-things summary {
+		display: flex;
+		align-items: center;
+		min-height: 44px;
+		cursor: pointer;
+		font:
+			13px system-ui,
+			sans-serif;
+		color: #304e42;
+	}
+	.little-things ul {
+		display: grid;
+		gap: 8px;
+		margin: 4px 0 8px;
+		padding-left: 18px;
+		font-size: 14px;
+		line-height: 1.5;
+	}
+	.controls {
+		padding-top: 8px;
+		border-top: 1px solid #dedbcf;
+		font:
+			12px/1.7 system-ui,
+			sans-serif;
+		color: #5f6555;
+	}
+	.settings {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0 18px;
+	}
+	.settings button,
+	.settings label {
+		min-height: 44px;
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		cursor: pointer;
+	}
+	.settings button {
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+	.settings button:disabled {
+		opacity: 0.45;
+		cursor: default;
+	}
+	input {
+		accent-color: #385b46;
+		width: 16px;
+		height: 16px;
+	}
+	.menu-foot {
+		display: grid;
+		gap: 4px;
+		margin-top: 8px;
+		padding-top: 12px;
+		border-top: 1px solid #dedbcf;
+		font-size: 14px;
+		color: #5f6555;
+	}
+	.menu-foot a {
+		color: #304e42;
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+
+	.fallback {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		padding: 24px;
+		background: #e9ebdf;
+	}
+	.fallback .still {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+		opacity: 0.4;
+		filter: saturate(0.6);
+		pointer-events: none;
+	}
+	.fallback-card {
+		position: relative;
+		max-width: 380px;
+		padding: 22px 24px;
+		text-align: center;
+		background: #faf7ebe6;
+		border: 1px solid #d2cfbb;
+		border-radius: 10px;
+	}
+	.fallback h2 {
+		font-size: 26px;
+		line-height: 1.2;
+	}
+	.fallback p {
+		margin-top: 10px;
+		color: #5a604f;
+	}
+	.fallback-actions {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		align-items: center;
+		gap: 8px 16px;
+		margin-top: 18px;
+	}
+	.fallback a {
+		display: inline-block;
+		background: #304e42;
+		color: #fffdf6;
+		padding: 12px 22px;
+		border-radius: 100px;
+	}
+	.fallback button {
+		min-height: 44px;
+		padding: 0 12px;
+		text-decoration: underline;
+		cursor: pointer;
+	}
+	.no-script {
+		position: absolute;
+		z-index: 2;
+		left: 0;
+		right: 0;
+		bottom: 96px;
+		padding: 12px;
+		text-align: center;
+		background: #e9ebdf;
+	}
+
+	/* Details sheet: right side on wide screens, bottom sheet on phones. */
+	.sheet {
+		margin: 0 0 0 auto;
+		width: min(480px, 42vw);
+		height: 100dvh;
+		max-height: 100dvh;
+		max-width: none;
+		overflow-y: auto;
+		padding: 28px clamp(24px, 3vw, 40px) 36px;
+		background: #faf7ed;
+		color: #283f33;
+		border: 0;
+		border-left: 1px solid #b7bda5;
+		box-shadow: -18px 0 60px #25352926;
+	}
+	.sheet::backdrop {
+		background: linear-gradient(90deg, #263b3a14, #263b3a4d);
+	}
+	/* The sheet takes focus only so the keyboard scrolls it; it isn't a control. */
+	.sheet:focus {
+		outline: none;
+	}
+	/* The bed's poem, set like a station's panel heading, then the verse. */
+	.poem-eyebrow {
+		font:
+			11px/1.5 system-ui,
+			sans-serif;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: #5f6755;
+	}
+	.poem h2 {
+		margin-top: 14px;
+		font-size: clamp(26px, 2.6vw, 32px);
+		letter-spacing: -0.035em;
+		line-height: 1.1;
+	}
+	.verse {
+		margin-top: 18px;
+		font-size: 17px;
+		line-height: 1.5;
+	}
+	.verse p + p {
+		margin-top: 14px;
+	}
+	.verse strong {
+		font-weight: 700;
+		color: #1f3328;
+	}
+	.poem .back-button {
+		margin-top: 22px;
+	}
+	.read-poem {
+		text-decoration: underline;
+		text-underline-offset: 3px;
+		cursor: pointer;
+	}
+	.sheet-top {
+		display: flex;
+		justify-content: flex-end;
+		align-items: center;
+		gap: 12px;
+		margin-bottom: 8px;
+	}
+	.sheet-hint {
+		font:
+			12px system-ui,
+			sans-serif;
+		color: #5f6555;
+	}
+	.close {
+		min-height: 44px;
+		min-width: 58px;
+		font:
+			12px system-ui,
+			sans-serif;
+		cursor: pointer;
+	}
+	.back-button {
+		display: block;
+		margin-top: 32px;
+		padding: 12px 18px;
+		background: #304e42;
+		color: #fffdf6;
+		border-radius: 4px;
+		cursor: pointer;
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		.sheet[open] {
+			animation: slide-in 260ms ease-out;
+		}
+		.menu:popover-open {
+			animation: rise 180ms ease-out;
+		}
+		@keyframes slide-in {
+			from {
+				transform: translateX(24px);
+				opacity: 0;
+			}
+		}
+		@keyframes rise {
+			from {
+				transform: translateY(8px);
+				opacity: 0;
+			}
+		}
+	}
+	@media (max-width: 820px) {
+		.sheet {
+			margin: auto 0 0;
+			width: 100%;
+			height: auto;
+			max-height: 78dvh;
+			border-left: 0;
+			border-top: 1px solid #b7bda5;
+			border-radius: 14px 14px 0 0;
+			box-shadow: 0 -18px 60px #25352926;
+		}
+		/* Taller for the poem, so it's whole on a phone. */
+		.sheet.poem {
+			max-height: 94dvh;
+		}
+		.sheet::backdrop {
+			background: #263b3a4d;
+		}
+		@media (prefers-reduced-motion: no-preference) {
+			.sheet[open] {
+				animation-name: slide-up;
+			}
+			@keyframes slide-up {
+				from {
+					transform: translateY(24px);
+					opacity: 0;
+				}
+			}
+		}
+	}
+	@media (max-width: 650px) {
+		.menu-button {
+			right: 16px;
+			bottom: 16px;
+		}
+		.menu {
+			inset: auto 16px 84px 16px;
+			width: auto;
+			max-height: calc(100dvh - 168px);
+		}
+		.room-hint {
+			left: 16px;
+			right: 16px;
+			bottom: 84px;
+			padding: 10px 14px;
+		}
+		.hint-title {
+			font-size: 19px;
+		}
+		.note {
+			left: 16px;
+			right: 16px;
+			bottom: 190px;
+			max-width: none;
+		}
+		.desktop-instructions {
+			display: none;
+		}
+	}
+</style>

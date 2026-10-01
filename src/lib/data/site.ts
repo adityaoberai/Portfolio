@@ -4,25 +4,12 @@ export const site = {
 	tagline: 'Developer Relations, communities, and open source',
 	description:
 		'Aditya Oberai is a DevRel practitioner, writer, speaker, and community builder helping developer tools communicate better, teach better, and build stronger developer communities.',
-	url: 'https://oberai.dev',
-	ogImage: 'https://oberai.dev/og.png',
+	// Canonical domain for V3 (oberai.dev redirects are a hosting task; see v3.md).
+	url: 'https://adityaoberai.com',
+	ogImage: 'https://adityaoberai.com/og.png',
 	email: 'aditya@oberai.dev',
 	twitterHandle: '@adityaoberai',
 	portrait: '/aditya.jpg',
+	portraitSmall: { webp: '/aditya-480.webp', jpg: '/aditya-480.jpg' },
 	resume: '/resume.pdf'
 };
-
-export type NavItem = {
-	label: string;
-	href: string;
-};
-
-export const primaryNav: NavItem[] = [
-	{ label: 'Home', href: '/' },
-	{ label: 'About', href: '/about' },
-	{ label: 'Work', href: '/work' },
-	{ label: 'Projects', href: '/projects' },
-	{ label: 'Community', href: '/community' },
-	{ label: 'Speaking', href: '/speaking' },
-	{ label: 'Contact', href: '/contact' }
-];
