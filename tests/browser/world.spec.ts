@@ -134,6 +134,31 @@ test('clicking objects in the room opens them; curiosities leave a note', async 
 	await expect(page.getByRole('dialog')).not.toBeVisible();
 });
 
+test('trying to sleep on the bed turns the character away, with a line from Frost', async ({
+	page
+}) => {
+	await openRoom(page);
+	await settle(page);
+	const canvas = page.locator('canvas');
+	const note = page.locator('.note');
+	// Walking up beside the bed offers it; E tries to sleep.
+	const beside = await floor(page, 1.35, 1.75);
+	await page.mouse.click(beside.x, beside.y);
+	await expect(page.locator('.room-hint')).toContainText('Press E to sleep');
+	await page.keyboard.press('e');
+	await expect(note).toContainText('And miles to go before I sleep.');
+	await expect(note.locator('cite')).toContainText('Robert Frost');
+	await expect(page.getByRole('dialog')).not.toBeVisible();
+	// Clicking the bed from across the room walks over to it first.
+	await openRoom(page);
+	await settle(page);
+	const bed = await anchor(page, 'bed');
+	await page.mouse.click(bed.x, bed.y);
+	await expect(canvas).toHaveAttribute('data-x', '1.750');
+	await expect(canvas).toHaveAttribute('data-z', '1.700');
+	await expect(note).toContainText('miles to go before I sleep');
+});
+
 test('portrait touch input, reduced motion, and low-power DPR', async ({ browser }) => {
 	const context = await browser.newContext({
 		viewport: { width: 390, height: 844 },

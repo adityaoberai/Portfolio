@@ -17,6 +17,7 @@ import {
 	MIRROR,
 	START,
 	STATIONS,
+	USE_RADIUS,
 	WALKABLE
 } from '../src/lib/world/layout.ts';
 
@@ -169,6 +170,18 @@ test('standing at the mirror, the character shows in the glass', async () => {
 			`(${dx}, ${y}) is reflected outside the glass, at ${seen.z.toFixed(2)}, ${seen.y.toFixed(2)}`
 		);
 	}
+});
+
+test('trying to sleep: the bed can be walked up to, and the character turns its back on it', () => {
+	const bed = CURIOSITIES.find((item) => item.id === 'bed');
+	assert.ok(isFree(bed.approach), 'beside the bed is inside furniture');
+	// No station is near there, so E tries the bed; and the room doesn't start beside it.
+	assert.equal(nearest(bed.approach, STATIONS), undefined);
+	assert.equal(nearest(bed.approach, [bed], USE_RADIUS), bed);
+	assert.equal(nearest(START, [bed], USE_RADIUS), undefined);
+	const facing = { x: Math.sin(bed.facing), z: Math.cos(bed.facing) };
+	const toBed = { x: FOOTPRINTS.bed.x - bed.approach.x, z: FOOTPRINTS.bed.z - bed.approach.z };
+	assert.ok(facing.x * toBed.x + facing.z * toBed.z < 0, 'the character faces the bed');
 });
 
 test('nothing is near in the middle of the room', () => {

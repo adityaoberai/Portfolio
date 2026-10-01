@@ -6,6 +6,7 @@ import { sectionById, type SectionId } from './sections';
 import {
 	world,
 	type Block,
+	type Curiosity,
 	type ItemStyle,
 	type Link,
 	type LinkTo,
@@ -179,9 +180,15 @@ if (configured.size !== world.stations.length)
 for (const id of layoutIds)
 	if (!configured.has(id))
 		throw problem(`station "${id}"`, 'this object is in the room but has no content.');
-for (const curiosity of CURIOSITIES)
+for (const curiosity of CURIOSITIES) {
 	if (!world.curiosities[curiosity.id])
 		throw problem(`curiosity "${curiosity.id}"`, 'this object is in the room but has no note.');
+	if (curiosity.approach && !world.curiosities[curiosity.id].use)
+		throw problem(
+			`curiosity "${curiosity.id}"`,
+			'you walk up to this one, so it needs `use` (its hint).'
+		);
+}
 
 const visible = world.stations.filter((s) => !s.hidden);
 
@@ -207,5 +214,5 @@ export const panels = Object.fromEntries(
 	visible.map((s) => [s.id, resolvePanel(s.panel, s.section, `station "${s.id}"`)])
 ) as Partial<Record<StationId, ResolvedPanel>>;
 
-export const curiosities: Record<CuriosityId, { label: string; line: string }> = world.curiosities;
+export const curiosities: Record<CuriosityId, Curiosity> = world.curiosities;
 export const page = world.page;

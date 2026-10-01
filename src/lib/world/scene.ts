@@ -61,7 +61,9 @@ import {
 	ROOM,
 	START,
 	STATIONS,
+	USE_RADIUS,
 	type CuriosityId,
+	type CuriosityLayout,
 	type StationId,
 	type StationLayout,
 	type Vec3
@@ -81,6 +83,8 @@ export interface RoomState {
 	z: number;
 	moving: boolean;
 	near: StationId | null;
+	// A little thing to walk up to (the bed), when no station is near.
+	nearCuriosity: CuriosityId | null;
 	focused: StationId | null;
 	frames: number;
 	calls: number;
@@ -386,7 +390,10 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	]);
 	// Click-to-walk waypoints around the furniture; the last one is the destination.
 	let path: Point[] = [];
-	let inspectOnArrival: StationLayout | null = null;
+	// What happens at the end of the walk: open a station, or use a little thing.
+	let onArrival: (() => void) | null = null;
+	// The beat between looking at the bed and turning away from it.
+	let turning = 0;
 	let reducedMotion = options.reducedMotion;
 	let lowQuality = options.lowQuality;
 	// Screen space covered by overlaid UI (CSS px); the room is framed in what's left.
@@ -398,6 +405,10 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	let frames = 0;
 	let stalled = 0;
 	let near: StationLayout | undefined;
+	let nearCuriosity: CuriosityLayout | undefined;
+	const walkUps = CURIOSITIES.filter((item): item is CuriosityLayout & { approach: Point } =>
+		Boolean(item.approach)
+	);
 	let focused: StationLayout | null = null;
 	// The station whose seat the character is sitting in, if any.
 	let seated: StationLayout | null = null;
@@ -414,6 +425,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			...position(),
 			moving: Boolean(path.length || keys.size),
 			near: near?.id ?? null,
+			nearCuriosity: nearCuriosity?.id ?? null,
 			focused: focused?.id ?? null,
 			frames,
 			calls: renderer.info.render.calls,
@@ -426,9 +438,10 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		frame = requestAnimationFrame(draw);
 	}
 	function stopMovement() {
+		window.clearTimeout(turning);
 		keys.clear();
 		path = [];
-		inspectOnArrival = null;
+		onArrival = null;
 		stalled = 0;
 		targetMarker.visible = false;
 		body.position.y = 0;
@@ -546,11 +559,9 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 				path.shift();
 				stalled = 0;
 			} else if (after < 0.001 || stalled > 8) {
-				const pending = inspectOnArrival;
+				const arrive = onArrival;
 				stopMovement();
-				if (pending) {
-					inspect(pending);
-				}
+				arrive?.();
 			}
 		}
 		const moving = keyboardMoving || path.length > 0;
@@ -564,16 +575,17 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			);
 
 		const nowNear = focused ?? nearest(position(), active);
+		nearCuriosity = nowNear ? undefined : nearest(position(), walkUps, USE_RADIUS);
+		const ringAt = (nowNear ?? nearCuriosity)?.approach;
+		if (ringAt) nearRing.position.set(ringAt.x, 0.066, ringAt.z);
 		if (nowNear !== near) {
 			near = nowNear;
-			nearRing.visible = Boolean(near) && !focused;
-			if (near) nearRing.position.set(near.approach.x, 0.066, near.approach.z);
 			// The monitor wakes when the character is at the desk.
 			displayMaterial.color.set(
 				near?.id === 'desk' || near?.id === 'notebook' ? '#d6e6ae' : '#acc4a2'
 			);
 		}
-		nearRing.visible = Boolean(near) && !focused;
+		nearRing.visible = Boolean(ringAt) && !focused;
 
 		let animating = false;
 		if (tween) {
@@ -604,23 +616,21 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		if (moving || animating) requestFrame();
 		else lastTime = 0;
 	}
-	function moveTo(point: Point, station: StationLayout | null = null) {
+	function moveTo(point: Point, arrive: (() => void) | null = null) {
 		if (paused || disposed) return;
 		standUp();
+		window.clearTimeout(turning);
 		keys.clear();
 		const target = clampPoint(point);
 		path = route(position(), target);
-		inspectOnArrival = station;
+		onArrival = arrive;
 		stalled = 0;
 		targetMarker.position.set(target.x, 0.063, target.z);
-		targetMarker.visible = !reducedMotion && !station;
+		targetMarker.visible = !reducedMotion && !arrive;
 		if (reducedMotion) {
 			setPosition(target);
 			path = [];
-			if (station) {
-				inspect(station);
-				return;
-			}
+			if (arrive) return arrive();
 		}
 		requestFrame();
 	}
@@ -630,7 +640,29 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		const here = position();
 		if (Math.hypot(here.x - station.approach.x, here.z - station.approach.z) < 0.35)
 			inspect(station);
-		else moveTo(station.approach, station);
+		else moveTo(station.approach, () => inspect(station));
+	}
+	// Walk up to a little thing (the bed): look at it, then turn as it says (away
+	// from the bed) and show its note. Walking off before the turn cancels it.
+	function use(item: CuriosityLayout) {
+		stopMovement();
+		standUp();
+		face(item.hit.center);
+		requestFrame();
+		const turn = () => {
+			if (item.facing !== undefined) character.rotation.y = item.facing;
+			options.onCuriosity(item.id);
+			requestFrame();
+		};
+		if (reducedMotion || item.facing === undefined) turn();
+		else turning = window.setTimeout(turn, 450);
+	}
+	function walkUp(item: CuriosityLayout) {
+		const at = item.approach;
+		if (!at || paused || disposed) return;
+		const here = position();
+		if (Math.hypot(here.x - at.x, here.z - at.z) < 0.35) use(item);
+		else moveTo(at, () => use(item));
 	}
 	function pick(event: PointerEvent) {
 		const rect = canvas.getBoundingClientRect();
@@ -681,7 +713,10 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		canvas.focus({ preventScroll: true });
 		const picked = pick(event);
 		if (picked?.kind === 'station') return visit(picked.id);
-		if (picked?.kind === 'curiosity') return options.onCuriosity(picked.id);
+		if (picked?.kind === 'curiosity') {
+			const item = CURIOSITIES.find((entry) => entry.id === picked.id);
+			return item?.approach ? walkUp(item) : options.onCuriosity(picked.id);
+		}
 		const point = raycaster.ray.intersectPlane(floorPlane, new Vector3());
 		if (
 			point &&
@@ -712,14 +747,16 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		if (movementKeys.has(key)) {
 			event.preventDefault();
 			standUp();
+			window.clearTimeout(turning);
 			path = [];
-			inspectOnArrival = null;
+			onArrival = null;
 			targetMarker.visible = false;
 			keys.add(key);
 			requestFrame();
-		} else if ((key === 'e' || key === 'enter') && near && !event.repeat) {
+		} else if ((key === 'e' || key === 'enter') && (near || nearCuriosity) && !event.repeat) {
 			event.preventDefault();
-			inspect(near);
+			if (near) inspect(near);
+			else if (nearCuriosity) use(nearCuriosity);
 		}
 	}
 	function keyUp(event: KeyboardEvent) {

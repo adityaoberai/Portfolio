@@ -266,16 +266,31 @@ export const FLAG = {
 	pixels: { width: 400, height: 248 }
 };
 
-export type CuriosityId = 'plush' | 'cowl' | 'delorean' | 'flag' | 'suitcase' | 'football';
+export type CuriosityId = 'plush' | 'cowl' | 'delorean' | 'flag' | 'suitcase' | 'football' | 'bed';
 
 export interface CuriosityLayout {
 	id: CuriosityId;
 	hit: Box;
+	// Something to walk up to (the bed): clicking it, or pressing E within
+	// USE_RADIUS of `approach`, walks the character there and turns it to `facing`
+	// before the note shows. Other little things just show their note.
+	approach?: Point;
+	facing?: number;
 }
 
 // Environmental details: a one-line note, not a navigation destination.
 export const CURIOSITIES: CuriosityLayout[] = [
 	{ id: 'plush', hit: { center: [BED.x - 0.08, 0.85, 0.15], size: [0.65, 0.6, 0.6] } },
+	{
+		// Trying to sleep: the character walks to the bed's side by its foot (further
+		// up, the bed hides it from the camera), looks at the bed, then turns its back
+		// on it to face the room and the camera (world.ts has why). The plush on the
+		// bed wins clicks on itself (the nearest hit wins).
+		id: 'bed',
+		hit: { center: [BED.x, 0.4, 0.825], size: [1.42, 0.8, 2.15] },
+		approach: { x: 1.75, z: 1.7 },
+		facing: Math.atan2(0.25, 1)
+	},
 	{
 		id: 'cowl',
 		hit: {
@@ -310,3 +325,5 @@ export const DOOR_OPEN = 0.6;
 
 // Generous: the character only needs to be roughly in front of an object.
 export const INTERACTION_RADIUS = 1.35;
+// Tighter for the bed, so the room's start point isn't already beside it.
+export const USE_RADIUS = 0.75;

@@ -4,6 +4,7 @@
 	import StationPanel from './StationPanel.svelte';
 	// All copy and content comes from src/lib/data/world.ts (resolved in room.ts).
 	import { curiosities, page as copy, stationById, stations } from '$lib/data/room';
+	import type { Curiosity } from '$lib/data/world';
 	import type { CuriosityId, StationId } from '$lib/world/layout';
 	import type { HoverTarget, RoomController, RoomState } from '$lib/world/scene';
 
@@ -23,11 +24,15 @@
 	let coarse = $state(false);
 	let open = $state<StationId | null>(null);
 	let hover = $state<{ label: string; x: number; y: number } | null>(null);
-	let note = $state('');
+	let note = $state<Curiosity | null>(null);
 	let noteTimer = 0;
 	let returnFocus: HTMLElement | null = null;
 
 	const near = $derived((roomState?.near && stationById[roomState.near]) || null);
+	// Something to walk up to (the bed), when no station is near.
+	const nearThing = $derived(
+		(!near && roomState?.nearCuriosity && curiosities[roomState.nearCuriosity]) || null
+	);
 
 	// Keyboard play should work the moment the room appears. Focus it on arrival, unless the
 	// visitor has already focused something; no focus ring for this programmatic focus.
@@ -116,9 +121,10 @@
 		else void showStation(id);
 	}
 	function showCuriosity(id: CuriosityId) {
-		note = curiosities[id].line;
+		note = curiosities[id];
 		window.clearTimeout(noteTimer);
-		noteTimer = window.setTimeout(() => (note = ''), 5000);
+		// A quote gets a little longer.
+		noteTimer = window.setTimeout(() => (note = null), note.cite ? 7000 : 5000);
 	}
 	function onHover(target: HoverTarget | null, x: number, y: number) {
 		if (!target) {
@@ -273,7 +279,9 @@
 		>
 	{/if}
 	{#if note}
-		<p class="note">{note}</p>
+		<p class="note">
+			<span class="line">{note.line}</span>{#if note.cite}<cite>{note.cite}</cite>{/if}
+		</p>
 	{/if}
 	{#if status === 'ready'}
 		<div class="room-hint" aria-hidden="true" bind:this={hintEl}>
@@ -283,6 +291,13 @@
 				<span class="hint-key"
 					>{#if coarse}{copy.hint.nearTouch}{:else}Press <kbd>E</kbd>
 						{copy.hint.nearKeys}{/if}</span
+				>
+			{:else if nearThing?.use}
+				<span class="eyebrow">{nearThing.label}</span>
+				<span class="hint-title">{nearThing.use.title}</span>
+				<span class="hint-key"
+					>{#if coarse}{nearThing.use.touch}{:else}Press <kbd>E</kbd>
+						{nearThing.use.keys}{/if}</span
 				>
 			{:else}
 				<span class="eyebrow">{copy.hint.idleKicker}</span>
@@ -334,7 +349,9 @@
 			<summary>Little things in the room</summary>
 			<ul>
 				{#each Object.values(curiosities) as item (item.label)}
-					<li><strong>{item.label}</strong> · {item.line}</li>
+					<li>
+						<strong>{item.label}</strong> · {item.line}{#if item.cite}{' '}— {item.cite}{/if}
+					</li>
 				{/each}
 			</ul>
 		</details>
@@ -369,7 +386,11 @@
 	</div>
 
 	<p class="sr-only" aria-live="polite">
-		{near ? `Near the ${near.short}. Press E while the room is focused to inspect it.` : ''}{note}
+		{near
+			? `Near the ${near.short}. Press E while the room is focused to inspect it.`
+			: nearThing?.use
+				? `Near the ${nearThing.label.toLowerCase()}. Press E while the room is focused ${nearThing.use.keys}.`
+				: ''}{note ? ` ${note.line}${note.cite ? ` (${note.cite})` : ''}` : ''}
 	</p>
 </section>
 
@@ -464,6 +485,16 @@
 			sans-serif;
 		white-space: nowrap;
 		pointer-events: none;
+	}
+	.note .line {
+		white-space: pre-line;
+	}
+	.note cite {
+		display: block;
+		margin-top: 6px;
+		font-size: 13px;
+		font-style: normal;
+		opacity: 0.75;
 	}
 	.note {
 		position: absolute;

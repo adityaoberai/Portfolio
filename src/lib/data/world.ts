@@ -8,7 +8,8 @@
 // panel       What opens when a station is inspected: a title, an optional
 //             lead, then any number of `blocks`, stacked in order, then
 //             `links`. Mix blocks freely; any station can use any block.
-// curiosities One-line notes on the small objects.
+// curiosities One-line notes on the small objects. The bed's is a quote, with
+//             `cite`, and `use` for the hint shown while standing beside it.
 //
 // BLOCKS (see the `Block` type below for every option)
 //   items    A list of artifacts. `style`: 'list' | 'pages' | 'pins' | 'badges'
@@ -152,7 +153,18 @@ export interface WorldConfig {
 		failed: { title: string; text: string };
 	};
 	stations: StationConfig[];
-	curiosities: Record<CuriosityId, { label: string; line: string }>;
+	curiosities: Record<CuriosityId, Curiosity>;
+}
+
+export interface Curiosity {
+	label: string;
+	// Line breaks (\n) are kept in the note.
+	line: string;
+	// Who said it, when the line is a quote.
+	cite?: string;
+	// For something you walk up to (the bed): the hint card while beside it,
+	// "Press E <keys>" or, on touch screens, `touch`.
+	use?: { title: string; keys: string; touch: string };
 }
 
 export const world: WorldConfig = {
@@ -453,6 +465,14 @@ export const world: WorldConfig = {
 		football: {
 			label: 'Football',
 			line: 'A Premier League ball at the foot of the bed, a little scuffed. It has seen some games.'
+		},
+		// Trying to sleep turns the character away from the bed. The lines are
+		// Robert Frost's; the hint is Claude's.
+		bed: {
+			label: 'Bed',
+			line: 'But I have promises to keep,\nAnd miles to go before I sleep.',
+			cite: 'Robert Frost, “Stopping by Woods on a Snowy Evening”',
+			use: { title: 'Time for a nap?', keys: 'to sleep', touch: 'Tap the bed to sleep' }
 		}
 	}
 };
