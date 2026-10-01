@@ -26,23 +26,44 @@ export const START: Point = { x: 0.6, z: 1.4 };
 export const CAMERA_OFFSET: Vec3 = [9, 10, 12];
 export const CAMERA_TARGET: Vec3 = [0, 1.05, 0.1];
 
-// Furniture footprints (x/z rectangles). Movement slides around them; nothing blocks.
+// Everything standing on the floor has a footprint: a rectangle centred on (x, z),
+// turned by `angle` (the same Y rotation the model gets in build.ts). The
+// character can't enter one; walking into it slides along its edge, and clicking
+// past it walks around it (see movement.ts).
 export interface Footprint {
-	minX: number;
-	maxX: number;
-	minZ: number;
-	maxZ: number;
+	x: number;
+	z: number;
+	halfX: number;
+	halfZ: number;
+	angle: number;
 }
 
-export const FOOTPRINTS: Record<string, Footprint> = {
-	desk: { minX: -0.1, maxX: 2.3, minZ: -3, maxZ: -2 },
-	cabinet: { minX: 2.6, maxX: 3.5, minZ: -3, maxZ: -2.4 },
-	shelf: { minX: -3.5, maxX: -2.95, minZ: -2.8, maxZ: -1.6 },
-	bed: { minX: -3.5, maxX: -2.1, minZ: -0.25, maxZ: 1.9 },
-	armchair: { minX: 2.2, maxX: 3.1, minZ: 0.8, maxZ: 1.65 },
-	plant: { minX: 2.72, maxX: 3.28, minZ: 2.27, maxZ: 2.83 },
-	suitcase: { minX: -2.15, maxX: -1.65, minZ: 2.72, maxZ: 2.98 }
-};
+// An unturned footprint from its edges.
+const edges = (minX: number, maxX: number, minZ: number, maxZ: number): Footprint => ({
+	x: (minX + maxX) / 2,
+	z: (minZ + maxZ) / 2,
+	halfX: (maxX - minX) / 2,
+	halfZ: (maxZ - minZ) / 2,
+	angle: 0
+});
+
+// build.ts places the turned and free-standing pieces from these, so a model and
+// its footprint can't drift apart.
+export const FOOTPRINTS = {
+	desk: edges(-0.1, 2.3, -3, -2),
+	deskChair: { x: 1.35, z: -1.8, halfX: 0.26, halfZ: 0.25, angle: -0.3 },
+	cabinet: edges(2.6, 3.5, -3, -2.4),
+	tripod: { x: 2.42, z: -2.2, halfX: 0.08, halfZ: 0.08, angle: 0 },
+	shelf: edges(-3.5, -2.95, -2.8, -1.6),
+	mirror: edges(-3.5, -3.12, -1.3, -0.6),
+	bed: edges(-3.5, -2.1, -0.25, 1.9),
+	football: { x: -3.2, z: 2.03, halfX: 0.13, halfZ: 0.13, angle: 0 },
+	suitcase: edges(-2.15, -1.65, 2.72, 2.98),
+	armchair: { x: 2.65, z: 1.22, halfX: 0.43, halfZ: 0.38, angle: -0.55 },
+	books: { x: 2.05, z: 0.62, halfX: 0.2, halfZ: 0.16, angle: 0 },
+	floorLamp: { x: 3.25, z: 0.62, halfX: 0.13, halfZ: 0.13, angle: 0 },
+	plant: edges(2.72, 3.28, 2.27, 2.83)
+} satisfies Record<string, Footprint>;
 
 export type StationId =
 	| 'desk'
@@ -70,14 +91,14 @@ export interface StationLayout {
 export const STATIONS: StationLayout[] = [
 	{
 		id: 'desk',
-		approach: { x: 0.85, z: -1.5 },
+		approach: { x: 0.7, z: -1.5 },
 		hit: { center: [1.1, 0.95, -2.5], size: [2.55, 1.95, 1.15] },
 		focus: [1.05, 1.2, -2.4],
 		priority: 0
 	},
 	{
 		id: 'notebook',
-		approach: { x: 1.8, z: -1.5 },
+		approach: { x: 1.85, z: -1.5 },
 		hit: { center: [1.8, 1.12, -2.28], size: [0.8, 0.5, 0.72] },
 		focus: [1.8, 1.05, -2.3],
 		priority: 1
@@ -126,7 +147,8 @@ export const STATIONS: StationLayout[] = [
 	},
 	{
 		id: 'door',
-		approach: { x: -2.85, z: 2.45 },
+		// Far enough out that the door swings open clear of the character's head.
+		approach: { x: -2.65, z: 2.4 },
 		hit: { center: [-3.42, 1.1, 2.5], size: [0.45, 2.3, 1.05] },
 		focus: [-3.4, 1.2, 2.5],
 		priority: 0
@@ -145,7 +167,7 @@ export const CURIOSITIES: CuriosityLayout[] = [
 	{ id: 'plush', hit: { center: [-2.72, 0.85, 0.15], size: [0.65, 0.6, 0.6] } },
 	{ id: 'mug', hit: { center: [0.4, 1.15, -2.25], size: [0.32, 0.32, 0.32] } },
 	{ id: 'suitcase', hit: { center: [-1.9, 0.38, 2.85], size: [0.62, 0.8, 0.45] } },
-	{ id: 'football', hit: { center: [-2.35, 0.14, 2.15], size: [0.42, 0.42, 0.42] } }
+	{ id: 'football', hit: { center: [-3.2, 0.14, 2.03], size: [0.42, 0.42, 0.42] } }
 ];
 
 // The door swings open while its station is focused.

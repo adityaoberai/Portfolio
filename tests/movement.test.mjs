@@ -2,13 +2,67 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
 	clampPoint,
+	isClear,
 	isFree,
 	keyboardDirection,
 	nearest,
+	route,
 	SPEED,
 	stepToward
 } from '../src/lib/world/movement.ts';
-import { CAMERA_OFFSET, CURIOSITIES, START, STATIONS, WALKABLE } from '../src/lib/world/layout.ts';
+import {
+	CAMERA_OFFSET,
+	CURIOSITIES,
+	FOOTPRINTS,
+	START,
+	STATIONS,
+	WALKABLE
+} from '../src/lib/world/layout.ts';
+
+test('every piece of furniture is solid, including the chairs and the floor lamp', () => {
+	for (const [name, f] of Object.entries(FOOTPRINTS)) {
+		const centre = { x: f.x, z: f.z };
+		assert.equal(isFree(centre), false, `${name} can be walked through`);
+		assert.ok(isFree(clampPoint(centre)), `${name}: pushed out into other furniture`);
+	}
+});
+
+test('walking into furniture slides along it: never inside, never a jump', () => {
+	const step = SPEED / 60;
+	for (const start of [START, ...STATIONS.map((s) => s.approach)])
+		for (let i = 0; i < 24; i++) {
+			const angle = (i / 24) * Math.PI * 2;
+			let point = start;
+			for (let frame = 0; frame < 120; frame++) {
+				const next = clampPoint({
+					x: point.x + Math.cos(angle) * step,
+					z: point.z + Math.sin(angle) * step
+				});
+				const where = `from ${JSON.stringify(start)}, direction ${i}, frame ${frame}`;
+				assert.ok(isFree(next), `${where}: inside furniture at ${JSON.stringify(next)}`);
+				assert.ok(Math.hypot(next.x - point.x, next.z - point.z) < step * 2, `${where}: jumped`);
+				point = next;
+			}
+		}
+});
+
+test('click-to-walk goes around furniture instead of through it', () => {
+	const desk = STATIONS.find((s) => s.id === 'desk').approach;
+	const notebook = STATIONS.find((s) => s.id === 'notebook').approach;
+	// The desk chair stands between the two.
+	assert.equal(isClear(desk, notebook), false);
+	const starts = [START, desk, ...STATIONS.map((s) => s.approach)];
+	for (const from of starts)
+		for (const station of STATIONS) {
+			const path = route(from, station.approach);
+			assert.deepEqual(path.at(-1), station.approach);
+			let at = from;
+			for (const waypoint of path) {
+				assert.ok(isClear(at, waypoint), `${JSON.stringify(from)} -> ${station.id}`);
+				at = waypoint;
+			}
+		}
+});
 
 test('large inputs stay on the floor and out of furniture', () => {
 	for (const point of [

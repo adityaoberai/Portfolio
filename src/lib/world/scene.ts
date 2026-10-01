@@ -52,7 +52,15 @@ import {
 	type StationLayout,
 	type Vec3
 } from './layout';
-import { clampPoint, keyboardDirection, nearest, SPEED, stepToward, type Point } from './movement';
+import {
+	clampPoint,
+	keyboardDirection,
+	nearest,
+	route,
+	SPEED,
+	stepToward,
+	type Point
+} from './movement';
 
 export interface RoomState {
 	x: number;
@@ -230,7 +238,8 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		'arrowdown',
 		'arrowright'
 	]);
-	let target: Point | null = null;
+	// Click-to-walk waypoints around the furniture; the last one is the destination.
+	let path: Point[] = [];
 	let inspectOnArrival: StationLayout | null = null;
 	let reducedMotion = options.reducedMotion;
 	let lowQuality = options.lowQuality;
@@ -255,7 +264,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	function report() {
 		options.onState({
 			...position(),
-			moving: Boolean(target || keys.size),
+			moving: Boolean(path.length || keys.size),
 			near: near?.id ?? null,
 			focused: focused?.id ?? null,
 			frames,
@@ -270,7 +279,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	}
 	function stopMovement() {
 		keys.clear();
-		target = null;
+		path = [];
 		inspectOnArrival = null;
 		stalled = 0;
 		targetMarker.visible = false;
@@ -353,13 +362,17 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 					z: character.position.z + direction.z * SPEED * delta
 				})
 			);
-		} else if (target && !paused) {
-			const before = Math.hypot(character.position.x - target.x, character.position.z - target.z);
-			setPosition(clampPoint(stepToward(position(), target, delta)));
-			const after = Math.hypot(character.position.x - target.x, character.position.z - target.z);
-			// Furniture can deflect a straight path; give up gracefully instead of jittering.
+		} else if (path.length && !paused) {
+			const next = path[0];
+			const before = Math.hypot(character.position.x - next.x, character.position.z - next.z);
+			setPosition(clampPoint(stepToward(position(), next, delta)));
+			const after = Math.hypot(character.position.x - next.x, character.position.z - next.z);
+			// If something still deflects the walk, give up gracefully instead of jittering.
 			stalled = before - after < SPEED * delta * 0.25 ? stalled + 1 : 0;
-			if (after < 0.001 || stalled > 8) {
+			if (after < 0.001 && path.length > 1) {
+				path.shift();
+				stalled = 0;
+			} else if (after < 0.001 || stalled > 8) {
 				const pending = inspectOnArrival;
 				stopMovement();
 				if (pending) {
@@ -367,7 +380,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 				}
 			}
 		}
-		const moving = keyboardMoving || Boolean(target);
+		const moving = keyboardMoving || path.length > 0;
 		body.position.y = moving && !reducedMotion ? Math.abs(Math.sin(time * 0.014)) * 0.035 : 0;
 		legs.forEach(
 			(leg, i) =>
@@ -412,14 +425,15 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	function moveTo(point: Point, station: StationLayout | null = null) {
 		if (paused || disposed) return;
 		keys.clear();
-		target = clampPoint(point);
+		const target = clampPoint(point);
+		path = route(position(), target);
 		inspectOnArrival = station;
 		stalled = 0;
 		targetMarker.position.set(target.x, 0.063, target.z);
 		targetMarker.visible = !reducedMotion && !station;
 		if (reducedMotion) {
 			setPosition(target);
-			target = null;
+			path = [];
 			if (station) {
 				inspect(station);
 				return;
@@ -508,7 +522,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		const key = event.key.toLowerCase();
 		if (movementKeys.has(key)) {
 			event.preventDefault();
-			target = null;
+			path = [];
 			inspectOnArrival = null;
 			targetMarker.visible = false;
 			keys.add(key);

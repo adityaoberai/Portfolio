@@ -3,6 +3,7 @@ import {
 	CHARACTER_RADIUS,
 	FOOTPRINTS,
 	INTERACTION_RADIUS,
+	START,
 	WALKABLE,
 	type Footprint,
 	type Point
@@ -18,37 +19,66 @@ const within = (point: Point) =>
 	point.z >= WALKABLE.minZ &&
 	point.z <= WALKABLE.maxZ;
 
-function inside(point: Point, f: Footprint, pad: number) {
-	return (
-		point.x > f.minX - pad &&
-		point.x < f.maxX + pad &&
-		point.z > f.minZ - pad &&
-		point.z < f.maxZ + pad
-	);
+const footprints: Footprint[] = Object.values(FOOTPRINTS);
+const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.z - b.z);
+
+// A point in a footprint's own frame, and back.
+function toLocal(point: Point, f: Footprint): Point {
+	const dx = point.x - f.x;
+	const dz = point.z - f.z;
+	const c = Math.cos(f.angle);
+	const s = Math.sin(f.angle);
+	return { x: c * dx - s * dz, z: s * dx + c * dz };
 }
 
-// Nudges a point out of furniture to the nearest free edge. Never blocks movement,
-// so the character slides around a bed or desk instead of stopping against it.
+function toWorld(point: Point, f: Footprint): Point {
+	const c = Math.cos(f.angle);
+	const s = Math.sin(f.angle);
+	return { x: f.x + c * point.x + s * point.z, z: f.z - s * point.x + c * point.z };
+}
+
+function inside(point: Point, f: Footprint, pad: number) {
+	const p = toLocal(point, f);
+	return Math.abs(p.x) < f.halfX + pad && Math.abs(p.z) < f.halfZ + pad;
+}
+
+// The closest free spot on growing rings around a point. Only needed when a point
+// is wedged where two footprints meet and no single edge is free.
+function nearestFree(point: Point): Point {
+	for (let r = 0.04; r < 3; r += 0.04)
+		for (let i = 0; i < 36; i++) {
+			const angle = (i / 36) * Math.PI * 2;
+			const p = { x: point.x + Math.cos(angle) * r, z: point.z + Math.sin(angle) * r };
+			if (isFree(p)) return p;
+		}
+	return START;
+}
+
+// Moves a point out of furniture to the nearest free edge, so walking into a desk
+// or chair slides along it instead of stopping dead. Always the nearest edge: a
+// free edge further away would teleport the character across the furniture.
 function pushOut(point: Point): Point {
 	let result = point;
-	for (let pass = 0; pass < 2; pass++) {
-		for (const f of Object.values(FOOTPRINTS)) {
+	for (let pass = 0; pass < 4 && !isFree(result); pass++) {
+		for (const f of footprints) {
 			if (!inside(result, f, CHARACTER_RADIUS)) continue;
-			const pad = CHARACTER_RADIUS + 0.001;
-			const candidates = [
-				{ x: f.minX - pad, z: result.z },
-				{ x: f.maxX + pad, z: result.z },
-				{ x: result.x, z: f.minZ - pad },
-				{ x: result.x, z: f.maxZ + pad }
-			].filter(within);
+			const p = toLocal(result, f);
+			const hx = f.halfX + CHARACTER_RADIUS + 0.001;
+			const hz = f.halfZ + CHARACTER_RADIUS + 0.001;
 			const from = result;
-			candidates.sort(
-				(a, b) => Math.hypot(a.x - from.x, a.z - from.z) - Math.hypot(b.x - from.x, b.z - from.z)
-			);
-			if (candidates[0]) result = candidates[0];
+			const candidates = [
+				{ x: -hx, z: p.z },
+				{ x: hx, z: p.z },
+				{ x: p.x, z: -hz },
+				{ x: p.x, z: hz }
+			]
+				.map((c) => toWorld(c, f))
+				.filter(within)
+				.sort((a, b) => distance(a, from) - distance(b, from));
+			result = candidates[0] ?? result;
 		}
 	}
-	return result;
+	return isFree(result) ? result : nearestFree(point);
 }
 
 export function clampPoint(point: Point): Point {
@@ -59,18 +89,92 @@ export function clampPoint(point: Point): Point {
 }
 
 export function isFree(point: Point): boolean {
-	return (
-		within(point) && Object.values(FOOTPRINTS).every((f) => !inside(point, f, CHARACTER_RADIUS))
-	);
+	return within(point) && footprints.every((f) => !inside(point, f, CHARACTER_RADIUS));
+}
+
+// Whether the segment a-b passes through a footprint grown by `pad` (slab test in
+// the footprint's frame). Touching an edge doesn't count.
+function crosses(a: Point, b: Point, f: Footprint, pad: number) {
+	const p = toLocal(a, f);
+	const q = toLocal(b, f);
+	let enter = 0;
+	let exit = 1;
+	for (const [start, delta, half] of [
+		[p.x, q.x - p.x, f.halfX + pad],
+		[p.z, q.z - p.z, f.halfZ + pad]
+	]) {
+		if (Math.abs(delta) < 1e-12) {
+			if (Math.abs(start) >= half) return false;
+			continue;
+		}
+		const t1 = (-half - start) / delta;
+		const t2 = (half - start) / delta;
+		enter = Math.max(enter, Math.min(t1, t2));
+		exit = Math.min(exit, Math.max(t1, t2));
+		if (enter >= exit) return false;
+	}
+	return true;
+}
+
+// Whether the character can walk straight from a to b without touching furniture.
+export function isClear(a: Point, b: Point): boolean {
+	return footprints.every((f) => !crosses(a, b, f, CHARACTER_RADIUS));
+}
+
+// Just outside each corner of each footprint: the turning points of a walk around it.
+const corners: Point[] = footprints
+	.flatMap((f) => {
+		const hx = f.halfX + CHARACTER_RADIUS + 0.02;
+		const hz = f.halfZ + CHARACTER_RADIUS + 0.02;
+		return [
+			{ x: -hx, z: -hz },
+			{ x: hx, z: -hz },
+			{ x: hx, z: hz },
+			{ x: -hx, z: hz }
+		].map((c) => toWorld(c, f));
+	})
+	.filter(isFree);
+
+// The waypoints of the shortest walk from `from` to `to` around the furniture:
+// just `to` when the way is clear, otherwise via footprint corners (Dijkstra over
+// a few dozen points, once per click). With no route it walks straight and
+// slides along whatever is in the way.
+export function route(from: Point, to: Point): Point[] {
+	if (isClear(from, to)) return [to];
+	const nodes = [from, ...corners, to];
+	const goal = nodes.length - 1;
+	const cost = nodes.map(() => Infinity);
+	const previous = nodes.map(() => -1);
+	const done = nodes.map(() => false);
+	cost[0] = 0;
+	for (;;) {
+		let u = -1;
+		for (let i = 0; i < nodes.length; i++)
+			if (!done[i] && cost[i] < Infinity && (u < 0 || cost[i] < cost[u])) u = i;
+		if (u < 0 || u === goal) break;
+		done[u] = true;
+		for (let v = 0; v < nodes.length; v++) {
+			if (done[v]) continue;
+			const next = cost[u] + distance(nodes[u], nodes[v]);
+			if (next < cost[v] && isClear(nodes[u], nodes[v])) {
+				cost[v] = next;
+				previous[v] = u;
+			}
+		}
+	}
+	if (previous[goal] < 0) return [to];
+	const path: Point[] = [];
+	for (let i = goal; i > 0; i = previous[i]) path.unshift(nodes[i]);
+	return path;
 }
 
 export function stepToward(from: Point, to: Point, delta: number): Point {
-	const distance = Math.hypot(to.x - from.x, to.z - from.z);
+	const remaining = distance(from, to);
 	const step = SPEED * Math.max(0, Math.min(delta, 0.05));
-	if (distance <= step) return { ...to };
+	if (remaining <= step) return { ...to };
 	return {
-		x: from.x + ((to.x - from.x) * step) / distance,
-		z: from.z + ((to.z - from.z) * step) / distance
+		x: from.x + ((to.x - from.x) * step) / remaining,
+		z: from.z + ((to.z - from.z) * step) / remaining
 	};
 }
 
@@ -100,10 +204,10 @@ export function nearest<T extends { approach: Point }>(
 	let best: T | undefined;
 	let bestDistance = radius;
 	for (const item of items) {
-		const distance = Math.hypot(point.x - item.approach.x, point.z - item.approach.z);
-		if (distance <= bestDistance) {
+		const d = distance(point, item.approach);
+		if (d <= bestDistance) {
 			best = item;
-			bestDistance = distance;
+			bestDistance = d;
 		}
 	}
 	return best;

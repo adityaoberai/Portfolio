@@ -13,7 +13,7 @@ import {
 	type BufferGeometry
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import type { Vec3 } from './layout';
+import { FOOTPRINTS, type Vec3 } from './layout';
 
 type Shape = 'box' | 'cylinder' | 'sphere' | 'disc' | 'cone';
 
@@ -111,9 +111,16 @@ export function buildShell(lit: Batch, unlit: Batch) {
 	lit.box('#dfc49a', [0, -0.025, 0.1], [7, 0.06, 6.2]);
 	for (let x = -3.3; x < 3.4; x += 0.55) lit.box('#cfb186', [x, 0.009, 0.1], [0.015, 0.005, 6.1]);
 	lit.box('#e4ddc4', [-0.075, 1.52, -3.075], [7.15, 3.1, 0.15]);
-	lit.box('#c5cdb2', [-3.575, 1.52, 0.1], [0.15, 3.1, 6.2]);
+	// Left wall in three pieces around the doorway (z 2.1 to 2.9, 2.1 high: the door slab).
+	lit.box('#c5cdb2', [-3.575, 1.52, -0.45], [0.15, 3.1, 5.1]);
+	lit.box('#c5cdb2', [-3.575, 1.52, 3.05], [0.15, 3.1, 0.3]);
+	lit.box('#c5cdb2', [-3.575, 2.585, 2.5], [0.15, 0.97, 0.8]);
 	lit.box('#b4ae91', [0, 0.13, -2.98], [7, 0.22, 0.05]);
-	lit.box('#94a086', [-3.48, 0.13, 0.1], [0.05, 0.22, 6.2]);
+	for (const [z, length] of [
+		[-0.45, 5.1],
+		[3.05, 0.3]
+	])
+		lit.box('#94a086', [-3.48, 0.13, z], [0.05, 0.22, length]);
 	lit.box('#a87753', [-0.075, 3.1, -3.075], [7.25, 0.1, 0.21]);
 	lit.box('#a87753', [-3.575, 3.1, 0.1], [0.21, 0.1, 6.3]);
 
@@ -162,7 +169,8 @@ export function buildDesk(lit: Batch, unlit: Batch) {
 	});
 
 	// Chair pulled back between the two approach points.
-	lit.group([1.35, 0, -1.8], -0.3, () => {
+	const chair = FOOTPRINTS.deskChair;
+	lit.group([chair.x, 0, chair.z], chair.angle, () => {
 		lit.box('#5c7667', [0, 0.5, 0], [0.52, 0.1, 0.48]);
 		lit.box('#5c7667', [0, 0.82, 0.21], [0.52, 0.55, 0.08]);
 		for (const x of [-0.2, 0.2])
@@ -412,6 +420,22 @@ export function buildCorkboard(lit: Batch) {
 export function buildDoorFrame(lit: Batch, unlit: Batch) {
 	for (const z of [2.06, 2.94]) lit.box('#6f4f37', [-3.46, 1.1, z], [0.07, 2.2, 0.07]);
 	lit.box('#6f4f37', [-3.46, 2.22, 2.5], [0.07, 0.07, 0.95]);
+	lit.box('#8f6a4c', [-3.575, -0.01, 2.5], [0.15, 0.03, 0.8]);
+	// The hallway beyond, seen only through the open door. The camera looks along
+	// -(9, 10, 12), so the doorway shows floor and wall further back (-z); the floor
+	// steps in so no corner pokes out past the front end of the left wall.
+	const hall: [number, number, number][] = [
+		[-3.75, 0.9, 2.9],
+		[-3.95, 0.9, 2.6],
+		[-4.15, 0.9, 2.35]
+	];
+	for (const [x, minZ, maxZ] of hall)
+		lit.box('#c9ad86', [x, -0.03, (minZ + maxZ) / 2], [0.2, 0.06, maxZ - minZ]);
+	lit.box('#9c5a45', [-3.95, 0.004, 1.75], [0.56, 0.008, 0.5]);
+	lit.box('#efe4cb', [-4.275, 0.8, 1.6], [0.05, 1.6, 1.4]);
+	lit.box('#c9bd9c', [-4.245, 0.08, 1.6], [0.012, 0.16, 1.4]);
+	lit.box('#6f4f37', [-4.24, 1.02, 1.5], [0.02, 0.32, 0.26]);
+	lit.box('#a9c2b0', [-4.228, 1.02, 1.5], [0.006, 0.24, 0.18]);
 	unlit.decal('#b08d68', -3.05, 2.5, 0.35, 0.5, 0.013);
 	// A football scarf on a hook beside the door.
 	lit.box('#4a3d30', [-3.46, 2.05, 1.97], [0.05, 0.04, 0.04]);
@@ -437,7 +461,8 @@ export function buildDecor(lit: Batch, unlit: Batch) {
 	lit.box('#2f3530', [1.55, 1.07, -2.05], [0.14, 0.02, 0.08]);
 
 	// Reading corner: armchair, headphones, books, lamp.
-	lit.group([2.65, 0, 1.22], -0.55, () => {
+	const armchair = FOOTPRINTS.armchair;
+	lit.group([armchair.x, 0, armchair.z], armchair.angle, () => {
 		lit.box('#b8644a', [0, 0.3, 0], [0.82, 0.3, 0.74]);
 		lit.box('#e2c9a4', [0, 0.49, 0.03], [0.62, 0.1, 0.6]);
 		lit.box('#a85a42', [0, 0.72, -0.31], [0.82, 0.62, 0.14]);
@@ -455,12 +480,14 @@ export function buildDecor(lit: Batch, unlit: Batch) {
 		['#ddd2b0', 0.2],
 		['#8c3f36', 0]
 	];
+	const stack = FOOTPRINTS.books;
 	books.forEach(([color, turn], i) =>
-		lit.box(color, [2.05, 0.05 + i * 0.09, 0.62], [0.36, 0.08, 0.26], [0, turn, 0])
+		lit.box(color, [stack.x, 0.05 + i * 0.09, stack.z], [0.36, 0.08, 0.26], [0, turn, 0])
 	);
-	lit.cylinder('#5d4a3a', [3.25, 0.02, 0.62], 0.12, 0.03);
-	lit.cylinder('#5d4a3a', [3.25, 0.75, 0.62], 0.015, 1.45);
-	lit.add('cone', '#e9d2a6', [3.25, 1.5, 0.62], [0.2, 0.22, 0.2]);
+	const lamp = FOOTPRINTS.floorLamp;
+	lit.cylinder('#5d4a3a', [lamp.x, 0.02, lamp.z], 0.12, 0.03);
+	lit.cylinder('#5d4a3a', [lamp.x, 0.75, lamp.z], 0.015, 1.45);
+	lit.add('cone', '#e9d2a6', [lamp.x, 1.5, lamp.z], [0.2, 0.22, 0.2]);
 
 	// Tripod folded against the cabinet.
 	const legs: [number, number][] = [
@@ -468,9 +495,14 @@ export function buildDecor(lit: Batch, unlit: Batch) {
 		[0.04, 0.05],
 		[0.03, -0.05]
 	];
+	const tripod = FOOTPRINTS.tripod;
 	for (const [dx, dz] of legs)
-		lit.cylinder('#3a3a38', [2.42 + dx, 0.55, -2.2 + dz], 0.012, 1.1, [dz * 1.5, 0, dx * 1.5]);
-	lit.box('#2b2b2a', [2.42, 1.12, -2.2], [0.08, 0.06, 0.08]);
+		lit.cylinder('#3a3a38', [tripod.x + dx, 0.55, tripod.z + dz], 0.012, 1.1, [
+			dz * 1.5,
+			0,
+			dx * 1.5
+		]);
+	lit.box('#2b2b2a', [tripod.x, 1.12, tripod.z], [0.08, 0.06, 0.08]);
 
 	// Suitcase with travel stickers, and a football.
 	lit.box('#4f6f7a', [-1.9, 0.36, 2.85], [0.48, 0.62, 0.26]);
@@ -484,7 +516,9 @@ export function buildDecor(lit: Batch, unlit: Batch) {
 		lit.box(color, [x, y, 2.982], [0.12, 0.09, 0.006], [0, 0, 0.2]);
 	for (const x of [-2.07, -1.73])
 		lit.cylinder('#2b2b2a', [x, 0.03, 2.85], 0.03, 0.03, [0, 0, Math.PI / 2]);
-	lit.add('sphere', '#f1eee6', [-2.35, 0.13, 2.15], [0.13, 0.13, 0.13]);
+	// The football waits by the door, under the scarf.
+	const ball = FOOTPRINTS.football;
+	lit.add('sphere', '#f1eee6', [ball.x, 0.13, ball.z], [0.13, 0.13, 0.13]);
 	const patches: [number, number, number][] = [
 		[0.08, 0.06, 0.08],
 		[-0.1, 0.02, 0.07],
@@ -492,6 +526,6 @@ export function buildDecor(lit: Batch, unlit: Batch) {
 		[0.1, -0.02, -0.07]
 	];
 	for (const [dx, dy, dz] of patches)
-		lit.add('sphere', '#2b2b2a', [-2.35 + dx, 0.13 + dy, 2.15 + dz], [0.035, 0.035, 0.035]);
-	unlit.decal('#caa77f', -2.35, 2.15, 0.14, 0.1, 0.012);
+		lit.add('sphere', '#2b2b2a', [ball.x + dx, 0.13 + dy, ball.z + dz], [0.035, 0.035, 0.035]);
+	unlit.decal('#caa77f', ball.x, ball.z, 0.14, 0.1, 0.014);
 }

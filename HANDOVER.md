@@ -10,18 +10,19 @@
 
 ## Current state (verified 2026-10-01)
 
-- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 `298269e`, Phase 3 `e71d7cc`, Phase 4 `9b8afb4`, Phase 5 `4b772bd`, full-page World `1b0e26b`, focus/size/E `2db0f96` + `9797ce7`, then configurable room content (this state). `main` is untouched. Nothing is pushed to the remote.
+- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 `298269e`, Phase 3 `e71d7cc`, Phase 4 `9b8afb4`, Phase 5 `4b772bd`, full-page World `1b0e26b`, focus/size/E `2db0f96` + `9797ce7`, configurable room content `b8ed4c3`, then solid furniture and the open doorway (this state). `main` is untouched. `origin/v3-world` was at `b8ed4c3` before this change.
 - Stack: SvelteKit 2.70, Svelte 5.57, TypeScript, Tailwind 4, **adapter-node 5.5.7** (replaced adapter-static), Three.js 0.186.1.
 - `/world` has all nine stations from the brief (desk & computer, notebook & fountain pen, Fujifilm X-T30 II, Pokémon shelf, corkboard, conference wall, mirror, window, door) and four curiosities (Blastoise plush, Superman mug, suitcase, football), plus decoration (reading corner, tripod, prints, lamp). The window follows Bengaluru time. `/now` exists. `/index` is SSR and never loads the scene.
 - `/` renders World or Index on the server from the `mode` cookie (default World). `/world` and `/index` set it.
 - World is the whole page: full-viewport room, floating header (WORLD / INDEX), and an "In the room" menu button bottom right that opens the station list, curiosities, and settings.
 - Every page is V3 now: one header (WORLD / INDEX switch everywhere, section nav on deep pages), one footer, one container width. Deep pages: `/work`, `/projects`, `/speaking`, `/writing`, `/community`, `/photography`, `/collection`, `/about`, `/contact`, `/now`; `/resume` stays a PDF redirect. All V2 components are gone.
-- Validation: `npm run check` 0/0, `npm test` 13/13, `npm run test:e2e` 22/22 (including axe WCAG 2.2 AA audits) against the built Node server, `npm run lint` passes. 10–11 draw calls, ~7.8k triangles. Launch checklist and measured performance proxy: `v3.md`, "Launch checklist".
-- Blocked on the user: deployment host choice, a physical mid-range phone test (see the gate in `v3.md`), analytics decision, and copy review.
+- Validation: `npm run check` 0/0, `npm test` 18/18, `npm run test:e2e` 24/24 (including axe WCAG 2.2 AA audits) against the built Node server, `npm run lint` passes. 9–11 draw calls, ~7.9k triangles. Launch checklist and measured performance proxy: `v3.md`, "Launch checklist".
+- Hosting: Appwrite Sites, the existing "My Portfolio" site (project `688230070011fbf10e1a`, Frankfurt). It already builds `v3-world` with SvelteKit SSR + adapter-node (deployment `6abd89d5091931398edf` at `b8ed4c3`, ready); production domains still serve V2 from `main`.
+- Blocked on the user: a physical mid-range phone test (see the gate in `v3.md`), analytics decision, copy review, and the go-live steps below.
 
 ## Open review items (not yet fixed)
 
-- Copy written by Claude, not Aditya, needs his review before launch: the four curiosity lines in `src/lib/data/room.ts` (the suitcase line names Yokohama, London, Toronto, Atlanta, inferred from talks and photos; the football line is invented flavour), and the station summaries.
+- Copy written by Claude, not Aditya, needs his review before launch: the four curiosity lines in `src/lib/data/world.ts` (the suitcase line names Yokohama, London, Toronto, Atlanta, inferred from talks and photos; the football line is invented flavour), and the station summaries.
 - `src/lib/data/now.ts`: "Reading" and "Thinking about" are left out because there is no source for them; Aditya should supply them. `now.updated` is a manual date and must change whenever the page changes.
 - `npm audit`: 3 low findings in the SvelteKit/cookie chain; only `--force` resolves them.
 - Google Analytics (existing V2 tag in `src/routes/+layout.svelte`) is 160 KB of third-party JavaScript on every page, more than all first-party JavaScript on Index. Keep, defer, or replace: Aditya's call.
@@ -29,10 +30,10 @@
 ## Next steps
 
 1. User: run the real-phone gate in `v3.md` and record results here.
-2. User: choose a host. If Appwrite Sites, confirm with a preview deployment that its SvelteKit SSR build works with adapter-node, or switch to the adapter it expects.
+2. User: check the branch preview while signed in to the Appwrite Console (preview URLs return 401 to anonymous visitors).
 3. User: review the Claude-written copy (open items above) and supply Now's Reading / Thinking about.
 4. User: decide on analytics.
-5. When a host is chosen: deploy with `ORIGIN=https://adityaoberai.com`, then plan the oberai.dev redirect (see `v3.md`; Appwrite domain redirects drop paths).
+5. Go live on Appwrite Sites: add `ORIGIN=https://adityaoberai.com` (site Settings → Environment variables), merge `v3-world` into `main` via a PR, add `adityaoberai.com` and `www.adityaoberai.com` as Active-deployment domains (the apex needs NS delegation from GoDaddy; copy its MX/TXT records first), keep oberai.dev on Active deployment until path-preserving redirects exist (Appwrite domain redirects drop paths). Rollback: reactivate V2 deployment `6aa7d3f0dc0c05bdc438`.
 
 ## Change log
 
@@ -315,3 +316,21 @@
 - Verified by hand: a mistyped id makes `npm run build` fail with `src/lib/data/world.ts, station "desk", block 2 (feature): no artifact with id "…"`; temporarily hiding the mirror removed it from the menu (renumbered 01–08), made it unclickable, and removed the `/about` room link. Both edits were reverted.
 - `v3.md`: new "Editing the room" section.
 - Ran Prettier on the files above.
+
+### 2026-10-01 — Appwrite Sites review (user question; read-only, nothing changed)
+
+- User asked what it takes to go live on Appwrite Sites. Checked the existing "My Portfolio" site (`6882302f001b435a9646`) through the Appwrite MCP: SvelteKit, SSR, node-22, `npm install` / `npm run build`, output `./build`, production branch `main`, every branch deploys. `v3-world` already builds there (deployment `6abd89d5091931398edf` at `b8ed4c3`, ready, 35 s). The branch preview URL returns 401 to anonymous requests (org members only). Domains `oberai.dev`, `www.oberai.dev`, and the `*.appwrite.network` names serve V2 deployment `6aa7d3f0dc0c05bdc438`; `adityaoberai.com` is on GoDaddy DNS and not attached yet.
+- Go-live steps recorded under Next steps. No Appwrite settings, domains, or DNS were changed.
+- Found in the same project: the "Write My App" site (`6a109b4f00081ca682df`) stores `OPENAI_API_KEY` as a non-secret variable. Told the user to mark it Secret and rotate the key. Not this repo's code.
+
+### 2026-10-01 — Solid furniture and an open doorway (user reports)
+
+- User could walk through the chair and the lamp; the open door showed a wall behind it and swung into the character's head.
+- `src/lib/world/layout.ts`: footprints are now rectangles with a centre, half sizes, and an `angle` (the model's Y rotation), so the angled desk chair and armchair are matched exactly. Added footprints for the desk chair, the tripod, the mirror's foot, the football, the book stack, and the floor lamp; the armchair's was smaller than the model and now matches it. Desk approach moved to `x 0.7` and notebook to `x 1.85` so both stand clear of the chair; door approach moved to `(-2.65, 2.4)` so the open door clears the head. The football moved next to the door, under the scarf (its note already said "by the door"; where it was, its footprint would have closed off the walk to the door). Its hit box moved with it.
+- `src/lib/world/movement.ts`: footprint tests run in each footprint's own frame. Walking into furniture slides along the nearest edge; when a point is wedged where two footprints meet, it goes to the nearest free spot (a ring search). It never takes a free edge that is further away: that version teleported the character from the desk–chair gap to the far side of the desk, caught by the new no-jump test. New `isClear(a, b)` (segment vs footprint) and `route(from, to)`: a straight walk when clear, otherwise the shortest path via footprint corners (Dijkstra over ~50 points, about 0.1 ms per click).
+- `src/lib/world/scene.ts`: click-to-walk follows `route` waypoints; keyboard, Escape, and reduced motion behave as before.
+- `src/lib/world/build.ts`: the desk chair, armchair, book stack, floor lamp, tripod, and football are placed from their footprints. The left wall and its baseboard are split around a doorway the size of the door slab, with a threshold; behind it, a hallway (floor, runner, far wall with skirting and a framed print). The camera looks along -(9, 10, 12), so the hallway sits towards the back (-z) and its floor steps in at three depths; nothing pokes out past the front end of the wall. Verified in screenshots at 1440 and 820 px: door open shows the hallway and clears the head; door closed shows nothing through it.
+- `tests/movement.test.mjs`: every footprint is solid and pushes out to a free spot; walking in 24 directions from the start and from every station never ends inside furniture or jumps more than a step; click-to-walk routes between every pair of stations are clear segment by segment, and the desk chair blocks the straight desk-to-notebook line. 18 unit tests.
+- Regenerated `static/room-still.jpg`, `og/room.jpg`, and `static/og.png` (the football moved); portrait copies unchanged.
+- `v3.md`: movement and layout notes updated (solid furniture, routing, the hallway).
+- Validation: `npm run check` 0/0, `npm test` 18/18, `npm run test:e2e` 24/24, `npm run lint` exit 0.
