@@ -12,12 +12,16 @@ import {
 	Raycaster,
 	RingGeometry,
 	Scene,
+	SRGBColorSpace,
+	TextureLoader,
 	Vector2,
 	Vector3,
 	WebGLRenderer,
 	type BufferGeometry,
-	type Material
+	type Material,
+	type Texture
 } from 'three';
+import { SHELF_ATLAS, shelfCards } from '../data/collection';
 import {
 	Batch,
 	buildBedroom,
@@ -124,7 +128,8 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	buildShell(lit, unlit);
 	buildDesk(lit, unlit);
 	buildPhotography(lit);
-	buildCollection(lit);
+	const faces = new Batch();
+	buildCollection(lit, faces, shelfCards.length);
 	buildBedroom(lit);
 	buildWindow(lit);
 	buildLanyards(lit);
@@ -162,6 +167,24 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		sun.intensity = sky.sun;
 	}
 	applySky();
+
+	// Favourite cards on the shelf slabs: one small atlas texture, loaded after the
+	// room is up. Until it arrives the slabs show plain card faces.
+	const faceMaterial = own(new MeshLambertMaterial({ vertexColors: true }));
+	const cardFaces = new Mesh(keep(faces.build()), faceMaterial);
+	cardFaces.visible = false;
+	scene.add(cardFaces);
+	let atlas: Texture | null = null;
+	new TextureLoader().load(SHELF_ATLAS, (texture) => {
+		if (disposed) return texture.dispose();
+		texture.colorSpace = SRGBColorSpace;
+		texture.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+		atlas = texture;
+		faceMaterial.map = texture;
+		faceMaterial.needsUpdate = true;
+		cardFaces.visible = true;
+		requestFrame();
+	});
 
 	// The door swings open while its station is focused.
 	const door = new Group();
@@ -683,6 +706,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			window.removeEventListener('blur', blur);
 			geometries.forEach((value) => value.dispose());
 			materials.forEach((value) => value.dispose());
+			atlas?.dispose();
 			renderer.dispose();
 		}
 	};

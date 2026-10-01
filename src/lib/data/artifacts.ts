@@ -1,4 +1,4 @@
-import { collection } from './collection';
+import { cardImage, collection, favouriteCards } from './collection';
 import { communityInitiatives } from './community';
 import { photographs, photoSrc } from './photography';
 import { podcasts } from './podcasts';
@@ -28,6 +28,8 @@ export interface Artifact {
 	// Where it happened or what it belongs to: an event, a show, a theme, a place.
 	context?: string;
 	image?: string;
+	/** Describes `image` when the title alone doesn't (card artwork). */
+	imageAlt?: string;
 	href?: string;
 	externalUrl?: string;
 	/** What following `externalUrl` gets you, when that matters (a recording, slides). */
@@ -174,17 +176,19 @@ const gathered: Artifact[] = communityInitiatives.map((initiative) => ({
 	featured: initiative.slug === 'writers-room'
 }));
 
-const collected: Artifact[] = [
-	{
-		id: 'collectible-blastoise',
-		type: 'collectible',
-		worlds: ['collect', 'personal'],
-		title: collection.favourite,
-		description: 'My favourite Pokémon, so it gets pride of place.',
-		externalUrl: collection.showcaseUrl,
-		featured: true
-	}
-];
+const collected: Artifact[] = favouriteCards.map((card) => ({
+	id: `collectible-${card.id}`,
+	type: 'collectible',
+	worlds: ['collect', 'personal'],
+	title: card.name,
+	description: card.note,
+	context: `${card.set} · ${card.number}`,
+	image: cardImage(card),
+	imageAlt: card.alt,
+	href: `/collection#${card.id}`,
+	externalUrl: collection.showcaseUrl,
+	featured: card.name === collection.favourite
+}));
 
 export const artifacts: Artifact[] = [
 	...work,

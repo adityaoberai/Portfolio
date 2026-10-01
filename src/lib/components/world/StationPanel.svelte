@@ -5,6 +5,8 @@
 	import { panels, stationById } from '$lib/data/room';
 	import { withWidth } from '$lib/data/photography';
 	import { bengaluruTime } from '$lib/data/now';
+	import { CARD_IMAGE_HEIGHT, CARD_IMAGE_WIDTH } from '$lib/data/collection';
+	import type { Artifact } from '$lib/data/artifacts';
 	import Slab from './Slab.svelte';
 	import Portrait from '$lib/components/Portrait.svelte';
 
@@ -17,6 +19,17 @@
 
 {#snippet itemLink(href: string | undefined, label: string)}
 	{#if href}<a class="item-link" {href}>{label} {external(href) ? '↗' : '→'}</a>{/if}
+{/snippet}
+
+{#snippet cardImage(card: Artifact)}
+	<img
+		src={card.image}
+		alt={card.imageAlt ?? card.title}
+		loading="lazy"
+		decoding="async"
+		width={CARD_IMAGE_WIDTH}
+		height={CARD_IMAGE_HEIGHT}
+	/>
 {/snippet}
 
 {#if station && panel}
@@ -109,6 +122,23 @@
 						</li>
 					{/each}
 				</ul>
+			{:else if block.style === 'cards'}
+				<ul class="cards">
+					{#each block.artifacts as card (card.id)}
+						<li>
+							<figure>
+								{#if block.show.link && card.link}<a href={card.link}>{@render cardImage(card)}</a
+									>{:else}{@render cardImage(card)}{/if}
+								<figcaption>
+									<strong>{card.title}</strong>
+									{#if block.show.context && card.context}<span>{card.context}</span>{/if}
+									{#if block.show.description && card.description}<span>{card.description}</span
+										>{/if}
+								</figcaption>
+							</figure>
+						</li>
+					{/each}
+				</ul>
 			{/if}
 		{:else if block.type === 'feature'}
 			{#if block.style === 'aside'}
@@ -130,7 +160,12 @@
 			{/if}
 		{:else if block.type === 'slab'}
 			<div class="slab-row">
-				<Slab name={block.artifact.title} caption={block.caption} />
+				<Slab
+					name={block.artifact.title}
+					caption={block.caption ?? block.artifact.context}
+					image={block.artifact.image}
+					alt={block.artifact.imageAlt}
+				/>
 			</div>
 		{:else if block.type === 'profile'}
 			<div class="reflection" class:no-portrait={block.portrait === false}>
@@ -524,6 +559,42 @@
 		display: flex;
 		justify-content: center;
 		margin: 24px 0 8px;
+	}
+	.cards {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+		gap: 16px;
+		margin: 14px 0 0;
+		padding: 0;
+		list-style: none;
+	}
+	.cards figure {
+		margin: 0;
+	}
+	.cards img {
+		display: block;
+		width: 100%;
+		height: auto;
+		aspect-ratio: 63 / 88;
+		object-fit: cover;
+		border-radius: 4.5% / 3.2%;
+		background: #e8e2cc;
+		box-shadow: 0 6px 14px #2a3f3a26;
+	}
+	.cards figcaption {
+		margin-top: 8px;
+		font-size: 13px;
+		line-height: 1.4;
+		color: #5a604f;
+	}
+	.cards strong {
+		display: block;
+		font-size: 15px;
+		font-weight: 600;
+		color: #2c3328;
+	}
+	.cards span {
+		display: block;
 	}
 	.links {
 		display: flex;

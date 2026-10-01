@@ -130,7 +130,7 @@ test('clicking objects in the room opens them; curiosities leave a note', async 
 	}
 	const plush = await anchor(page, 'plush');
 	await page.mouse.click(plush.x, plush.y);
-	await expect(page.locator('.note')).toContainText('Blastoise plush');
+	await expect(page.locator('.note')).toContainText('Squirtle plush');
 	await expect(page.getByRole('dialog')).not.toBeVisible();
 });
 

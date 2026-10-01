@@ -1,11 +1,15 @@
 <script lang="ts">
-	// A graded card slab drawn in CSS: case, label, and an abstract card face.
-	// No official artwork; the tilt is decorative and disabled for reduced motion.
+	// A graded card slab drawn in CSS: case, label, and the card itself (its image,
+	// or an abstract face without one). The tilt is decorative and off for reduced motion.
 	let {
 		name,
 		grade = 'FAVOURITE',
-		caption
-	}: { name: string; grade?: string; caption?: string } = $props();
+		caption,
+		image,
+		alt
+	}: { name: string; grade?: string; caption?: string; image?: string; alt?: string } = $props();
+	import { CARD_IMAGE_HEIGHT, CARD_IMAGE_WIDTH } from '$lib/data/collection';
+
 	let rx = $state(0);
 	let ry = $state(0);
 
@@ -26,13 +30,24 @@
 		<div class="label">
 			<span>{name.toUpperCase()}</span><span>{grade}</span>
 		</div>
-		<div class="card">
-			<div class="art" aria-hidden="true">
-				<span class="shell"></span><span class="cannon left"></span><span class="cannon right"
-				></span>
+		{#if image}
+			<img
+				class="photo"
+				src={image}
+				alt={alt ?? `${name} card`}
+				width={CARD_IMAGE_WIDTH}
+				height={CARD_IMAGE_HEIGHT}
+				decoding="async"
+			/>
+		{:else}
+			<div class="card">
+				<div class="art" aria-hidden="true">
+					<span class="shell"></span><span class="cannon left"></span><span class="cannon right"
+					></span>
+				</div>
+				<p class="card-name">{name}</p>
 			</div>
-			<p class="card-name">{name}</p>
-		</div>
+		{/if}
 	</div>
 	<figcaption>{caption ?? `A ${name} slab in pride of place on the shelf.`}</figcaption>
 </figure>
@@ -43,7 +58,7 @@
 		margin: 0;
 	}
 	.case {
-		width: 180px;
+		width: 200px;
 		padding: 10px;
 		border-radius: 8px;
 		background: linear-gradient(
@@ -71,6 +86,16 @@
 			700 9px/1.2 system-ui,
 			sans-serif;
 		letter-spacing: 0.08em;
+	}
+	.photo {
+		display: block;
+		width: 100%;
+		height: auto;
+		margin-top: 8px;
+		aspect-ratio: 63 / 88;
+		object-fit: cover;
+		border-radius: 4.5% / 3.2%;
+		background: #e8c85a;
 	}
 	.card {
 		margin-top: 8px;

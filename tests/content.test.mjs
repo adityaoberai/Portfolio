@@ -11,6 +11,40 @@ import { podcasts } from '../src/lib/data/podcasts.ts';
 import { writingSamples } from '../src/lib/data/writing.ts';
 import { photographs } from '../src/lib/data/photography.ts';
 import { communityInitiatives } from '../src/lib/data/community.ts';
+import { existsSync, readFileSync } from 'node:fs';
+import {
+	cardImage,
+	favouriteCards,
+	SHELF_ATLAS,
+	SHELF_CELL,
+	SHELF_SLOTS,
+	shelfCards
+} from '../src/lib/data/collection.ts';
+
+// Width and height of a WebP file (lossy VP8 or extended VP8X).
+function webpSize(path) {
+	const b = readFileSync(path);
+	const chunk = b.toString('ascii', 12, 16);
+	if (chunk === 'VP8 ')
+		return { width: b.readUInt16LE(26) & 0x3fff, height: b.readUInt16LE(28) & 0x3fff };
+	if (chunk === 'VP8X') return { width: 1 + b.readUIntLE(24, 3), height: 1 + b.readUIntLE(27, 3) };
+	throw new Error(`${path}: unexpected WebP chunk ${chunk}`);
+}
+
+test('every favourite card has its images; the shelf texture matches the card list', () => {
+	for (const card of favouriteCards) {
+		assert.ok(existsSync(`assets/cards/${card.id}.png`), `${card.id}: original missing`);
+		assert.ok(existsSync(`static${cardImage(card)}`), `${card.id}: run npm run cards`);
+		assert.ok(card.alt.length > 20, `${card.id}: describe the artwork`);
+	}
+	assert.equal(new Set(favouriteCards.map((c) => c.id)).size, favouriteCards.length);
+	assert.ok(shelfCards.length > 0 && shelfCards.length <= SHELF_SLOTS);
+	// One cell per shelf card, in order; a stale texture means `npm run cards` wasn't run.
+	assert.deepEqual(webpSize(`static${SHELF_ATLAS}`), {
+		width: SHELF_CELL.width * shelfCards.length,
+		height: SHELF_CELL.height
+	});
+});
 
 test('every source record becomes exactly one artifact with a unique id', () => {
 	const sources =
@@ -21,7 +55,7 @@ test('every source record becomes exactly one artifact with a unique id', () => 
 		writingSamples.length +
 		photographs.length +
 		communityInitiatives.length +
-		1; // Blastoise
+		favouriteCards.length;
 	assert.equal(artifacts.length, sources);
 	assert.equal(new Set(artifacts.map((a) => a.id)).size, artifacts.length);
 });

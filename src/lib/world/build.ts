@@ -7,6 +7,7 @@ import {
 	Euler,
 	Float32BufferAttribute,
 	Matrix4,
+	PlaneGeometry,
 	Quaternion,
 	SphereGeometry,
 	Vector3,
@@ -15,7 +16,7 @@ import {
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { FOOTPRINTS, type Vec3 } from './layout';
 
-type Shape = 'box' | 'cylinder' | 'sphere' | 'disc' | 'cone';
+type Shape = 'box' | 'cylinder' | 'sphere' | 'disc' | 'cone' | 'plane';
 
 function createBases(): Record<Shape, BufferGeometry> {
 	return {
@@ -23,7 +24,8 @@ function createBases(): Record<Shape, BufferGeometry> {
 		cylinder: new CylinderGeometry(1, 1, 1, 10),
 		sphere: new SphereGeometry(1, 10, 6),
 		disc: new CircleGeometry(1, 28),
-		cone: new ConeGeometry(1, 1, 8)
+		cone: new ConeGeometry(1, 1, 8),
+		plane: new PlaneGeometry(1, 1)
 	};
 }
 
@@ -79,6 +81,16 @@ export class Batch {
 		this.add('disc', color, [x, y, z], [sx, sz, 1], [-Math.PI / 2, 0, 0]);
 	}
 
+	// A flat picture facing local +z that shows one cell of a texture atlas:
+	// `cell` is [left, bottom, right, top] in texture coordinates (0 to 1).
+	picture(position: Vec3, width: number, height: number, rotation: Vec3, cell: number[]) {
+		this.add('plane', '#ffffff', position, [width, height, 1], rotation);
+		const uv = this.parts[this.parts.length - 1].getAttribute('uv');
+		const [left, bottom, right, top] = cell;
+		for (let i = 0; i < uv.count; i++)
+			uv.setXY(i, left + uv.getX(i) * (right - left), bottom + uv.getY(i) * (top - bottom));
+	}
+
 	build(): BufferGeometry {
 		const merged = mergeGeometries(this.parts, false);
 		this.parts.forEach((part) => part.dispose());
@@ -89,20 +101,103 @@ export class Batch {
 	}
 }
 
-// Low-poly Blastoise, local +z facing forward. Used for the shelf figure and the plush.
+// Blastoise, local +z facing forward: the figure on top of the shelf, after
+// Aditya's plush. Sky-blue and stocky: a big cream belly with a stitched seam, a
+// black collar, a wide head with an open red-and-pink mouth, angled eyes and black
+// ears; a brown shell with a pale rim; grey cannons over the shoulders; white claws.
 export function blastoise(b: Batch) {
-	b.box('#8a6a45', [0, 0.27, -0.09], [0.37, 0.34, 0.2]);
-	b.box('#6f5436', [0, 0.27, -0.2], [0.3, 0.26, 0.03]);
-	b.box('#4f7fb8', [0, 0.25, 0.02], [0.3, 0.32, 0.22]);
-	b.box('#e3d6a3', [0, 0.24, 0.135], [0.22, 0.24, 0.02]);
-	b.box('#5b8cc4', [0, 0.5, 0.05], [0.2, 0.17, 0.18]);
-	for (const x of [-0.05, 0.05]) b.box('#24231f', [x, 0.53, 0.142], [0.03, 0.035, 0.01]);
-	for (const x of [-0.085, 0.085]) b.box('#4f7fb8', [x, 0.61, 0.02], [0.05, 0.06, 0.03]);
-	for (const x of [-0.14, 0.14]) {
-		b.cylinder('#9aa3a8', [x, 0.45, 0.0], 0.036, 0.26, [Math.PI / 2, 0, 0]);
-		b.box('#4f7fb8', [x * 1.28, 0.28, 0.04], [0.07, 0.16, 0.08]);
-		b.box('#4f7fb8', [x * 0.58, 0.035, 0.05], [0.09, 0.07, 0.11]);
+	const blue = '#56afdc';
+	const claw = '#f6f5ef';
+	// Legs and feet.
+	for (const side of [-1, 1]) {
+		const x = side * 0.1;
+		b.add('sphere', blue, [x, 0.13, 0.03], [0.09, 0.095, 0.1]);
+		b.add('sphere', blue, [x, 0.045, 0.07], [0.085, 0.05, 0.1]);
+		for (const dx of [-0.035, 0.035])
+			b.add('cone', claw, [x + dx, 0.03, 0.165], [0.018, 0.04, 0.018], [Math.PI / 2, 0, 0]);
 	}
+	// Shell, its pale rim, the body, and the belly.
+	b.add('sphere', '#5b4030', [0, 0.31, -0.1], [0.2, 0.2, 0.12]);
+	b.add('sphere', '#e3e2da', [0, 0.3, -0.03], [0.2, 0.215, 0.11]);
+	b.add('sphere', blue, [0, 0.27, 0], [0.165, 0.18, 0.13]);
+	b.add('sphere', '#f2ecb0', [0, 0.26, 0.07], [0.135, 0.165, 0.08]);
+	b.box('#d6cb7a', [0, 0.32, 0.146], [0.1, 0.006, 0.006]);
+	b.box('#d6cb7a', [0, 0.17, 0.142], [0.006, 0.08, 0.006]);
+	// Arms with white claws.
+	for (const side of [-1, 1]) {
+		b.add('sphere', blue, [side * 0.175, 0.32, 0.03], [0.065, 0.095, 0.065], [0, 0, side * 0.35]);
+		b.add('sphere', blue, [side * 0.2, 0.22, 0.08], [0.055, 0.06, 0.065]);
+		for (const dx of [-0.02, 0.02])
+			b.add(
+				'cone',
+				claw,
+				[side * 0.2 + dx, 0.2, 0.145],
+				[0.014, 0.035, 0.014],
+				[Math.PI / 2 + 0.4, 0, 0]
+			);
+	}
+	// Collar, head, snout, and the open mouth.
+	b.add('cylinder', '#1f1f1f', [0, 0.44, 0.02], [0.11, 0.04, 0.095]);
+	b.add('sphere', blue, [0, 0.545, 0.03], [0.115, 0.1, 0.11]);
+	b.add('sphere', '#f2ecb0', [0, 0.445, 0.1], [0.09, 0.035, 0.075]);
+	b.box('#b3262c', [0, 0.49, 0.165], [0.11, 0.035, 0.03]);
+	b.box('#ef8c9b', [0, 0.468, 0.17], [0.085, 0.03, 0.03]);
+	b.add('sphere', blue, [0, 0.535, 0.13], [0.09, 0.035, 0.07]);
+	// Eyes slanting down towards the snout, and black ears.
+	for (const side of [-1, 1]) {
+		b.group([side * 0.068, 0.575, 0.117], [0, side * 0.6, side * 0.35], () => {
+			b.box('#f4f4f0', [0, 0, 0], [0.045, 0.022, 0.01]);
+			b.box('#1f1f1f', [side * -0.01, -0.002, 0.003], [0.018, 0.018, 0.01]);
+		});
+		b.add('cone', '#1f1f1f', [side * 0.08, 0.63, -0.01], [0.03, 0.055, 0.02], [0, 0, side * -0.4]);
+	}
+	// Cannons over the shoulders, splayed a little, with dark muzzles.
+	for (const side of [-1, 1]) {
+		const splay = side * -0.25;
+		const axis = [-Math.sin(splay), 0, Math.cos(splay)];
+		const base: Vec3 = [side * 0.15, 0.44, 0];
+		b.add('cylinder', '#b9bab4', base, [0.042, 0.26, 0.042], [Math.PI / 2, 0, splay]);
+		b.add(
+			'cylinder',
+			'#1f1f1f',
+			[base[0] + axis[0] * 0.131, base[1], base[2] + axis[2] * 0.131],
+			[0.028, 0.006, 0.028],
+			[Math.PI / 2, 0, splay]
+		);
+	}
+}
+
+// Squirtle plush, local +z facing forward, after Aditya's own: sky-blue and
+// round, a big head with red eyes, a cream belly plate with stitched seams, and a
+// brown shell with a cream rim.
+export function squirtle(b: Batch) {
+	const blue = '#7cc5e3';
+	for (const x of [-0.085, 0.085]) {
+		b.add('sphere', blue, [x, 0.045, 0.05], [0.07, 0.05, 0.085]);
+		b.add('sphere', blue, [x * 0.95, 0.1, 0.02], [0.075, 0.08, 0.075]);
+	}
+	b.add('sphere', '#b07a4f', [0, 0.22, -0.05], [0.165, 0.175, 0.12]);
+	b.cylinder('#ead7a6', [0, 0.22, -0.005], 0.168, 0.035, [Math.PI / 2, 0, 0]);
+	b.add('sphere', blue, [0, 0.21, 0], [0.15, 0.16, 0.13]);
+	b.add('sphere', blue, [0.07, 0.08, -0.15], [0.05, 0.05, 0.06]);
+	// Belly plate and its seams.
+	b.box('#efdcaa', [0, 0.205, 0.12], [0.19, 0.23, 0.03]);
+	b.box('#6b5440', [0, 0.205, 0.137], [0.006, 0.21, 0.004]);
+	for (const y of [0.16, 0.25]) b.box('#6b5440', [0, y, 0.137], [0.17, 0.006, 0.004]);
+	for (const side of [-1, 1])
+		b.add('sphere', blue, [side * 0.165, 0.245, 0.04], [0.07, 0.05, 0.055], [0, 0, side * 0.6]);
+	// Head, eyes, smile.
+	b.add('sphere', blue, [0, 0.47, 0.02], [0.175, 0.16, 0.155]);
+	for (const side of [-1, 1])
+		b.group([side * 0.068, 0.49, 0.156], [0, side * 0.42, 0], () => {
+			b.box('#3a2420', [0, 0, 0], [0.062, 0.076, 0.01]);
+			b.box('#c7362f', [0, 0, 0.003], [0.05, 0.064, 0.01]);
+			b.box('#1f1a18', [0, -0.004, 0.006], [0.022, 0.032, 0.01]);
+			b.box('#fbf6ee', [side * -0.01, 0.016, 0.009], [0.014, 0.014, 0.01]);
+		});
+	b.box('#4a2e28', [0, 0.428, 0.168], [0.05, 0.008, 0.008]);
+	for (const side of [-1, 1])
+		b.box('#4a2e28', [side * 0.03, 0.434, 0.164], [0.018, 0.008, 0.008], [0, 0, side * 0.5]);
 }
 
 export function buildShell(lit: Batch, unlit: Batch) {
@@ -211,30 +306,48 @@ export function buildPhotography(lit: Batch) {
 	});
 }
 
-export function buildCollection(lit: Batch) {
+// `faces` collects the card pictures (one textured mesh, see scene.ts); the first
+// `cards` slabs, easel first, show cell i of the shelf atlas. The rest stay abstract.
+export function buildCollection(lit: Batch, faces: Batch, cards: number) {
 	const x = -3.225;
 	lit.box('#e9e0c8', [-3.49, 1.15, -2.2], [0.02, 2.3, 1.2]);
 	for (const z of [-2.78, -1.62]) lit.box('#8f6a4c', [x, 1.15, z], [0.55, 2.3, 0.04]);
 	for (const y of [0.05, 0.6, 1.15, 1.7, 2.28]) lit.box('#9f7753', [x, y, -2.2], [0.55, 0.05, 1.2]);
 
-	// Graded slabs: clear case, card, red label.
-	const slab = (z: number, y: number, card: string, tilt = 0) => {
+	// Graded slabs: clear case, card, red label. The card's picture sits just in
+	// front of its yellow face, which shows until the atlas has loaded.
+	let slot = 0;
+	const slab = (z: number, y: number, art: string, tilt = 0) => {
+		const face = slot < cards ? slot : -1;
+		slot++;
 		lit.group([-3.2, y, z], [0, 0, tilt], () => {
 			lit.box('#dfe9ec', [0, 0.17, 0], [0.04, 0.34, 0.22]);
 			lit.box('#e8c85a', [0.021, 0.15, 0], [0.006, 0.25, 0.18]);
-			lit.box(card, [0.025, 0.17, 0], [0.004, 0.12, 0.14]);
+			if (face < 0) lit.box(art, [0.025, 0.17, 0], [0.004, 0.12, 0.14]);
 			lit.box('#c23b3b', [0.021, 0.3, 0], [0.042, 0.045, 0.2]);
 		});
+		if (face >= 0)
+			faces.group([-3.2, y, z], [0, 0, tilt], () =>
+				faces.picture(
+					[0.0245, 0.15, 0],
+					0.18,
+					0.25,
+					[0, Math.PI / 2, 0],
+					[face / cards, 0, (face + 1) / cards, 1]
+				)
+			);
 	};
-	slab(-2.62, 1.175, '#9fb8d4', 0.1);
-	slab(-2.38, 1.175, '#e0a36a', 0.1);
-	slab(-2.02, 1.175, '#b7c98e', 0.1);
-	slab(-1.78, 1.175, '#d5a0b8', 0.1);
-	// The Blastoise slab on an easel in the middle of the shelf.
+	// Filled in order of how well the room's camera sees each slab: the favourite on
+	// an easel in the middle of the top shelf first; the two slabs nearest the
+	// shelf's front edge last, as its side panel hides them.
 	lit.box('#6b4f36', [-3.12, 1.73, -2.2], [0.14, 0.04, 0.2]);
 	slab(-2.2, 1.73, '#5b8cc4', 0.2);
 	slab(-2.55, 1.725, '#c7b58a', 0.12);
+	slab(-2.62, 1.175, '#9fb8d4', 0.1);
+	slab(-2.38, 1.175, '#e0a36a', 0.1);
+	slab(-2.02, 1.175, '#b7c98e', 0.1);
 	slab(-1.85, 1.725, '#a9c2b0', 0.12);
+	slab(-1.78, 1.175, '#d5a0b8', 0.1);
 
 	// Binders and sealed boxes.
 	lit.box('#355a8a', [-3.2, 0.81, -2.62], [0.34, 0.37, 0.07]);
@@ -256,8 +369,8 @@ export function buildBedroom(lit: Batch) {
 	lit.box('#749287', [-2.8, 0.66, 1.15], [1.36, 0.1, 1.45]);
 	lit.box('#a7b6a1', [-2.8, 0.72, 0.45], [1.38, 0.03, 0.3]);
 	lit.box('#f0e3c7', [-2.9, 0.7, 0.07], [0.95, 0.16, 0.4]);
-	// Blastoise plush by the pillow.
-	lit.group([-2.62, 0.62, 0.28], Math.PI / 3, () => blastoise(lit), 0.72);
+	// Squirtle plush by the pillow.
+	lit.group([-2.62, 0.62, 0.28], Math.PI / 3, () => squirtle(lit), 0.72);
 
 	// Front-right plant.
 	lit.cylinder('#b87554', [3.0, 0.33, 2.55], 0.3, 0.66);

@@ -41,7 +41,8 @@ const defaultShow: Record<ItemStyle, Shown> = {
 	pages: { description: true, date: true, context: false, link: true },
 	pins: { description: true, date: false, context: true, link: true },
 	badges: { description: false, date: true, context: true, link: true },
-	photos: { description: false, date: false, context: false, link: true }
+	photos: { description: false, date: false, context: false, link: true },
+	cards: { description: false, date: false, context: true, link: false }
 };
 
 const defaultLinkTo: Record<ItemStyle, LinkTo> = {
@@ -49,7 +50,8 @@ const defaultLinkTo: Record<ItemStyle, LinkTo> = {
 	pages: 'either',
 	pins: 'page',
 	badges: 'external',
-	photos: 'either'
+	photos: 'either',
+	cards: 'page'
 };
 
 // The URL an item links to, following `linkTo`.
@@ -130,6 +132,11 @@ function resolveBlock(block: Block, section: SectionId, where: string): Resolved
 			const artifacts = pick(items, where).map((a) => ({ ...a, link: linkFor(a, to) }));
 			if (block.style === 'photos' && artifacts.some((a) => !a.image))
 				throw problem(where, "the 'photos' style needs artifacts with images (type: 'photo').");
+			if (block.style === 'cards' && artifacts.some((a) => !a.image))
+				throw problem(
+					where,
+					"the 'cards' style needs artifacts with images (type: 'collectible')."
+				);
 			return { ...rest, artifacts, show: { ...defaultShow[block.style], ...show } };
 		}
 		case 'feature': {

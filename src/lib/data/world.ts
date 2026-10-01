@@ -12,13 +12,14 @@
 //
 // BLOCKS (see the `Block` type below for every option)
 //   items    A list of artifacts. `style`: 'list' | 'pages' | 'pins' | 'badges'
-//            | 'photos'. `items` takes artifact ids and/or queries such as
+//            | 'photos' | 'cards'. `items` takes artifact ids and/or queries such as
 //            { type: 'photo', limit: 6 } or { type: 'talk', featured: true }.
 //            `show` toggles description / date / context / link per item;
 //            `linkLabel` sets the link text, `linkTo` where it goes ('external',
 //            'page', or 'either'); `heading` adds a subheading.
 //   feature  One artifact, as a highlighted 'card' or an inline 'aside'.
-//   slab     A graded card slab for a collectible.
+//   slab     A graded card slab for a collectible, showing its card image.
+//            Cards themselves (names, sets, images) live in collection.ts.
 //   profile  Portrait beside a paragraph.
 //   text     A paragraph. `{time}` becomes the current time in Bengaluru.
 //   tags     A row of small labels.
@@ -66,7 +67,7 @@ export interface Link {
 	href?: string;
 }
 
-export type ItemStyle = 'list' | 'pages' | 'pins' | 'badges' | 'photos';
+export type ItemStyle = 'list' | 'pages' | 'pins' | 'badges' | 'photos' | 'cards';
 
 /** Where an item's link goes: its external source, its page on this site, or whichever exists. */
 export type LinkTo = 'external' | 'page' | 'either';
@@ -267,8 +268,16 @@ export const world: WorldConfig = {
 			section: 'collection',
 			panel: {
 				title: `${collection.favourite} gets the top shelf.`,
-				lead: 'My favourite Pokémon, so it gets pride of place. The shelf holds a few slabs and binders; the whole collection is catalogued on Collectr.',
-				blocks: [{ type: 'slab', item: 'collectible-blastoise' }],
+				lead: 'My favourite Pokémon, so it gets pride of place. A few other favourites share the shelf; the whole collection is catalogued on Collectr.',
+				blocks: [
+					{ type: 'slab', item: 'collectible-blastoise' },
+					{
+						type: 'items',
+						style: 'cards',
+						heading: 'Also on the shelf',
+						items: [{ type: 'collectible', featured: false }]
+					}
+				],
 				links: [{ label: 'Open the binder on Collectr', href: collection.showcaseUrl }]
 			}
 		},
@@ -381,8 +390,8 @@ export const world: WorldConfig = {
 	// Copy written by Claude for Aditya to review (see WORKLOG.md).
 	curiosities: {
 		plush: {
-			label: 'Blastoise plush',
-			line: 'A Blastoise plush. The one on the shelf has competition.'
+			label: 'Squirtle plush',
+			line: 'A Squirtle plush by the pillow. Two evolutions from now, it gets the top shelf.'
 		},
 		mug: {
 			label: 'Superman mug',
