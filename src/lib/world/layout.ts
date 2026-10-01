@@ -90,10 +90,10 @@ export function onShelf(x: number, z: number): Point {
 	return { x: SHELF.x + c * x + s * z, z: SHELF.z - s * x + c * z };
 }
 
-// The camera cabinet stands against the back wall left of the shelf, with a
+// The camera cabinet stands against the back wall right of the shelf, with a
 // strand of prints above it; the mirror leans against the back wall in the right
 // corner. Both are drawn in their own frames (build.ts).
-export const CABINET = { x: -0.55, z: -2.7, angle: 0 };
+export const CABINET = { x: 1.95, z: -2.7, angle: 0 };
 
 // The lanyards hang on the left wall just behind the corkboard, from one rail that
 // runs along the top of both, so the two read as one board.
@@ -159,9 +159,9 @@ export const STATIONS: StationLayout[] = [
 	},
 	{
 		id: 'camera',
-		approach: { x: -0.55, z: -1.95 },
-		hit: { center: [-0.53, 1.25, -2.72], size: [1.05, 2.5, 0.85] },
-		focus: [-0.52, 1.2, -2.7],
+		approach: { x: CABINET.x, z: -1.95 },
+		hit: { center: [CABINET.x + 0.02, 1.25, -2.72], size: [1.05, 2.5, 0.85] },
+		focus: [CABINET.x + 0.03, 1.2, -2.7],
 		priority: 0
 	},
 	{
