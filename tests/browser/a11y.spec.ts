@@ -59,12 +59,23 @@ test('the room, its guide, and every station meet WCAG 2.2 AA (automated checks)
 		await expect(page.getByRole('dialog')).toBeVisible();
 		// Measure contrast after the sheet's fade-in, not halfway through it.
 		await page
-			.locator('dialog')
+			.locator('dialog.sheet')
 			.evaluate((dialog) => Promise.all(dialog.getAnimations().map((a) => a.finished)));
 		await audit(page, `/world (${name} open)`);
 		await page.keyboard.press('Escape');
 		await expect(page.getByRole('dialog')).not.toBeVisible();
 	}
+	// The bed's poem, opened from the menu's list of little things.
+	await menuButton.click();
+	await page.getByText('Little things in the room').click();
+	await page.getByRole('button', { name: /^Read “Stopping by Woods/ }).click();
+	await expect(page.getByRole('dialog')).toBeVisible();
+	await page
+		.locator('dialog.poem')
+		.evaluate((dialog) => Promise.all(dialog.getAnimations().map((a) => a.finished)));
+	await audit(page, '/world (poem open)');
+	await page.keyboard.press('Escape');
+	await expect(page.getByRole('dialog')).not.toBeVisible();
 });
 
 test('the room fallback meets WCAG 2.2 AA without WebGL', async ({ browser }) => {

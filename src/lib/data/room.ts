@@ -188,6 +188,9 @@ for (const curiosity of CURIOSITIES) {
 			`curiosity "${curiosity.id}"`,
 			'you walk up to this one, so it needs `use` (its hint).'
 		);
+	const poem = world.curiosities[curiosity.id].poem;
+	if (poem?.bold && !poem.stanzas.flat().some((line) => line.startsWith(poem.bold!)))
+		throw problem(`curiosity "${curiosity.id}"`, `no line of its poem starts with "${poem.bold}".`);
 }
 
 const visible = world.stations.filter((s) => !s.hidden);

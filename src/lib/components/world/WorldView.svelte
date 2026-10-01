@@ -4,7 +4,7 @@
 	import StationPanel from './StationPanel.svelte';
 	// All copy and content comes from src/lib/data/world.ts (resolved in room.ts).
 	import { curiosities, page as copy, stationById, stations } from '$lib/data/room';
-	import type { Curiosity } from '$lib/data/world';
+	import type { Curiosity, Poem } from '$lib/data/world';
 	import type { CuriosityId, StationId } from '$lib/world/layout';
 	import type { HoverTarget, RoomController, RoomState } from '$lib/world/scene';
 
@@ -15,6 +15,7 @@
 	let menuButton: HTMLButtonElement;
 	let menu: HTMLDivElement;
 	let dialog: HTMLDialogElement;
+	let poemDialog: HTMLDialogElement;
 	let room: RoomController | undefined;
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
 	let reducedMotion = $state(false);
@@ -26,6 +27,7 @@
 	let hover = $state<{ label: string; x: number; y: number } | null>(null);
 	let note = $state<Curiosity | null>(null);
 	let noteTimer = 0;
+	let poem = $state<Poem | null>(null);
 	let returnFocus: HTMLElement | null = null;
 
 	const near = $derived((roomState?.near && stationById[roomState.near]) || null);
@@ -62,7 +64,7 @@
 	// If focus drifts to the page itself, movement keys still reach the room. Focused
 	// controls, the menu, and open stations are never interrupted, and Tab still leaves.
 	function forwardRoomKeys(event: KeyboardEvent) {
-		if (status !== 'ready' || !nothingFocused() || dialog.open) return;
+		if (status !== 'ready' || !nothingFocused() || dialog.open || poemDialog.open) return;
 		if (menu.matches(':popover-open') || event.altKey || event.ctrlKey || event.metaKey) return;
 		if (!roomKeys.has(event.key.toLowerCase())) return;
 		event.preventDefault();
@@ -87,44 +89,104 @@
 		if (status !== 'loading') openFromHash();
 	});
 
+	// When the menu, a station, or the poem closes, the keyboard goes back to the room, so WASD
+	// works straight away; to the menu button if the room couldn't open.
+	function backToRoom() {
+		if (status === 'ready') focusRoom();
+		else menuButton.focus({ preventScroll: true });
+	}
+
 	async function showStation(id: StationId) {
-		// Focus returns to whatever opened the station: the canvas, or the menu button.
-		returnFocus ??= document.activeElement as HTMLElement | null;
+		// Focus returns to whatever opened the station: the room, or the menu (see visit).
+		const focused = document.activeElement as HTMLElement | null;
+		returnFocus ??= focused && focused !== document.body ? focused : null;
 		open = id;
 		room?.setPaused(true);
 		hover = null;
 		await tick();
 		if (!dialog.open) dialog.showModal();
+		// The sheet itself takes focus, so Space, the arrows, and Page Down scroll it (and Space
+		// can't press Close).
+		dialog.focus(quietFocus);
 	}
-	// E opens a station from the room, so E closes it too (Escape still works).
-	// Ignore key repeat, so holding E after opening doesn't close it straight away, and stop the
-	// event here so it can't reach the room and reopen the station it just closed.
-	function closeOnE(event: KeyboardEvent) {
-		if (event.key.toLowerCase() !== 'e' || event.repeat) return;
+	// While a sheet (a station, the poem) is open, W and S scroll it, and E closes it, since E
+	// opened it (Escape still works). Key repeat is ignored for E, so holding E after opening
+	// doesn't close it straight away, and E stops here so it can't reach the room and reopen
+	// what it just closed.
+	function sheetKeys(event: KeyboardEvent) {
 		if (event.altKey || event.ctrlKey || event.metaKey) return;
+		const sheet = event.currentTarget as HTMLDialogElement;
+		const key = event.key.toLowerCase();
+		if (key === 'w' || key === 's') {
+			event.preventDefault();
+			sheet.scrollBy({
+				top: key === 's' ? 120 : -120,
+				behavior: reducedMotion ? 'instant' : 'smooth'
+			});
+		}
+		if (key !== 'e' || event.repeat) return;
 		event.preventDefault();
 		event.stopPropagation();
-		dialog.close();
+		sheet.close();
+	}
+	// The wheel over the room beside an open sheet scrolls the sheet; the room behind can't scroll.
+	function wheelToSheet(event: WheelEvent) {
+		const sheet = dialog.open ? dialog : poemDialog.open ? poemDialog : null;
+		if (!sheet) return;
+		const box = sheet.getBoundingClientRect();
+		const { clientX: x, clientY: y } = event;
+		if (x >= box.left && x <= box.right && y >= box.top && y <= box.bottom) return;
+		sheet.scrollBy({ top: event.deltaMode === 1 ? event.deltaY * 40 : event.deltaY });
 	}
 	function closeStation() {
 		open = null;
 		room?.release();
 		room?.setPaused(false);
-		returnFocus?.focus({ preventScroll: true });
+		if (returnFocus) returnFocus.focus({ preventScroll: true });
+		else backToRoom();
 		returnFocus = null;
 	}
-	// Picking from the menu closes it; focus comes back to the menu button, which stays visible.
+	// Picking from the menu closes it, and the keyboard goes back to the room afterwards.
 	function visit(id: StationId) {
 		if (menu.matches(':popover-open')) menu.hidePopover();
-		returnFocus = menuButton;
+		returnFocus = status === 'ready' ? canvas : menuButton;
 		if (room && status === 'ready') room.visit(id);
 		else void showStation(id);
 	}
+	// Closing the menu (its button, ×, Escape, a click outside) hands the keyboard back to the
+	// room, unless the visitor has moved on to something else or opened something from it.
+	function menuToggled(event: ToggleEvent) {
+		if (event.newState !== 'closed' || status !== 'ready') return;
+		if (dialog.open || poemDialog.open) return;
+		const focused = document.activeElement;
+		if (nothingFocused() || focused === menuButton || menu.contains(focused)) focusRoom();
+	}
 	function showCuriosity(id: CuriosityId) {
-		note = curiosities[id];
+		const item = curiosities[id];
+		if (item.poem) return void showPoem(item.poem);
+		note = item;
 		window.clearTimeout(noteTimer);
-		// A quote gets a little longer.
-		noteTimer = window.setTimeout(() => (note = null), note.cite ? 7000 : 5000);
+		noteTimer = window.setTimeout(() => (note = null), 5000);
+	}
+	// The bed's poem pops up over the room and stays until it's closed.
+	async function showPoem(value: Poem) {
+		window.clearTimeout(noteTimer);
+		note = null;
+		poem = value;
+		room?.setPaused(true);
+		hover = null;
+		await tick();
+		if (!poemDialog.open) poemDialog.showModal();
+		poemDialog.focus(quietFocus);
+	}
+	function readPoem(value: Poem) {
+		if (menu.matches(':popover-open')) menu.hidePopover();
+		void showPoem(value);
+	}
+	function closePoem() {
+		poem = null;
+		room?.setPaused(false);
+		backToRoom();
 	}
 	function onHover(target: HoverTarget | null, x: number, y: number) {
 		if (!target) {
@@ -173,6 +235,7 @@
 		motion.addEventListener('change', updateMotion);
 		coarse = window.matchMedia('(pointer: coarse)').matches;
 		window.addEventListener('keydown', forwardRoomKeys);
+		window.addEventListener('wheel', wheelToSheet, { passive: true });
 		const observer = new ResizeObserver(measureInsets);
 		observer.observe(frameEl);
 		observer.observe(topEl);
@@ -213,6 +276,7 @@
 			window.clearTimeout(noteTimer);
 			motion.removeEventListener('change', updateMotion);
 			window.removeEventListener('keydown', forwardRoomKeys);
+			window.removeEventListener('wheel', wheelToSheet);
 			room?.destroy();
 		};
 	});
@@ -279,9 +343,7 @@
 		>
 	{/if}
 	{#if note}
-		<p class="note">
-			<span class="line">{note.line}</span>{#if note.cite}<cite>{note.cite}</cite>{/if}
-		</p>
+		<p class="note">{note.line}</p>
 	{/if}
 	{#if status === 'ready'}
 		<div class="room-hint" aria-hidden="true" bind:this={hintEl}>
@@ -313,7 +375,7 @@
 	<button class="menu-button" popovertarget="room-menu" bind:this={menuButton}
 		><span class="bars" aria-hidden="true"><span></span></span>{copy.menuTitle}</button
 	>
-	<div id="room-menu" class="menu" popover bind:this={menu}>
+	<div id="room-menu" class="menu" popover bind:this={menu} ontoggle={menuToggled}>
 		<div class="menu-head">
 			<h2 id="menu-title">{copy.menuTitle}</h2>
 			<button
@@ -350,7 +412,10 @@
 			<ul>
 				{#each Object.values(curiosities) as item (item.label)}
 					<li>
-						<strong>{item.label}</strong> · {item.line}{#if item.cite}{' '}— {item.cite}{/if}
+						<strong>{item.label}</strong> · {item.line}{#if item.poem}{@const poem =
+								item.poem}{' '}<button class="read-poem" onclick={() => readPoem(poem)}
+								>Read “{poem.title}”</button
+							>{/if}
 					</li>
 				{/each}
 			</ul>
@@ -390,7 +455,7 @@
 			? `Near the ${near.short}. Press E while the room is focused to inspect it.`
 			: nearThing?.use
 				? `Near the ${nearThing.label.toLowerCase()}. Press E while the room is focused ${nearThing.use.keys}.`
-				: ''}{note ? ` ${note.line}${note.cite ? ` (${note.cite})` : ''}` : ''}
+				: ''}{note ? ` ${note.line}` : ''}
 	</p>
 </section>
 
@@ -398,13 +463,14 @@
 	bind:this={dialog}
 	class="sheet"
 	onclose={closeStation}
-	onkeydown={closeOnE}
+	onkeydown={sheetKeys}
 	aria-labelledby="station-title"
+	tabindex="-1"
 >
 	{#if open}
 		<div class="sheet-top">
 			{#if !coarse}<span class="sheet-hint" aria-hidden="true"
-					><kbd>E</kbd> or <kbd>Esc</kbd> to close</span
+					><kbd>W</kbd><kbd>S</kbd> to scroll · <kbd>E</kbd> or <kbd>Esc</kbd> to close</span
 				>{/if}
 			<button class="close" onclick={() => dialog.close()} aria-label="Close and return to the room"
 				>Close ×</button
@@ -412,6 +478,39 @@
 		</div>
 		<StationPanel id={open} />
 		<button class="back-button" onclick={() => dialog.close()}>← Back to the room</button>
+	{/if}
+</dialog>
+
+<!-- The bed's poem. A click outside the card closes it, like E, Escape, and the button. -->
+<dialog
+	bind:this={poemDialog}
+	class="poem"
+	onclose={closePoem}
+	onkeydown={sheetKeys}
+	onclick={(event) => event.target === poemDialog && poemDialog.close()}
+	aria-labelledby="poem-title"
+	tabindex="-1"
+>
+	{#if poem}
+		<div class="poem-card">
+			<p class="eyebrow">{poem.author}</p>
+			<h2 id="poem-title">{poem.title}</h2>
+			<div class="verse">
+				{#each poem.stanzas as stanza, s (s)}
+					<p>
+						{#each stanza as line, i (i)}{#if i}<br
+								/>{/if}{#if poem.bold && line.startsWith(poem.bold)}<strong>{line}</strong
+								>{:else}{line}{/if}{/each}
+					</p>
+				{/each}
+			</div>
+			<div class="poem-foot">
+				<button class="back-button" onclick={() => poemDialog.close()}>← Back to the room</button>
+				{#if !coarse}<span class="sheet-hint" aria-hidden="true"
+						><kbd>E</kbd> or <kbd>Esc</kbd> to close</span
+					>{/if}
+			</div>
+		</div>
 	{/if}
 </dialog>
 
@@ -485,16 +584,6 @@
 			sans-serif;
 		white-space: nowrap;
 		pointer-events: none;
-	}
-	.note .line {
-		white-space: pre-line;
-	}
-	.note cite {
-		display: block;
-		margin-top: 6px;
-		font-size: 13px;
-		font-style: normal;
-		opacity: 0.75;
 	}
 	.note {
 		position: absolute;
@@ -848,6 +937,68 @@
 	.sheet::backdrop {
 		background: linear-gradient(90deg, #263b3a14, #263b3a4d);
 	}
+	/* The sheet takes focus only so the keyboard scrolls it; it isn't a control. */
+	.sheet:focus,
+	.poem:focus {
+		outline: none;
+	}
+	/* The bed's poem: a card that pops up in the middle of the room. */
+	.poem {
+		margin: auto;
+		width: min(460px, calc(100% - 32px));
+		max-height: calc(100dvh - 32px);
+		max-width: none;
+		overflow-y: auto;
+		padding: 0;
+		background: #faf7ed;
+		color: #283f33;
+		border: 1px solid #b7bda5;
+		border-radius: 12px;
+		box-shadow: 0 24px 80px #25352947;
+	}
+	.poem::backdrop {
+		background: #263b3a59;
+	}
+	.poem-card {
+		padding: 30px 34px 26px;
+	}
+	.poem-card .eyebrow {
+		font-size: 11px;
+	}
+	.poem h2 {
+		margin-top: 6px;
+		font-size: clamp(24px, 3vw, 30px);
+		line-height: 1.12;
+		letter-spacing: -0.03em;
+		font-weight: 500;
+	}
+	.verse {
+		margin-top: 20px;
+		font-size: 17px;
+		line-height: 1.55;
+	}
+	.verse p + p {
+		margin-top: 14px;
+	}
+	.verse strong {
+		font-weight: 700;
+		color: #1f3328;
+	}
+	.poem-foot {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px 16px;
+		margin-top: 24px;
+	}
+	.poem-foot .back-button {
+		margin-top: 0;
+	}
+	.read-poem {
+		text-decoration: underline;
+		text-underline-offset: 3px;
+		cursor: pointer;
+	}
 	.sheet-top {
 		display: flex;
 		justify-content: flex-end;
@@ -884,6 +1035,24 @@
 		}
 		.menu:popover-open {
 			animation: rise 180ms ease-out;
+		}
+		/* A small overshoot, so the poem pops. */
+		.poem[open] {
+			animation: pop 320ms cubic-bezier(0.2, 1.4, 0.4, 1);
+		}
+		.poem[open]::backdrop {
+			animation: fade 200ms ease-out;
+		}
+		@keyframes pop {
+			from {
+				transform: scale(0.86);
+				opacity: 0;
+			}
+		}
+		@keyframes fade {
+			from {
+				opacity: 0;
+			}
 		}
 		@keyframes slide-in {
 			from {

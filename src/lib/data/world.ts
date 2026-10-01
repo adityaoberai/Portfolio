@@ -158,13 +158,21 @@ export interface WorldConfig {
 
 export interface Curiosity {
 	label: string;
-	// Line breaks (\n) are kept in the note.
 	line: string;
-	// Who said it, when the line is a quote.
-	cite?: string;
 	// For something you walk up to (the bed): the hint card while beside it,
 	// "Press E <keys>" or, on touch screens, `touch`.
 	use?: { title: string; keys: string; touch: string };
+	// A poem that pops up instead of the note (the bed's). The menu's list of
+	// little things shows `line` and a button to read it.
+	poem?: Poem;
+}
+
+export interface Poem {
+	title: string;
+	author: string;
+	stanzas: string[][];
+	// Lines starting with this are set in bold.
+	bold?: string;
 }
 
 export const world: WorldConfig = {
@@ -331,9 +339,15 @@ export const world: WorldConfig = {
 				lead: 'Spaces I’ve helped build for people to write, walk, meet, and make things together. Who they’re for matters more than how big they got.',
 				blocks: [
 					{
+						// The communities running now. Past events and Appwrite's programs
+						// live on /community (and Appwrite's at the desk).
 						type: 'items',
 						style: 'pins',
-						items: [{ type: 'community' }, { type: 'work', context: 'Community' }],
+						items: [
+							'community-writers-room',
+							'community-photo-walks',
+							'community-doon-tech-community'
+						],
 						linkLabel: 'Read more'
 					},
 					{
@@ -466,13 +480,43 @@ export const world: WorldConfig = {
 			label: 'Football',
 			line: 'A Premier League ball at the foot of the bed, a little scuffed. It has seen some games.'
 		},
-		// Trying to sleep turns the character away from the bed. The lines are
-		// Robert Frost's; the hint is Claude's.
+		// Trying to sleep turns the character away from the bed, and the poem pops
+		// up. The poem is Robert Frost's (1923, public domain); the rest is Claude's.
 		bed: {
 			label: 'Bed',
-			line: 'But I have promises to keep,\nAnd miles to go before I sleep.',
-			cite: 'Robert Frost, “Stopping by Woods on a Snowy Evening”',
-			use: { title: 'Time for a nap?', keys: 'to sleep', touch: 'Tap the bed to sleep' }
+			line: 'Not yet: miles to go before I sleep.',
+			use: { title: 'Time for a nap?', keys: 'to sleep', touch: 'Tap the bed to sleep' },
+			poem: {
+				title: 'Stopping by Woods on a Snowy Evening',
+				author: 'Robert Frost',
+				stanzas: [
+					[
+						'Whose woods these are I think I know.',
+						'His house is in the village though;',
+						'He will not see me stopping here',
+						'To watch his woods fill up with snow.'
+					],
+					[
+						'My little horse must think it queer',
+						'To stop without a farmhouse near',
+						'Between the woods and frozen lake',
+						'The darkest evening of the year.'
+					],
+					[
+						'He gives his harness bells a shake',
+						'To ask if there is some mistake.',
+						'The only other sound’s the sweep',
+						'Of easy wind and downy flake.'
+					],
+					[
+						'The woods are lovely, dark and deep,',
+						'But I have promises to keep,',
+						'And miles to go before I sleep,',
+						'And miles to go before I sleep.'
+					]
+				],
+				bold: 'And miles to go before I sleep'
+			}
 		}
 	}
 };

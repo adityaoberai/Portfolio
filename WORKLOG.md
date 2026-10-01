@@ -10,19 +10,19 @@
 
 ## Current state (verified 2026-10-02)
 
-- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 `298269e`, Phase 3 `e71d7cc`, Phase 4 `9b8afb4`, Phase 5 `4b772bd`, full-page World `1b0e26b`, focus/size/E `2db0f96` + `9797ce7`, configurable room content `b8ed4c3`, solid furniture and the open doorway `99f5277`, rename to `WORKLOG.md` `6e97548`, favourite cards, Squirtle plush, and new Blastoise `75dfc72`, cowl, DeLorean, flag, and shelf rows `39017a7`, desk/shelf swap and laptop `1418900`, bed/armchair and mirror/cabinet swaps `f3fd237`, plant removed and walls rearranged `c57e6c1`, camera cabinet right of the shelf `d63c09e`, the sofa, the combined board, seats, books, and the window move `0dcd437`, then the mirror reflection `e6209af`, then the bed that turns the character away (this state). `main` is untouched. Each change set is pushed to `origin/v3-world`.
+- Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 `298269e`, Phase 3 `e71d7cc`, Phase 4 `9b8afb4`, Phase 5 `4b772bd`, full-page World `1b0e26b`, focus/size/E `2db0f96` + `9797ce7`, configurable room content `b8ed4c3`, solid furniture and the open doorway `99f5277`, rename to `WORKLOG.md` `6e97548`, favourite cards, Squirtle plush, and new Blastoise `75dfc72`, cowl, DeLorean, flag, and shelf rows `39017a7`, desk/shelf swap and laptop `1418900`, bed/armchair and mirror/cabinet swaps `f3fd237`, plant removed and walls rearranged `c57e6c1`, camera cabinet right of the shelf `d63c09e`, the sofa, the combined board, seats, books, and the window move `0dcd437`, then the mirror reflection `e6209af`, the bed that turns the character away `8675336`, then the poem card, the keyboard back to the room after the menu, scrollable sheets, and the trimmed corkboard (this state). `main` is untouched. Each change set is pushed to `origin/v3-world`.
 - Stack: SvelteKit 2.70, Svelte 5.57, TypeScript, Tailwind 4, **adapter-node 5.5.7** (replaced adapter-static), Three.js 0.186.1.
-- `/world` has all nine stations from the brief (desk & computer, notebook & fountain pen, Fujifilm X-T30 II, Pokémon shelf, corkboard, conference wall, mirror, window, door) and seven curiosities (Squirtle plush, Batman cowl, LEGO DeLorean, Manchester United flag, suitcase, football, and the bed, which turns the character away with a line from Robert Frost), plus decoration (reading corner, prints, lamps, a Blastoise figure on top of the shelf, books). Left wall, back to front: the desk with the laptop and the United flag above it, the sofa on a small rug under one board (corkboard and lanyards), the door. The suitcase and football sit at the foot of the bed. Opening the desk or the board sits the character down (chair, sofa). Back wall: the window (between the desk and the shelf), the shelf (cards, cowl and DeLorean, Aditya's six books), the camera cabinet with prints above, the mirror in the corner (it reflects the character). The bed runs along the right edge. The shelf holds, top to bottom: Blastoise, the four favourite cards, the cowl and the DeLorean, books, binders and sealed boxes. `/collection` shows the cards too. The window follows Bengaluru time. `/now` exists. `/index` is SSR and never loads the scene.
+- `/world` has all nine stations from the brief (desk & computer, notebook & fountain pen, Fujifilm X-T30 II, Pokémon shelf, corkboard, conference wall, mirror, window, door) and seven curiosities (Squirtle plush, Batman cowl, LEGO DeLorean, Manchester United flag, suitcase, football, and the bed, which turns the character away and pops up Robert Frost's "Stopping by Woods on a Snowy Evening"), plus decoration (reading corner, prints, lamps, a Blastoise figure on top of the shelf, books). Left wall, back to front: the desk with the laptop and the United flag above it, the sofa on a small rug under one board (corkboard and lanyards), the door. The suitcase and football sit at the foot of the bed. Opening the desk or the board sits the character down (chair, sofa). Back wall: the window (between the desk and the shelf), the shelf (cards, cowl and DeLorean, Aditya's six books), the camera cabinet with prints above, the mirror in the corner (it reflects the character). The bed runs along the right edge. The shelf holds, top to bottom: Blastoise, the four favourite cards, the cowl and the DeLorean, books, binders and sealed boxes. `/collection` shows the cards too. The window follows Bengaluru time. `/now` exists. `/index` is SSR and never loads the scene.
 - `/` renders World or Index on the server from the `mode` cookie (default World). `/world` and `/index` set it.
 - World is the whole page: full-viewport room, floating header (WORLD / INDEX), and an "In the room" menu button bottom right that opens the station list, curiosities, and settings.
 - Every page is V3 now: one header (WORLD / INDEX switch everywhere, section nav on deep pages), one footer, one container width. Deep pages: `/work`, `/projects`, `/speaking`, `/writing`, `/community`, `/photography`, `/collection`, `/about`, `/contact`, `/now`; `/resume` stays a PDF redirect. All V2 components are gone.
-- Validation: `npm run check` 0/0, `npm test` 23/23, `npm run test:e2e` 25/25 (including axe WCAG 2.2 AA audits) against the built Node server, `npm run lint` passes. 11–13 draw calls (4 more while the character shows in the mirror), ~11.7k triangles, two textures (54 KB card atlas, 14.5 KB flag). Launch checklist and measured performance proxy: `v3.md`, "Launch checklist".
+- Validation: `npm run check` 0/0, `npm test` 23/23, `npm run test:e2e` 27/27 (including axe WCAG 2.2 AA audits) against the built Node server, `npm run lint` passes. 11–13 draw calls (4 more while the character shows in the mirror), ~11.7k triangles, two textures (54 KB card atlas, 14.5 KB flag). Launch checklist and measured performance proxy: `v3.md`, "Launch checklist".
 - Hosting: Appwrite Sites, the existing "My Portfolio" site (project `688230070011fbf10e1a`, Frankfurt). It already builds `v3-world` with SvelteKit SSR + adapter-node (deployment `6abd89d5091931398edf` at `b8ed4c3`, ready); production domains still serve V2 from `main`.
 - Blocked on the user: a physical mid-range phone test (see the gate in `v3.md`), analytics decision, copy review, and the go-live steps below.
 
 ## Open review items (not yet fixed)
 
-- Copy written by Claude, not Aditya, needs his review before launch: the four curiosity lines in `src/lib/data/world.ts` (the suitcase line names Yokohama, London, Toronto, Atlanta, inferred from talks and photos; the football line is invented flavour), and the station summaries. Also: the Squirtle plush, Batman cowl, LEGO DeLorean, and flag lines, the football line's "Premier League ball", the shelf panel's lead and its "Other favourites" lines, the combined board's summary and lanyards line, the bed's hint ("Time for a nap?", "Press E to sleep", "Tap the bed to sleep"; the quote itself is Robert Frost's, from a 1923 poem in the public domain) ("A few other favourites share the shelf…"), and the card details and alt text in `src/lib/data/collection.ts`, which Claude read off the card images (set names, numbers, illustrators).
+- Copy written by Claude, not Aditya, needs his review before launch: the four curiosity lines in `src/lib/data/world.ts` (the suitcase line names Yokohama, London, Toronto, Atlanta, inferred from talks and photos; the football line is invented flavour), and the station summaries. Also: the Squirtle plush, Batman cowl, LEGO DeLorean, and flag lines, the football line's "Premier League ball", the shelf panel's lead and its "Other favourites" lines, the combined board's summary and lanyards line, the bed's hint ("Time for a nap?", "Press E to sleep", "Tap the bed to sleep") and its line in the menu ("Not yet: miles to go before I sleep."; the poem itself is Robert Frost's, from 1923 and in the public domain) ("A few other favourites share the shelf…"), and the card details and alt text in `src/lib/data/collection.ts`, which Claude read off the card images (set names, numbers, illustrators).
 - `src/lib/data/now.ts`: "Reading" and "Thinking about" are left out because there is no source for them; Aditya should supply them. `now.updated` is a manual date and must change whenever the page changes.
 - `npm audit`: 3 low findings in the SvelteKit/cookie chain; only `--force` resolves them.
 - Google Analytics (existing V2 tag in `src/routes/+layout.svelte`) is 160 KB of third-party JavaScript on every page, more than all first-party JavaScript on Index. Keep, defer, or replace: Aditya's call.
@@ -474,3 +474,46 @@
 - Verified in screenshots, desktop and phone width: the walk, the look at the bed (back to the camera), the turn (face to the camera, bed behind), the quote, and the hint. No console errors.
 - The room still and OG images are unchanged; the character only turns when it is used.
 - Validation: `npm run check` 0/0, `npm test` 23/23, `npm run test:e2e` 25/25, `npm run lint` exit 0.
+
+### 2026-10-02 — The poem pops up; the keyboard comes back after the menu; sheets scroll; the corkboard trimmed (user requests)
+
+- User asked:
+  - Once the "In the room" menu closes, focus should return to the world: WASD stopped working after leaving the menu.
+  - The panels that open with E need to scroll.
+  - Frost's poem should pop up properly, in full, with "And miles to go before I sleep" in bold.
+  - Take the past initiatives and Appwrite's programs off the corkboard. Appwrite's work is at the desk already.
+- Found, before the fix (headless Chromium):
+  - Closing the menu with its button, ×, or Escape left focus on the menu button, so WASD did nothing. The same happened after closing a station picked from the menu.
+  - A station opened with E put focus on its Close button. Arrows and Page Down scrolled the sheet, but Space pressed Close and shut the panel.
+  - The wheel over the room beside the sheet did nothing.
+  - Touch scrolling the sheet on a phone worked; checked with raw touch events, since the synthesized gesture didn't scroll ordinary pages either.
+- `src/lib/components/world/WorldView.svelte`:
+  - Keyboard after the menu:
+    - When the menu closes (its button, ×, Escape, a click outside), the room takes focus again, unless the visitor has moved on to something else or opened something from it.
+    - Closing a station picked from the menu returns to the room, not to the menu button. Without WebGL, focus still goes to the menu button.
+  - Sheets:
+    - An open station sheet (and the poem) takes focus itself (`tabindex="-1"`, no ring), so Space, the arrows, and Page Up/Down scroll it, and Space can't press Close.
+    - W and S scroll it too, so you can stay on WASD. E still closes it.
+    - The wheel over the room beside an open sheet scrolls the sheet.
+    - The sheet's hint reads "W S to scroll · E or Esc to close".
+  - The poem:
+    - A centred card pops up (a small overshoot; no animation with reduced motion) over a dimmed room.
+    - It shows the poet, the title, and all four stanzas. Lines starting with the poem's `bold` text ("And miles to go before I sleep") are bold.
+    - It stays until closed with E, Escape, "Back to the room", or a click outside. Then the room has the keyboard again.
+    - It fits without scrolling at 1440×900, 1366×768, and 390×844, and scrolls if a screen is shorter.
+    - The menu's "Little things" list has a "Read “Stopping by Woods on a Snowy Evening”" button, so it opens without walking to the bed (and without WebGL).
+    - The bed's short note is gone. The `cite` field from the last change is replaced by `poem`.
+- `src/lib/data/world.ts`:
+  - `Poem` (title, author, stanzas, bold); the bed's `poem` is the full text of Frost's poem.
+  - The bed's list line is now "Not yet: miles to go before I sleep."
+  - The corkboard pins only the three communities running now (`community-writers-room`, `community-photo-walks`, `community-doon-tech-community`). DevRelCon Bengaluru 2024, HackOn 2.0, and the four Appwrite programs (Education, Heroes, Hackathons, Hacktoberfest) are off the board. They stay on `/community`, and Appwrite's are at the desk.
+- `src/lib/data/room.ts`: checks that a poem's `bold` text starts at least one of its lines.
+- Tests:
+  - E2E (27):
+    - The bed test now checks the whole poem in its card, the two bold lines, E closing it, and WASD working afterwards.
+    - New: closing the menu with Escape, ×, or its button gives the room focus, and WASD moves.
+    - New: a sheet opened with E takes focus. Space, S, and ArrowDown each scroll it without closing it, and the wheel over the room beside it scrolls it.
+    - The desk test expects the room focused after a station from the menu closes.
+    - The accessibility test also audits the poem card (axe, WCAG 2.2 AA) and targets the station sheet by class, now that there are two dialogs.
+- Verified in screenshots: the poem at desktop, laptop, and phone size; the corkboard with three pins; the sheet hint. No console errors.
+- Validation: `npm run check` 0/0, `npm test` 23/23, `npm run test:e2e` 27/27, `npm run lint` exit 0.

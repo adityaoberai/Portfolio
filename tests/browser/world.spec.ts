@@ -84,8 +84,8 @@ test('keyboard and floor movement stop at rest; the desk opens and focus returns
 	).toBeVisible();
 	await page.keyboard.press('Escape');
 	await expect(page.getByRole('dialog')).not.toBeVisible();
-	// The menu closed when the station opened, so focus returns to the menu button.
-	await expect(page.getByRole('button', { name: 'In the room', exact: true })).toBeFocused();
+	// The menu closed when the station opened, so the keyboard goes back to the room.
+	await expect(page.locator('canvas')).toBeFocused();
 	await page.screenshot({ path: 'test-results/world-desktop.png' });
 	expect(errors).toEqual([]);
 });
@@ -134,29 +134,110 @@ test('clicking objects in the room opens them; curiosities leave a note', async 
 	await expect(page.getByRole('dialog')).not.toBeVisible();
 });
 
-test('trying to sleep on the bed turns the character away, with a line from Frost', async ({
+test('trying to sleep on the bed turns the character away, and Frost’s poem pops up', async ({
 	page
 }) => {
 	await openRoom(page);
 	await settle(page);
 	const canvas = page.locator('canvas');
-	const note = page.locator('.note');
+	const poem = page.getByRole('dialog', { name: 'Stopping by Woods on a Snowy Evening' });
 	// Walking up beside the bed offers it; E tries to sleep.
 	const beside = await floor(page, 1.35, 1.75);
 	await page.mouse.click(beside.x, beside.y);
 	await expect(page.locator('.room-hint')).toContainText('Press E to sleep');
 	await page.keyboard.press('e');
-	await expect(note).toContainText('And miles to go before I sleep.');
-	await expect(note.locator('cite')).toContainText('Robert Frost');
-	await expect(page.getByRole('dialog')).not.toBeVisible();
+	// The whole poem, with its last two lines in bold.
+	await expect(poem).toBeVisible();
+	await expect(poem).toContainText('Whose woods these are I think I know.');
+	await expect(poem).toContainText('Robert Frost');
+	await expect(poem.locator('strong')).toHaveText([
+		'And miles to go before I sleep,',
+		'And miles to go before I sleep.'
+	]);
+	// E closes it, and the room has the keyboard again.
+	await page.keyboard.press('e');
+	await expect(poem).not.toBeVisible();
+	await expect(canvas).toBeFocused();
+	const x = await canvas.getAttribute('data-x');
+	await page.keyboard.down('a');
+	await page.waitForTimeout(300);
+	await page.keyboard.up('a');
+	await expect(canvas).not.toHaveAttribute('data-x', x!);
 	// Clicking the bed from across the room walks over to it first.
 	await openRoom(page);
 	await settle(page);
 	const bed = await anchor(page, 'bed');
 	await page.mouse.click(bed.x, bed.y);
+	await expect(poem).toBeVisible();
 	await expect(canvas).toHaveAttribute('data-x', '1.750');
 	await expect(canvas).toHaveAttribute('data-z', '1.700');
-	await expect(note).toContainText('miles to go before I sleep');
+	await page.getByRole('button', { name: 'Back to the room' }).click();
+	await expect(canvas).toBeFocused();
+});
+
+test('closing the menu gives the keyboard back to the room', async ({ page }) => {
+	await openRoom(page);
+	await settle(page);
+	const canvas = page.locator('canvas');
+	const menuButton = page.getByRole('button', { name: 'In the room', exact: true });
+	for (const close of [
+		() => page.keyboard.press('Escape'),
+		() => page.getByRole('button', { name: 'Close the menu' }).click(),
+		() => menuButton.click()
+	]) {
+		await openMenu(page);
+		await close();
+		await expect(page.getByRole('navigation', { name: 'In the room' })).not.toBeVisible();
+		await expect(canvas).toBeFocused();
+		const x = await canvas.getAttribute('data-x');
+		await page.keyboard.down('d');
+		await page.waitForTimeout(250);
+		await page.keyboard.up('d');
+		await expect(canvas).not.toHaveAttribute('data-x', x!);
+		await settle(page);
+	}
+});
+
+test('an open station scrolls with the keys and the wheel, and Space doesn’t close it', async ({
+	page
+}) => {
+	await openRoom(page);
+	await page.evaluate(() =>
+		(window as unknown as { __room: { visit: (id: string) => void } }).__room.visit('shelf')
+	);
+	const sheet = page.getByRole('dialog');
+	await expect(sheet).toBeVisible();
+	await page.keyboard.press('Escape');
+	await settle(page);
+	await page.keyboard.press('e');
+	await expect(sheet).toBeFocused();
+	const top = () => sheet.evaluate((element) => element.scrollTop);
+	// Back to the top once any smooth scroll has finished (it would carry on otherwise).
+	const toTop = async () => {
+		let last = -1;
+		await expect
+			.poll(async () => {
+				const now = await top();
+				const still = now === last;
+				last = now;
+				return still;
+			})
+			.toBe(true);
+		await sheet.evaluate((element) => element.scrollTo({ top: 0, behavior: 'instant' }));
+		await expect.poll(top).toBe(0);
+	};
+	// Each key from the top, so one big jump can't reach the bottom before the next key.
+	for (const key of ['Space', 's', 'ArrowDown']) {
+		await toTop();
+		await page.keyboard.press(key);
+		await expect.poll(top).toBeGreaterThan(0);
+		await expect(sheet).toBeVisible();
+	}
+	await toTop();
+	// The wheel over the room beside the sheet scrolls the sheet too.
+	await page.mouse.move(300, 450);
+	await page.mouse.wheel(0, 400);
+	await expect.poll(top).toBeGreaterThan(0);
 });
 
 test('portrait touch input, reduced motion, and low-power DPR', async ({ browser }) => {
