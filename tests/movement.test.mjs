@@ -14,6 +14,7 @@ import {
 	CAMERA_OFFSET,
 	CURIOSITIES,
 	FOOTPRINTS,
+	MIRROR,
 	START,
 	STATIONS,
 	WALKABLE
@@ -135,6 +136,38 @@ test('seats are on furniture, and standing up lands somewhere free', () => {
 	for (const station of seated) {
 		assert.equal(isFree(station.seat), false, `${station.id} seat is not on furniture`);
 		assert.ok(isFree(station.approach), `${station.id} stands up inside furniture`);
+	}
+});
+
+test('standing at the mirror, the character shows in the glass', async () => {
+	const { Euler, Matrix4, Quaternion, Vector3 } = await import('three');
+	const { glass } = MIRROR;
+	const frame = new Matrix4().compose(
+		new Vector3(MIRROR.x, 0, MIRROR.z),
+		new Quaternion().setFromEuler(new Euler(0, MIRROR.angle, MIRROR.lean)),
+		new Vector3(1, 1, 1)
+	);
+	const toFrame = frame.clone().invert();
+	const normal = new Vector3(1, 0, 0).transformDirection(frame);
+	const centre = new Vector3(glass.front, glass.y, 0).applyMatrix4(frame);
+	const view = new Vector3(...CAMERA_OFFSET).negate().normalize();
+	const reflected = view.clone().addScaledVector(normal, -2 * view.dot(normal));
+	const { approach } = STATIONS.find((s) => s.id === 'mirror');
+	// Feet, the top of the hair, and both sides of the body: where the camera sees
+	// each of them in the glass (back along the reflected view to the glass plane).
+	for (const [dx, y] of [
+		[0, 0.05],
+		[0, 1.2],
+		[-0.2, 0.55],
+		[0.2, 0.55]
+	]) {
+		const point = new Vector3(approach.x + dx, y, approach.z);
+		const back = point.clone().sub(centre).dot(normal) / reflected.dot(normal);
+		const seen = point.addScaledVector(reflected, -back).applyMatrix4(toFrame);
+		assert.ok(
+			Math.abs(seen.z) < glass.width / 2 && Math.abs(seen.y - glass.y) < glass.height / 2,
+			`(${dx}, ${y}) is reflected outside the glass, at ${seen.z.toFixed(2)}, ${seen.y.toFixed(2)}`
+		);
 	}
 });
 

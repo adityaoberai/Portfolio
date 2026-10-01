@@ -100,7 +100,15 @@ export const CABINET = { x: 1.95, z: -2.7, angle: 0 };
 // nearer the door, under a rail along its top. `z` is its centre and `width` its length along the wall.
 export const BOARD = { z: -0.025, width: 2.5, y: 1.9, height: 1.05 };
 export const LANYARDS = { x: -3.47, z: -0.65, angle: Math.PI / 2, drop: -0.12 };
-export const MIRROR = { x: 3.05, z: -2.88, angle: -Math.PI / 2 };
+// The mirror leans back by `lean`; `glass` is its pane in the mirror's frame
+// (+x faces out): the front surface, the centre height, and the size.
+export const MIRROR = {
+	x: 3.05,
+	z: -2.88,
+	angle: -Math.PI / 2,
+	lean: 0.08,
+	glass: { front: 0.055, y: 0.99, width: 0.66, height: 1.76 }
+};
 
 // The bed runs along the right edge of the room, headboard at the back.
 export const BED = { x: 2.8 };
@@ -217,7 +225,9 @@ export const STATIONS: StationLayout[] = [
 	},
 	{
 		id: 'mirror',
-		approach: { x: 3.05, z: -2.2 },
+		// Left of centre and clear of the cabinet: the camera looks at the glass from
+		// the right, so this is where the character's reflection lands in the middle.
+		approach: { x: 2.5, z: -2.05 },
 		hit: { center: [3.05, 1.0, -2.85], size: [0.95, 2.0, 0.55] },
 		focus: [3.05, 1.1, -2.9],
 		priority: 0

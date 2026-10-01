@@ -1,22 +1,28 @@
 import {
 	BoxGeometry,
 	CircleGeometry,
+	CustomBlending,
 	DirectionalLight,
 	Group,
 	HemisphereLight,
 	Mesh,
 	MeshBasicMaterial,
 	MeshLambertMaterial,
+	OneFactor,
+	OneMinusSrcAlphaFactor,
 	OrthographicCamera,
 	Plane,
+	PlaneGeometry,
 	Raycaster,
 	RingGeometry,
 	Scene,
+	ShaderMaterial,
 	SRGBColorSpace,
 	TextureLoader,
 	Vector2,
 	Vector3,
 	WebGLRenderer,
+	WebGLRenderTarget,
 	type BufferGeometry,
 	type Material,
 	type Texture
@@ -51,6 +57,7 @@ import {
 	DOOR_OPEN,
 	FLAG,
 	LAPTOP,
+	MIRROR,
 	ROOM,
 	START,
 	STATIONS,
@@ -247,6 +254,104 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	nearRing.rotation.x = -Math.PI / 2;
 	nearRing.visible = false;
 	scene.add(nearRing);
+
+	// The character's reflection in the mirror. The room camera never turns, so
+	// neither does its view in the mirror: a second camera looks along the
+	// reflected view direction and renders only the character (layer 1) into a
+	// small texture, laid over the glass. The rest of the room isn't reflected.
+	const REFLECTED = 1;
+	for (const object of [hemisphere, sun, body, ...legs]) object.layers.enable(REFLECTED);
+	const { glass } = MIRROR;
+	const mirror = new Group();
+	mirror.position.set(MIRROR.x, 0, MIRROR.z);
+	mirror.rotation.set(0, MIRROR.angle, MIRROR.lean);
+	// Sized to the glass below.
+	const reflectionTarget = new WebGLRenderTarget(1, 1, { samples: 4 });
+	// The texture is cleared to transparent, so its colours are premultiplied: blend
+	// them as such. The reflection is a little cooler and lets some glass through.
+	const reflectionMaterial = own(
+		new ShaderMaterial({
+			uniforms: { map: { value: reflectionTarget.texture } },
+			vertexShader: /* glsl */ `
+				varying vec2 vUv;
+				void main() {
+					vUv = uv;
+					gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+				}`,
+			fragmentShader: /* glsl */ `
+				uniform sampler2D map;
+				varying vec2 vUv;
+				void main() {
+					vec4 colour = texture2D(map, vUv) * 0.82;
+					gl_FragColor = vec4(colour.rgb * vec3(0.92, 1.0, 0.98), colour.a);
+					#include <colorspace_fragment>
+				}`,
+			transparent: true,
+			depthWrite: false,
+			blending: CustomBlending,
+			blendSrc: OneFactor,
+			blendDst: OneMinusSrcAlphaFactor
+		})
+	);
+	const pane = keep(new PlaneGeometry(glass.width, glass.height));
+	const reflection = new Mesh(pane, reflectionMaterial);
+	// Just in front of the glass and behind its glare streaks; the plane faces its
+	// own +z, the mirror faces out along its +x.
+	reflection.position.set(glass.front + 0.0005, glass.y, 0);
+	reflection.rotation.y = Math.PI / 2;
+	reflection.visible = false;
+	mirror.add(reflection);
+	scene.add(mirror);
+	mirror.updateMatrixWorld(true);
+	const normal = new Vector3(1, 0, 0).transformDirection(mirror.matrixWorld);
+	const looking = new Vector3(...CAMERA_OFFSET).negate().normalize();
+	looking.addScaledVector(normal, -2 * looking.dot(normal));
+	const glassCentre = reflection.getWorldPosition(new Vector3());
+	const mirrorCamera = new OrthographicCamera();
+	mirrorCamera.layers.set(REFLECTED);
+	mirrorCamera.up.set(0, 1, 0).transformDirection(mirror.matrixWorld);
+	mirrorCamera.position.copy(glassCentre).addScaledVector(looking, -4);
+	mirrorCamera.lookAt(glassCentre);
+	mirrorCamera.updateMatrixWorld();
+	// Frame the glass exactly: its corners as the mirror camera sees them give the
+	// frustum, and where each corner falls in it is that corner's texture coordinate.
+	const corners = pane.getAttribute('position');
+	const seen = Array.from({ length: corners.count }, (_, i) =>
+		new Vector3()
+			.fromBufferAttribute(corners, i)
+			.applyMatrix4(reflection.matrixWorld)
+			.applyMatrix4(mirrorCamera.matrixWorldInverse)
+	);
+	mirrorCamera.left = Math.min(...seen.map((v) => v.x));
+	mirrorCamera.right = Math.max(...seen.map((v) => v.x));
+	mirrorCamera.bottom = Math.min(...seen.map((v) => v.y));
+	mirrorCamera.top = Math.max(...seen.map((v) => v.y));
+	mirrorCamera.near = 0.1;
+	mirrorCamera.far = 10;
+	mirrorCamera.updateProjectionMatrix();
+	const across = mirrorCamera.right - mirrorCamera.left;
+	const tall = mirrorCamera.top - mirrorCamera.bottom;
+	const uv = pane.getAttribute('uv');
+	seen.forEach((v, i) =>
+		uv.setXY(i, (v.x - mirrorCamera.left) / across, (v.y - mirrorCamera.bottom) / tall)
+	);
+	uv.needsUpdate = true;
+	const REFLECTION_HEIGHT = 512;
+	reflectionTarget.setSize(Math.round((REFLECTION_HEIGHT * across) / tall), REFLECTION_HEIGHT);
+	// Skip the extra pass unless some of the character could show in the glass.
+	const probe = new Vector3();
+	function inMirror() {
+		probe.copy(character.position);
+		probe.y += 0.6;
+		probe.applyMatrix4(mirrorCamera.matrixWorldInverse);
+		const reach = 0.75;
+		return (
+			probe.x > mirrorCamera.left - reach &&
+			probe.x < mirrorCamera.right + reach &&
+			probe.y > mirrorCamera.bottom - reach &&
+			probe.y < mirrorCamera.top + reach
+		);
+	}
 
 	// Hitboxes are never rendered; they only answer raycasts.
 	const hitMaterial = own(new MeshBasicMaterial());
@@ -482,6 +587,12 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			else animating = true;
 		}
 		try {
+			reflection.visible = inMirror();
+			if (reflection.visible) {
+				renderer.setRenderTarget(reflectionTarget);
+				renderer.render(scene, mirrorCamera);
+				renderer.setRenderTarget(null);
+			}
 			renderer.render(scene, camera);
 		} catch {
 			stopMovement();
@@ -766,6 +877,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			geometries.forEach((value) => value.dispose());
 			materials.forEach((value) => value.dispose());
 			textures.forEach((value) => value.dispose());
+			reflectionTarget.dispose();
 			renderer.dispose();
 		}
 	};

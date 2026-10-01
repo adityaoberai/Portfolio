@@ -754,9 +754,11 @@ export function buildLanyards(lit: Batch) {
 
 export function buildMirror(lit: Batch) {
 	// Leaning back against the wall (MIRROR in layout.ts); its own +x faces out.
-	lit.group([MIRROR.x, 0, MIRROR.z], [0, MIRROR.angle, 0.08], () => {
+	// The character's reflection is laid over the glass in scene.ts.
+	const { glass } = MIRROR;
+	lit.group([MIRROR.x, 0, MIRROR.z], [0, MIRROR.angle, MIRROR.lean], () => {
 		lit.box('#8f6a4c', [0, 0.97, 0], [0.08, 1.92, 0.82]);
-		lit.box('#d6e3df', [0.045, 0.99, 0], [0.02, 1.76, 0.66]);
+		lit.box('#d6e3df', [glass.front - 0.01, glass.y, 0], [0.02, glass.height, glass.width]);
 		for (const [y, z] of [
 			[1.35, -0.12],
 			[1.05, 0.12]
