@@ -14,7 +14,18 @@ import {
 	type BufferGeometry
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { BED, CABINET, DESK, FLAG, FOOTPRINTS, LAPTOP, MIRROR, SHELF, type Vec3 } from './layout';
+import {
+	BED,
+	CABINET,
+	DESK,
+	FLAG,
+	FOOTPRINTS,
+	LANYARDS,
+	LAPTOP,
+	MIRROR,
+	SHELF,
+	type Vec3
+} from './layout';
 
 type Shape = 'box' | 'cylinder' | 'sphere' | 'disc' | 'cone' | 'plane';
 
@@ -304,14 +315,19 @@ export function legoDelorean(b: Batch) {
 	b.add('sphere', black, [-0.239, 0.246, 0.05], [0.006, 0.006, 0.006]);
 }
 
-// The Manchester United flag pinned to the back wall: a red backing (all that
-// shows until the texture arrives), the picture with the crest, and two pins.
+// The Manchester United flag pinned to the wall (FLAG in layout.ts), in a frame
+// whose +z points out of the wall: a red backing (all that shows until the
+// texture arrives), the picture with the crest, and two pins.
 export function manUtdFlag(lit: Batch, picture: Batch) {
-	const { x, y, width, height } = FLAG;
-	lit.box('#c8102e', [x, y, -2.993], [width, height, 0.008]);
-	picture.picture([x, y, -2.988], width, height, [0, 0, 0], [0, 0, 1, 1]);
-	for (const dx of [-0.48, 0.48])
-		lit.box('#d9d4c7', [x + dx, y + 0.29, -2.984], [0.02, 0.02, 0.006]);
+	const { width, height } = FLAG;
+	const place: [Vec3, number] = [[FLAG.x, FLAG.y, FLAG.z], FLAG.angle];
+	lit.group(...place, () => {
+		lit.box('#c8102e', [0, 0, 0.007], [width, height, 0.008]);
+		for (const dx of [-0.48, 0.48]) lit.box('#d9d4c7', [dx, 0.29, 0.016], [0.02, 0.02, 0.006]);
+	});
+	picture.group(...place, () =>
+		picture.picture([0, 0, 0.012], width, height, [0, 0, 0], [0, 0, 1, 1])
+	);
 }
 
 // The camera's view direction and screen axes, for placing details on the side of
@@ -607,19 +623,6 @@ export function buildBedroom(lit: Batch) {
 	lit.box('#f0e3c7', [x + 0.1, 0.7, 0.07], [0.95, 0.16, 0.4]);
 	// Squirtle plush by the pillow, facing the room.
 	lit.group([x - 0.18, 0.62, 0.28], Math.PI / 3, () => squirtle(lit), 0.72);
-
-	// Front-right plant.
-	lit.cylinder('#b87554', [3.0, 0.33, 2.55], 0.3, 0.66);
-	for (let i = 0; i < 5; i++) {
-		const angle = (i * Math.PI * 2) / 5;
-		lit.add(
-			'sphere',
-			i % 2 ? '#658463' : '#7e965f',
-			[3.0 + Math.cos(angle) * 0.2, 0.95 + i * 0.1, 2.55 + Math.sin(angle) * 0.2],
-			[0.16, 0.43, 0.17],
-			[0, 0, Math.cos(angle) * 0.5]
-		);
-	}
 }
 
 // Character parts: body is static relative to the character; legs swing.
@@ -693,32 +696,34 @@ export function buildCityLights(b: Batch) {
 }
 
 export function buildLanyards(lit: Batch) {
-	lit.box('#6b5a48', [-0.65, 2.62, -2.97], [1.35, 0.05, 0.05]);
-	const straps = ['#c9573c', '#3d6f9e', '#d6a64a', '#5f8f73', '#8a5aa8'];
-	straps.forEach((strap, i) => {
-		const x = -1.15 + i * 0.25;
-		const drop = [0, 0.08, 0.03, 0.12, 0.05][i];
-		const badgeY = 1.78 - drop;
-		const length = 2.6 - badgeY - 0.1;
-		lit.box('#4a3d30', [x, 2.6, -2.94], [0.03, 0.06, 0.04]);
-		for (const side of [-1, 1])
-			lit.box(
-				strap,
-				[x + side * 0.045, badgeY + 0.1 + length / 2, -2.96],
-				[0.03, length, 0.01],
-				[0, 0, -side * 0.12]
-			);
-		lit.group([x, badgeY, -2.955], [0, 0, (i - 2) * 0.04], () => {
-			lit.box('#f6f1e4', [0, 0, 0], [0.2, 0.27, 0.012]);
-			lit.box(strap, [0, 0.1, 0.008], [0.2, 0.06, 0.004]);
-			for (const y of [-0.01, -0.05, -0.09])
-				lit.box('#9a9280', [0, y, 0.008], [0.13, 0.012, 0.004]);
-		});
-	});
-	// A talk poster at eye level.
-	lit.box('#e8dcc0', [-0.65, 1.1, -2.985], [0.62, 0.48, 0.01]);
-	lit.add('sphere', '#d9774f', [-0.8, 1.16, -2.978], [0.12, 0.12, 0.004]);
-	for (const y of [1.2, 1.12, 1.04]) lit.box('#5c5446', [-0.52, y, -2.978], [0.22, 0.025, 0.004]);
+	// One rail along the top of the lanyards and the corkboard.
+	lit.box('#6b5a48', [-3.47, 2.5, 0.2], [0.05, 0.05, 2.95]);
+	// Drawn as they hung on the back wall, centred on x -0.65, then moved.
+	lit.group([LANYARDS.x, LANYARDS.drop, LANYARDS.z], LANYARDS.angle, () =>
+		lit.group([0.65, 0, 3], 0, () => {
+			const straps = ['#c9573c', '#3d6f9e', '#d6a64a', '#5f8f73', '#8a5aa8'];
+			straps.forEach((strap, i) => {
+				const x = -1.15 + i * 0.25;
+				const drop = [0, 0.08, 0.03, 0.12, 0.05][i];
+				const badgeY = 1.78 - drop;
+				const length = 2.6 - badgeY - 0.1;
+				lit.box('#4a3d30', [x, 2.6, -2.94], [0.03, 0.06, 0.04]);
+				for (const side of [-1, 1])
+					lit.box(
+						strap,
+						[x + side * 0.045, badgeY + 0.1 + length / 2, -2.96],
+						[0.03, length, 0.01],
+						[0, 0, -side * 0.12]
+					);
+				lit.group([x, badgeY, -2.955], [0, 0, (i - 2) * 0.04], () => {
+					lit.box('#f6f1e4', [0, 0, 0], [0.2, 0.27, 0.012]);
+					lit.box(strap, [0, 0.1, 0.008], [0.2, 0.06, 0.004]);
+					for (const y of [-0.01, -0.05, -0.09])
+						lit.box('#9a9280', [0, y, 0.008], [0.13, 0.012, 0.004]);
+				});
+			});
+		})
+	);
 }
 
 export function buildMirror(lit: Batch) {

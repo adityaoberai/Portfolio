@@ -90,10 +90,14 @@ export function onShelf(x: number, z: number): Point {
 	return { x: SHELF.x + c * x + s * z, z: SHELF.z - s * x + c * z };
 }
 
-// The camera cabinet stands against the left wall beside the desk, facing the
-// room, with a strand of prints above it; the mirror leans against the back wall
-// in the right corner. Both are drawn in their own frames (build.ts).
-export const CABINET = { x: -3.2, z: -0.8, angle: Math.PI / 2 };
+// The camera cabinet stands against the back wall left of the shelf, with a
+// strand of prints above it; the mirror leans against the back wall in the right
+// corner. Both are drawn in their own frames (build.ts).
+export const CABINET = { x: -0.55, z: -2.7, angle: 0 };
+
+// The lanyards hang on the left wall just behind the corkboard, from one rail that
+// runs along the top of both, so the two read as one board.
+export const LANYARDS = { x: -3.5, z: -0.575, angle: Math.PI / 2, drop: -0.12 };
 export const MIRROR = { x: 3.05, z: -2.88, angle: -Math.PI / 2 };
 
 // The bed runs along the right edge of the room, headboard at the back.
@@ -111,8 +115,7 @@ export const FOOTPRINTS = {
 	// The reading corner, under the corkboard where the bed was.
 	armchair: { x: -2.75, z: 1.0, halfX: 0.43, halfZ: 0.38, angle: 0.55 },
 	books: { x: -2.0, z: 1.6, halfX: 0.2, halfZ: 0.16, angle: 0 },
-	floorLamp: { x: -3.1, z: 0.3, halfX: 0.13, halfZ: 0.13, angle: 0 },
-	plant: edges(2.72, 3.28, 2.27, 2.83)
+	floorLamp: { x: -3.1, z: 0.3, halfX: 0.13, halfZ: 0.13, angle: 0 }
 } satisfies Record<string, Footprint>;
 
 export type StationId =
@@ -156,9 +159,9 @@ export const STATIONS: StationLayout[] = [
 	},
 	{
 		id: 'camera',
-		approach: { x: -2.5, z: -0.8 },
-		hit: { center: [-3.2, 1.25, -0.8], size: [0.85, 2.5, 1.05] },
-		focus: [-3.18, 1.2, -0.78],
+		approach: { x: -0.55, z: -1.95 },
+		hit: { center: [-0.53, 1.25, -2.72], size: [1.05, 2.5, 0.85] },
+		focus: [-0.52, 1.2, -2.7],
 		priority: 0
 	},
 	{
@@ -177,9 +180,9 @@ export const STATIONS: StationLayout[] = [
 	},
 	{
 		id: 'lanyards',
-		approach: { x: -0.65, z: -2.25 },
-		hit: { center: [-0.65, 1.8, -2.92], size: [1.4, 1.9, 0.45] },
-		focus: [-0.65, 1.8, -2.95],
+		approach: { x: -2.6, z: -0.6 },
+		hit: { center: [-3.42, 1.9, -0.575], size: [0.4, 1.3, 1.35] },
+		focus: [-3.4, 1.85, -0.575],
 		priority: 0
 	},
 	{
@@ -211,11 +214,13 @@ const displayRow = SHELF.boards[2] + 0.025;
 const cowlAt = onShelf(SHELF.cowl.x, SHELF.cowl.z);
 const deloreanAt = onShelf(SHELF.delorean.x, SHELF.delorean.z);
 
-// The Manchester United flag on the back wall, above the right of the desk. Its
-// picture (red field and crest) is a texture made by `npm run images`.
+// The Manchester United flag on the left wall above the desk, facing the room.
+// Its picture (red field and crest) is a texture made by `npm run images`.
 export const FLAG = {
-	x: 1.85,
-	y: 2.35,
+	x: -3.5,
+	y: 2.3,
+	z: -2.1,
+	angle: Math.PI / 2,
 	width: 1,
 	height: 0.62,
 	texture: '/room/flag.webp',
@@ -243,7 +248,7 @@ export const CURIOSITIES: CuriosityLayout[] = [
 		id: 'delorean',
 		hit: { center: [deloreanAt.x, displayRow + 0.1, deloreanAt.z], size: [0.48, 0.26, 0.4] }
 	},
-	{ id: 'flag', hit: { center: [FLAG.x, FLAG.y, -2.96], size: [1.04, 0.66, 0.1] } },
+	{ id: 'flag', hit: { center: [FLAG.x + 0.04, FLAG.y, FLAG.z], size: [0.1, 0.66, 1.04] } },
 	{ id: 'suitcase', hit: { center: [-1.9, 0.38, 2.85], size: [0.62, 0.8, 0.45] } },
 	{ id: 'football', hit: { center: [-3.2, 0.14, 2.03], size: [0.42, 0.42, 0.42] } }
 ];
