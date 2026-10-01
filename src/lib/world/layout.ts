@@ -95,9 +95,11 @@ export function onShelf(x: number, z: number): Point {
 // corner. Both are drawn in their own frames (build.ts).
 export const CABINET = { x: 1.95, z: -2.7, angle: 0 };
 
-// The lanyards hang on the left wall just behind the corkboard, from one rail that
-// runs along the top of both, so the two read as one board.
-export const LANYARDS = { x: -3.5, z: -0.575, angle: Math.PI / 2, drop: -0.12 };
+// One board on the left wall above the sofa: a wide corkboard with the lanyards
+// hanging on the half nearer the desk and notes and photos pinned on the half
+// nearer the door, under a rail along its top. `z` is its centre and `width` its length along the wall.
+export const BOARD = { z: -0.025, width: 2.5, y: 1.9, height: 1.05 };
+export const LANYARDS = { x: -3.47, z: -0.65, angle: Math.PI / 2, drop: -0.12 };
 export const MIRROR = { x: 3.05, z: -2.88, angle: -Math.PI / 2 };
 
 // The bed runs along the right edge of the room, headboard at the back.
@@ -110,12 +112,12 @@ export const FOOTPRINTS = {
 	shelf: { x: SHELF.x, z: SHELF.z, halfX: 0.275, halfZ: 0.6, angle: SHELF.angle },
 	mirror: edges(2.64, 3.46, -3, -2.62),
 	bed: edges(BED.x - 0.7, BED.x + 0.7, -0.25, 1.9),
-	football: { x: -3.2, z: 2.03, halfX: 0.13, halfZ: 0.13, angle: 0 },
-	suitcase: edges(-2.15, -1.65, 2.72, 2.98),
-	// The reading corner, under the corkboard where the bed was.
-	armchair: { x: -2.75, z: 1.0, halfX: 0.43, halfZ: 0.38, angle: 0.55 },
-	books: { x: -2.0, z: 1.6, halfX: 0.2, halfZ: 0.16, angle: 0 },
-	floorLamp: { x: -3.1, z: 0.3, halfX: 0.13, halfZ: 0.13, angle: 0 }
+	// At the foot of the bed: the suitcase, turned a little towards the room, and the ball.
+	suitcase: { x: 2.45, z: 2.6, halfX: 0.25, halfZ: 0.13, angle: -0.25 },
+	football: { x: 3.05, z: 2.3, halfX: 0.13, halfZ: 0.13, angle: 0 },
+	// A two-seat sofa against the left wall under the board, on a small rug, with
+	// room for one person between it and the desk.
+	sofa: { x: -3.08, z: 0.05, halfX: 0.75, halfZ: 0.4, angle: Math.PI / 2 }
 } satisfies Record<string, Footprint>;
 
 export type StationId =
@@ -139,16 +141,41 @@ export interface StationLayout {
 	focus: Vec3;
 	// Smaller objects sitting on larger ones win the raycast.
 	priority: number;
+	// Where the character sits while the station is open: a point on the floor
+	// plan, the way it faces, and how far it is lifted (seat height less hip
+	// height). It stands up again at `approach` when the station closes.
+	seat?: Seat;
 }
+
+export interface Seat {
+	x: number;
+	z: number;
+	facing: number;
+	lift: number;
+}
+
+// A point in a turned footprint's frame, in the room.
+function within(f: Footprint, x: number, z: number): Point {
+	const c = Math.cos(f.angle);
+	const s = Math.sin(f.angle);
+	return { x: f.x + c * x + s * z, z: f.z - s * x + c * z };
+}
+
+// On the desk chair, facing the laptop (the chair's sitter faces its own -z).
+const chair = FOOTPRINTS.deskChair;
+const chairSeat = within(chair, 0, 0.03);
+// On the sofa cushion nearer the room, facing out.
+const sofaSeat = within(FOOTPRINTS.sofa, -0.31, 0.13);
 
 export const STATIONS: StationLayout[] = [
 	{
 		id: 'desk',
-		// Behind the chair, looking at the laptop.
+		// Behind the chair, looking at the laptop; the character sits on the chair.
 		approach: { x: -1.8, z: -2.1 },
 		hit: { center: [-3.1, 0.95, -2.1], size: [1.0, 1.95, 1.75] },
 		focus: [-3.0, 1.25, -2.1],
-		priority: 0
+		priority: 0,
+		seat: { ...chairSeat, facing: chair.angle + Math.PI, lift: 0.21 }
 	},
 	{
 		id: 'notebook',
@@ -173,16 +200,19 @@ export const STATIONS: StationLayout[] = [
 	},
 	{
 		id: 'corkboard',
-		approach: { x: -1.75, z: 0.9 },
-		hit: { center: [-3.42, 1.85, 0.9], size: [0.4, 1.25, 1.7] },
-		focus: [-3.4, 1.8, 0.9],
-		priority: 0
+		// In front of the sofa; the character sits on it while the board is open.
+		approach: { x: -2.3, z: FOOTPRINTS.sofa.z },
+		hit: { center: [-3.42, BOARD.y, BOARD.z], size: [0.4, BOARD.height + 0.2, BOARD.width] },
+		focus: [-3.4, BOARD.y - 0.05, BOARD.z],
+		priority: 0,
+		seat: { ...sofaSeat, facing: Math.PI / 2, lift: 0.1 }
 	},
 	{
 		id: 'lanyards',
-		approach: { x: -2.6, z: -0.6 },
-		hit: { center: [-3.42, 1.9, -0.575], size: [0.4, 1.3, 1.35] },
-		focus: [-3.4, 1.85, -0.575],
+		// Part of the board now; world.ts hides this station, so only the board opens.
+		approach: { x: -2.1, z: -0.75 },
+		hit: { center: [-3.42, BOARD.y, LANYARDS.z], size: [0.4, 1.2, 1.1] },
+		focus: [-3.4, BOARD.y - 0.05, LANYARDS.z],
 		priority: 0
 	},
 	{
@@ -194,10 +224,9 @@ export const STATIONS: StationLayout[] = [
 	},
 	{
 		id: 'window',
-		// Off to the right of the window, clear of the desk chair.
-		approach: { x: -1.45, z: -2.3 },
-		hit: { center: [-2.2, 1.95, -2.92], size: [1.5, 1.5, 0.45] },
-		focus: [-2.2, 1.9, -2.95],
+		approach: { x: -1.25, z: -2.3 },
+		hit: { center: [-1.25, 1.95, -2.92], size: [1.5, 1.5, 0.45] },
+		focus: [-1.25, 1.9, -2.95],
 		priority: 0
 	},
 	{
@@ -249,8 +278,20 @@ export const CURIOSITIES: CuriosityLayout[] = [
 		hit: { center: [deloreanAt.x, displayRow + 0.1, deloreanAt.z], size: [0.48, 0.26, 0.4] }
 	},
 	{ id: 'flag', hit: { center: [FLAG.x + 0.04, FLAG.y, FLAG.z], size: [0.1, 0.66, 1.04] } },
-	{ id: 'suitcase', hit: { center: [-1.9, 0.38, 2.85], size: [0.62, 0.8, 0.45] } },
-	{ id: 'football', hit: { center: [-3.2, 0.14, 2.03], size: [0.42, 0.42, 0.42] } }
+	{
+		id: 'suitcase',
+		hit: {
+			center: [FOOTPRINTS.suitcase.x, 0.38, FOOTPRINTS.suitcase.z],
+			size: [0.62, 0.8, 0.45]
+		}
+	},
+	{
+		id: 'football',
+		hit: {
+			center: [FOOTPRINTS.football.x, 0.14, FOOTPRINTS.football.z],
+			size: [0.42, 0.42, 0.42]
+		}
+	}
 ];
 
 // The door swings open while its station is focused.

@@ -80,9 +80,11 @@ test('photo titles come from real Pexels slugs', () => {
 	assert.ok(photographs.some((photo) => photo.title.includes('CN Tower')));
 });
 
-test('every room station has layout, meaning, and a section', () => {
+test('every room station has layout, meaning, and a section', async () => {
+	const { world } = await import('../src/lib/data/world.ts');
 	const ids = new Set(sections.map((s) => s.id));
-	assert.deepEqual(stations.map((s) => s.id).sort(), STATIONS.map((s) => s.id).sort());
+	// Every object in the room is configured (hidden ones too); visible ones have a section.
+	assert.deepEqual(world.stations.map((s) => s.id).sort(), STATIONS.map((s) => s.id).sort());
 	for (const station of stations) assert.ok(ids.has(station.section), station.id);
 });
 

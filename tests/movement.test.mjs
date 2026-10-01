@@ -129,6 +129,15 @@ test('every station can be reached and is the nearest at its own approach point'
 	assert.ok(CURIOSITIES.length >= 1);
 });
 
+test('seats are on furniture, and standing up lands somewhere free', () => {
+	const seated = STATIONS.filter((s) => s.seat);
+	assert.deepEqual(seated.map((s) => s.id).sort(), ['corkboard', 'desk']);
+	for (const station of seated) {
+		assert.equal(isFree(station.seat), false, `${station.id} seat is not on furniture`);
+		assert.ok(isFree(station.approach), `${station.id} stands up inside furniture`);
+	}
+});
+
 test('nothing is near in the middle of the room', () => {
 	assert.equal(nearest({ x: 0.5, z: 1.8 }, STATIONS), undefined);
 });

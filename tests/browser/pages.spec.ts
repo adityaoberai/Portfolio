@@ -61,8 +61,9 @@ test('"In the room" links open the matching station in World', async ({ browser 
 	const context = await browser.newContext({ reducedMotion: 'reduce' });
 	const page = await context.newPage();
 	await page.goto('/speaking');
-	await page.getByRole('link', { name: /In the room: the conference wall/ }).click();
-	await expect(page).toHaveURL(/\/world#lanyards$/);
+	// The lanyards are part of the corkboard now, so Speaking links to the board.
+	await page.getByRole('link', { name: /In the room: the corkboard/ }).click();
+	await expect(page).toHaveURL(/\/world#corkboard$/);
 	await expect(page.getByRole('heading', { name: 'Lanyards from the road' })).toBeVisible();
 	await context.close();
 });

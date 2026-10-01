@@ -30,7 +30,7 @@
 	<PageIntro
 		eyebrow="Speaking · the conference wall"
 		title="Talks, stages, and the occasional microphone."
-		station="lanyards"
+		station="corkboard"
 	>
 		<p>
 			I speak about developer relations, communities, and building with AI, and I've organized a

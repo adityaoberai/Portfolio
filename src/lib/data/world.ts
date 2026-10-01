@@ -39,6 +39,7 @@ import type { ArtifactType, World } from './artifacts';
 import type { SectionId } from './sections';
 import type { CuriosityId, StationId } from '../world/layout';
 import { about } from './about';
+import { books } from './books';
 import { collection } from './collection';
 import { socialLinks, sponsorLink } from './links';
 import { now } from './now';
@@ -260,22 +261,45 @@ export const world: WorldConfig = {
 		},
 		{
 			id: 'shelf',
-			object: 'Pokémon shelf',
-			short: 'Pokémon shelf',
+			object: 'Shelf of favourites',
+			short: 'shelf',
 			area: 'Collection',
 			world: 'collect',
-			summary: `Slabs, binders, and ${collection.favourite} in pride of place.`,
+			summary: `Pokémon cards, Batman, Back to the Future, books, and ${collection.favourite} on top.`,
 			section: 'collection',
 			panel: {
 				title: `${collection.favourite} gets the top shelf.`,
-				lead: 'My favourite Pokémon, so it gets pride of place. A few other favourites share the shelf; the whole collection is catalogued on Collectr.',
+				lead: 'The shelf is where the things I love live: Pokémon cards, Batman, Back to the Future, and a row of favourite books. Blastoise is my favourite Pokémon, so it gets pride of place; the whole card collection is catalogued on Collectr.',
 				blocks: [
 					{ type: 'slab', item: 'collectible-blastoise' },
 					{
 						type: 'items',
 						style: 'cards',
-						heading: 'Also on the shelf',
+						heading: 'More favourite cards',
 						items: [{ type: 'collectible', featured: false }]
+					},
+					{
+						type: 'list',
+						heading: 'Other favourites',
+						items: [
+							{
+								title: 'Batman',
+								text: 'My favourite DC character. The cowl on the second shelf is mine, and it fits.'
+							},
+							{
+								title: 'Back to the Future',
+								text: 'The LEGO DeLorean time machine, antenna and all.'
+							},
+							{
+								title: 'Manchester United',
+								text: 'The flag above the desk and the scarf by the door. Glory, glory.'
+							}
+						]
+					},
+					{
+						type: 'list',
+						heading: 'Books on the shelf',
+						items: books.map((book) => ({ title: book.title, text: book.author }))
 					}
 				],
 				links: [{ label: 'Open the binder on Collectr', href: collection.showcaseUrl }]
@@ -285,9 +309,10 @@ export const world: WorldConfig = {
 			id: 'corkboard',
 			object: 'Corkboard',
 			short: 'corkboard',
-			area: 'Community',
+			area: 'Community & speaking',
 			world: 'gather',
-			summary: 'Tickets, photos, and notes from the communities I’ve helped build.',
+			summary:
+				'Notes from the communities I’ve helped build, and lanyards from the talks I’ve given.',
 			section: 'community',
 			panel: {
 				title: 'Pinned to the corkboard',
@@ -298,13 +323,29 @@ export const world: WorldConfig = {
 						style: 'pins',
 						items: [{ type: 'community' }, { type: 'work', context: 'Community' }],
 						linkLabel: 'Read more'
+					},
+					{
+						type: 'text',
+						text: `${talks.length} talks and counting. A few of the lanyards I kept:`
+					},
+					{
+						type: 'items',
+						style: 'badges',
+						heading: 'Lanyards from the road',
+						items: [{ type: 'talk', featured: true }]
 					}
 				],
-				links: [{ label: 'All community work' }]
+				links: [
+					{ label: 'All community work' },
+					{ label: 'Every talk and podcast', href: '/speaking' },
+					{ label: 'Invite me to speak', href: `mailto:${site.email}?subject=Speaking invitation` }
+				]
 			}
 		},
 		{
 			id: 'lanyards',
+			// Combined with the corkboard (see above): still in the room, not its own stop.
+			hidden: true,
 			object: 'Conference wall',
 			short: 'conference wall',
 			area: 'Speaking',
@@ -411,7 +452,7 @@ export const world: WorldConfig = {
 		},
 		football: {
 			label: 'Football',
-			line: 'A Premier League ball by the door, a little scuffed. It has seen some games.'
+			line: 'A Premier League ball at the foot of the bed, a little scuffed. It has seen some games.'
 		}
 	}
 };

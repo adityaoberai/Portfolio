@@ -167,7 +167,7 @@ test('portrait touch input, reduced motion, and low-power DPR', async ({ browser
 	expect(size.scroll).toBeLessThanOrEqual(size.width);
 	// The room is the page: nothing scrolls vertically either.
 	expect(await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)).toBe(0);
-	await page.getByRole('button', { name: 'Inspect the Pokémon shelf' }).tap();
+	await page.getByRole('button', { name: 'Inspect the shelf' }).tap();
 	await expect(page.getByRole('navigation', { name: 'In the room' })).not.toBeVisible();
 	await expect(page.getByRole('dialog')).toBeVisible();
 	await page.getByRole('button', { name: 'Back to the room' }).tap();
@@ -215,9 +215,10 @@ test('WebGL failure and disabled JavaScript preserve the content and Index escap
 	);
 	// The menu is a native popover, so it opens without JavaScript too.
 	await staticPage.getByRole('button', { name: 'In the room', exact: true }).click();
+	// One link per visible station (the lanyards are part of the corkboard).
 	await expect(
 		staticPage.getByRole('navigation', { name: 'In the room' }).getByRole('link')
-	).toHaveCount(9);
+	).toHaveCount(8);
 	await staticPage.keyboard.press('Escape');
 	await staticPage.getByRole('status').getByRole('link', { name: 'Explore the Index' }).click();
 	await expect(staticPage.getByRole('heading', { level: 1 })).toContainText(
@@ -248,9 +249,8 @@ test('every station in the room opens from the guide', async ({ browser }) => {
 		['desk', 'Developer Relations Lead at Appwrite'],
 		['notebook', 'Pages from the notebook'],
 		['camera', 'Fujifilm X-T30 II'],
-		['Pokémon shelf', 'Blastoise gets the top shelf.'],
+		['shelf', 'Blastoise gets the top shelf.'],
 		['corkboard', 'Pinned to the corkboard'],
-		['conference wall', 'Lanyards from the road'],
 		['mirror', 'Making complicated things make sense.'],
 		['window', 'Right now'],
 		['door', 'Elsewhere']

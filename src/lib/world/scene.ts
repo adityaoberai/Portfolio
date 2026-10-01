@@ -294,6 +294,8 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	let stalled = 0;
 	let near: StationLayout | undefined;
 	let focused: StationLayout | null = null;
+	// The station whose seat the character is sitting in, if any.
+	let seated: StationLayout | null = null;
 	let pointerStart: { x: number; y: number; id: number } | null = null;
 
 	// Camera framing tween: target point and zoom.
@@ -325,7 +327,30 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		stalled = 0;
 		targetMarker.visible = false;
 		body.position.y = 0;
-		legs.forEach((leg) => (leg.rotation.x = 0));
+		pose();
+	}
+	// Sitting: legs straight out in front, like a minifigure. Standing: legs down.
+	function pose() {
+		legs.forEach((leg) => (leg.rotation.x = seated ? -Math.PI / 2 : 0));
+	}
+	function sit(station: StationLayout) {
+		const seat = station.seat;
+		if (!seat) return;
+		seated = station;
+		character.position.set(seat.x, seat.lift, seat.z);
+		character.rotation.y = seat.facing;
+		shadow.visible = false;
+		pose();
+	}
+	// Back on the floor at the station's approach point, facing where it sat.
+	function standUp() {
+		if (!seated) return;
+		const { approach } = seated;
+		seated = null;
+		character.position.set(approach.x, 0, approach.z);
+		shadow.position.set(approach.x, 0.064, approach.z);
+		shadow.visible = true;
+		pose();
 	}
 	function setPosition(point: Point) {
 		const dx = point.x - character.position.x;
@@ -384,7 +409,9 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	}
 	function inspect(station: StationLayout) {
 		stopMovement();
-		face(station.focus);
+		standUp();
+		if (station.seat) sit(station);
+		else face(station.focus);
 		focused = station;
 		frameTo(station);
 		options.onInspect(station.id);
@@ -423,10 +450,13 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		}
 		const moving = keyboardMoving || path.length > 0;
 		body.position.y = moving && !reducedMotion ? Math.abs(Math.sin(time * 0.014)) * 0.035 : 0;
-		legs.forEach(
-			(leg, i) =>
-				(leg.rotation.x = moving && !reducedMotion ? Math.sin(time * 0.014 + i * Math.PI) * 0.4 : 0)
-		);
+		if (seated) pose();
+		else
+			legs.forEach(
+				(leg, i) =>
+					(leg.rotation.x =
+						moving && !reducedMotion ? Math.sin(time * 0.014 + i * Math.PI) * 0.4 : 0)
+			);
 
 		const nowNear = focused ?? nearest(position(), active);
 		if (nowNear !== near) {
@@ -465,6 +495,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	}
 	function moveTo(point: Point, station: StationLayout | null = null) {
 		if (paused || disposed) return;
+		standUp();
 		keys.clear();
 		const target = clampPoint(point);
 		path = route(position(), target);
@@ -569,6 +600,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		const key = event.key.toLowerCase();
 		if (movementKeys.has(key)) {
 			event.preventDefault();
+			standUp();
 			path = [];
 			inspectOnArrival = null;
 			targetMarker.visible = false;
@@ -678,11 +710,14 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		},
 		// Return the camera to the overview after a station closes.
 		release() {
+			standUp();
 			focused = null;
 			frameTo(null);
+			requestFrame();
 		},
 		reset() {
 			stopMovement();
+			standUp();
 			focused = null;
 			setPosition(START);
 			character.rotation.y = 0;

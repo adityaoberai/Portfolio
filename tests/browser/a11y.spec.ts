@@ -48,9 +48,8 @@ test('the room, its guide, and every station meet WCAG 2.2 AA (automated checks)
 		'desk',
 		'notebook',
 		'camera',
-		'Pokémon shelf',
+		'shelf',
 		'corkboard',
-		'conference wall',
 		'mirror',
 		'window',
 		'door'
