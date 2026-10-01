@@ -46,9 +46,11 @@ import {
 	CAMERA_OFFSET,
 	CAMERA_TARGET,
 	CURIOSITIES,
+	DESK,
 	DOOR_HINGE,
 	DOOR_OPEN,
 	FLAG,
+	LAPTOP,
 	ROOM,
 	START,
 	STATIONS,
@@ -144,10 +146,19 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 
 	const unit = keep(new BoxGeometry(1, 1, 1));
 	const displayMaterial = own(new MeshLambertMaterial({ color: '#acc4a2', flatShading: true }));
+	// The laptop's screen, in the same frames as build.ts: desk, laptop, then lid.
 	const display = new Mesh(unit, displayMaterial);
-	display.position.set(0.85, 1.62, -2.755);
-	display.scale.set(1.07, 0.6, 0.02);
-	scene.add(display);
+	const desk = new Group();
+	desk.position.set(DESK.x, 0, DESK.z);
+	desk.rotation.y = DESK.angle;
+	const lid = new Group();
+	lid.position.set(LAPTOP.x, DESK.height + LAPTOP.base, LAPTOP.z - LAPTOP.depth / 2);
+	lid.rotation.x = -LAPTOP.tilt;
+	display.position.set(0, LAPTOP.lid / 2, 0.0025);
+	display.scale.set(LAPTOP.width - 0.05, LAPTOP.lid - 0.06, 0.002);
+	lid.add(display);
+	desk.add(lid);
+	scene.add(desk);
 
 	// Bengaluru through the window: sky colour and city lights follow local time there.
 	const skyMaterial = own(new MeshBasicMaterial({ color: '#b9d4c3' }));

@@ -47,21 +47,25 @@ test('walking into furniture slides along it: never inside, never a jump', () =>
 });
 
 test('click-to-walk goes around furniture instead of through it', () => {
-	const desk = STATIONS.find((s) => s.id === 'desk').approach;
-	const notebook = STATIONS.find((s) => s.id === 'notebook').approach;
-	// The desk chair stands between the two.
-	assert.equal(isClear(desk, notebook), false);
-	const starts = [START, desk, ...STATIONS.map((s) => s.approach)];
+	const starts = [START, ...STATIONS.map((s) => s.approach)];
+	let detours = 0;
 	for (const from of starts)
 		for (const station of STATIONS) {
 			const path = route(from, station.approach);
 			assert.deepEqual(path.at(-1), station.approach);
+			// Where furniture is in the way, the walk turns at least once.
+			if (!isClear(from, station.approach)) {
+				assert.ok(path.length > 1, `${JSON.stringify(from)} -> ${station.id} walks straight`);
+				detours++;
+			}
 			let at = from;
 			for (const waypoint of path) {
 				assert.ok(isClear(at, waypoint), `${JSON.stringify(from)} -> ${station.id}`);
 				at = waypoint;
 			}
 		}
+	// The room has furniture between some stations, so routing is exercised.
+	assert.ok(detours > 0);
 });
 
 test('large inputs stay on the floor and out of furniture', () => {

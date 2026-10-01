@@ -14,7 +14,7 @@ import {
 	type BufferGeometry
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { FLAG, FOOTPRINTS, SHELF, type Vec3 } from './layout';
+import { DESK, FLAG, FOOTPRINTS, LAPTOP, SHELF, type Vec3 } from './layout';
 
 type Shape = 'box' | 'cylinder' | 'sphere' | 'disc' | 'cone' | 'plane';
 
@@ -384,45 +384,75 @@ export function buildShell(lit: Batch, unlit: Batch) {
 	for (const z of [-0.3, 1.7]) lit.box('#ebc498', [0.5, 0.05, z], [3, 0.005, 0.055]);
 }
 
+// Asus ROG Zephyrus G15, open, local +z towards whoever sits at it: an Eclipse
+// Gray chassis, a black keyboard with white backlit rows, a touchpad, ROG's vent
+// strip along the hinge, and the lid leaning back. The screen's panels sit in
+// front of the display mesh (scene.ts), which lights up when someone is near.
+export function zephyrusG15(b: Batch) {
+	const { width, depth, base, lid, tilt } = LAPTOP;
+	const shell = '#2d2f33';
+	b.box(shell, [0, base / 2, 0], [width, base, depth]);
+	b.box('#17181a', [0, base + 0.0015, -0.065], [width - 0.05, 0.003, 0.16]);
+	for (const z of [-0.13, -0.1, -0.07, -0.04, -0.01])
+		b.box('#d8dce2', [0, base + 0.0035, z], [width - 0.09, 0.0015, 0.006]);
+	b.box('#3a3c40', [0, base + 0.001, 0.1], [0.16, 0.002, 0.09]);
+	b.box('#1c1d20', [0, base + 0.002, -depth / 2 + 0.012], [width - 0.04, 0.004, 0.018]);
+	b.group([0, base, -depth / 2], [-tilt, 0, 0], () => {
+		b.box(shell, [0, lid / 2, -0.006], [width, lid, 0.012]);
+		b.box('#111214', [0, lid / 2, 0.001], [width - 0.02, lid - 0.02, 0.002]);
+		b.box('#dae1bd', [-0.11, lid * 0.62, 0.0045], [0.19, 0.1, 0.002]);
+		b.box('#638d7c', [0.11, lid * 0.62, 0.0045], [0.19, 0.1, 0.002]);
+		b.box('#e5e7d1', [0, lid * 0.3, 0.0045], [0.41, 0.04, 0.002]);
+	});
+}
+
+// The desk in the back-left corner (DESK in layout.ts), drawn in its own frame:
+// the laptop in the middle, the lamp at the back end, the open notebook at the
+// front end, drawers underneath. The chair stands in the room's frame.
 export function buildDesk(lit: Batch, unlit: Batch) {
-	unlit.decal('#c5aa82', 1.1, -2.35, 1.5, 0.75);
-	lit.box('#ad744c', [1.1, 1, -2.5], [2.4, 0.12, 1]);
-	for (const x of [0, 2.2])
-		for (const z of [-2.9, -2.1]) lit.box('#7c6148', [x, 0.47, z], [0.1, 0.94, 0.1]);
-	lit.box('#b89063', [1.95, 0.62, -2.55], [0.55, 0.6, 0.8]);
-	lit.box('#785a41', [1.95, 0.66, -2.14], [0.16, 0.035, 0.03]);
+	const { length, depth, height } = DESK;
+	unlit.group([DESK.x, 0, DESK.z], DESK.angle, () =>
+		unlit.decal('#c5aa82', 0, 0.2, length * 0.6, depth * 0.75)
+	);
+	lit.group([DESK.x, 0, DESK.z], DESK.angle, () => {
+		lit.box('#ad744c', [0, height - 0.06, 0], [length, 0.12, depth]);
+		for (const x of [-length / 2 + 0.05, length / 2 - 0.05])
+			for (const z of [-depth / 2 + 0.07, depth / 2 - 0.07])
+				lit.box('#7c6148', [x, 0.47, z], [0.08, 0.94, 0.08]);
+		lit.box('#b89063', [0.5, 0.62, -0.02], [0.5, 0.6, 0.7]);
+		lit.box('#785a41', [0.5, 0.66, 0.335], [0.16, 0.035, 0.03]);
 
-	// Monitor frame; the display face is a separate mesh so it can wake.
-	lit.box('#35483f', [0.85, 1.62, -2.8], [1.2, 0.72, 0.08]);
-	lit.box('#dae1bd', [0.6, 1.72, -2.74], [0.4, 0.2, 0.01]);
-	lit.box('#638d7c', [1.1, 1.72, -2.74], [0.4, 0.2, 0.01]);
-	lit.box('#e5e7d1', [0.83, 1.46, -2.74], [0.9, 0.1, 0.01]);
-	lit.box('#35483f', [0.85, 1.2, -2.8], [0.1, 0.28, 0.08]);
-	lit.box('#35483f', [0.85, 1.075, -2.72], [0.45, 0.03, 0.28]);
-	lit.box('#eee5cd', [0.85, 1.08, -2.3], [0.78, 0.04, 0.24]);
+		lit.group([LAPTOP.x, height, LAPTOP.z], 0, () => zephyrusG15(lit));
+		lit.box('#2f3530', [-0.12, height + 0.005, -0.27], [0.36, 0.01, 0.015], [0, 0.35, 0]);
 
-	// Desk lamp: warm, not RGB.
-	lit.cylinder('#5d4a3a', [0.12, 1.08, -2.7], 0.1, 0.03);
-	lit.box('#5d4a3a', [0.12, 1.33, -2.7], [0.03, 0.5, 0.03], [0, 0, -0.2]);
-	lit.add('cone', '#d9a35a', [0.24, 1.55, -2.62], [0.13, 0.16, 0.13], [0.4, 0, -0.7]);
+		// Desk lamp: warm, not RGB, leaning over the laptop.
+		lit.cylinder('#5d4a3a', [0.62, height + 0.02, -0.25], 0.1, 0.03);
+		lit.box('#5d4a3a', [0.62, height + 0.27, -0.25], [0.03, 0.5, 0.03], [0, 0, 0.2]);
+		lit.add('cone', '#d9a35a', [0.5, height + 0.49, -0.17], [0.13, 0.16, 0.13], [0.4, 0, 0.7]);
 
-	// Open notebook and fountain pen.
-	lit.group([1.8, 1.06, -2.3], -0.2, () => {
-		lit.box('#5f7f6a', [0, 0.01, 0], [0.66, 0.02, 0.46]);
-		lit.box('#f3ead2', [-0.165, 0.03, 0], [0.3, 0.02, 0.42]);
-		lit.box('#efe4c8', [0.165, 0.03, 0], [0.3, 0.02, 0.42]);
-		lit.box('#8d7f62', [0, 0.032, 0], [0.012, 0.022, 0.42]);
-		for (const x of [-0.165, 0.165])
-			for (const z of [-0.13, -0.07, -0.01, 0.05])
-				lit.box('#a79c86', [x, 0.042, z], [0.2, 0.004, 0.012]);
-		lit.group([0.12, 0.055, 0.1], 0.6, () => {
-			lit.cylinder('#23302a', [0, 0, 0], 0.018, 0.3, [0, 0, Math.PI / 2]);
-			lit.cylinder('#c9a24a', [0.09, 0, 0], 0.02, 0.02, [0, 0, Math.PI / 2]);
-			lit.add('cone', '#c9a24a', [-0.175, 0, 0], [0.016, 0.05, 0.016], [0, 0, Math.PI / 2]);
-		});
+		// Open notebook and fountain pen.
+		lit.group(
+			[-0.49, height, 0.1],
+			-0.12,
+			() => {
+				lit.box('#5f7f6a', [0, 0.01, 0], [0.66, 0.02, 0.46]);
+				lit.box('#f3ead2', [-0.165, 0.03, 0], [0.3, 0.02, 0.42]);
+				lit.box('#efe4c8', [0.165, 0.03, 0], [0.3, 0.02, 0.42]);
+				lit.box('#8d7f62', [0, 0.032, 0], [0.012, 0.022, 0.42]);
+				for (const x of [-0.165, 0.165])
+					for (const z of [-0.13, -0.07, -0.01, 0.05])
+						lit.box('#a79c86', [x, 0.042, z], [0.2, 0.004, 0.012]);
+				lit.group([0.12, 0.055, 0.1], 0.6, () => {
+					lit.cylinder('#23302a', [0, 0, 0], 0.018, 0.3, [0, 0, Math.PI / 2]);
+					lit.cylinder('#c9a24a', [0.09, 0, 0], 0.02, 0.02, [0, 0, Math.PI / 2]);
+					lit.add('cone', '#c9a24a', [-0.175, 0, 0], [0.016, 0.05, 0.016], [0, 0, Math.PI / 2]);
+				});
+			},
+			0.85
+		);
 	});
 
-	// Chair pulled back between the two approach points.
+	// The chair, pulled back from the desk.
 	const chair = FOOTPRINTS.deskChair;
 	lit.group([chair.x, 0, chair.z], chair.angle, () => {
 		lit.box('#5c7667', [0, 0.5, 0], [0.52, 0.1, 0.48]);
@@ -480,75 +510,82 @@ const BOOKS: [string, number, number][] = [
 	['#4a3d30', 0.31, 0.07]
 ];
 
-// The Pokémon shelf, by rows (see SHELF in layout.ts). `faces` collects the card
-// pictures (one textured mesh, see scene.ts); the first `cards` slabs show cell i
-// of the shelf atlas, left to right. Slabs past that stay abstract.
+// The Pokémon shelf, by rows (SHELF in layout.ts), drawn in its own frame: +x out
+// of its front, z along it (+z is screen-left once it stands on the back wall).
+// `faces` collects the card pictures (one textured mesh, see scene.ts); the first
+// `cards` slabs show cell i of the shelf atlas, left to right. Slabs past that stay
+// abstract.
 export function buildCollection(lit: Batch, faces: Batch, cards: number) {
-	const { x, boards } = SHELF;
+	const { boards } = SHELF;
 	const row = (board: number) => boards[board] + 0.025;
-	lit.box('#e9e0c8', [-3.49, 1.15, -2.2], [0.02, 2.3, 1.2]);
-	for (const z of [-2.78, -1.62]) lit.box('#8f6a4c', [x, 1.15, z], [0.55, 2.3, 0.04]);
-	for (const y of boards) lit.box('#9f7753', [x, y, -2.2], [0.55, 0.05, 1.2]);
+	const place: [Vec3, number] = [[SHELF.x, 0, SHELF.z], SHELF.angle];
+	lit.group(...place, () =>
+		faces.group(...place, () => {
+			lit.box('#e9e0c8', [-0.265, 1.15, 0], [0.02, 2.3, 1.2]);
+			for (const z of [-0.58, 0.58]) lit.box('#8f6a4c', [0, 1.15, z], [0.55, 2.3, 0.04]);
+			for (const y of boards) lit.box('#9f7753', [0, y, 0], [0.55, 0.05, 1.2]);
 
-	// Graded slabs: clear case, card, red label. The card's picture sits just in
-	// front of its yellow face, which shows until the atlas has loaded.
-	let slot = 0;
-	const slab = (z: number, y: number, art: string, tilt = 0) => {
-		const face = slot < cards ? slot : -1;
-		slot++;
-		lit.group([-3.08, y, z], [0, 0, tilt], () => {
-			lit.box('#dfe9ec', [0, 0.17, 0], [0.04, 0.34, 0.22]);
-			lit.box('#e8c85a', [0.021, 0.15, 0], [0.006, 0.25, 0.18]);
-			if (face < 0) lit.box(art, [0.025, 0.17, 0], [0.004, 0.12, 0.14]);
-			lit.box('#c23b3b', [0.021, 0.3, 0], [0.042, 0.045, 0.2]);
-		});
-		if (face >= 0)
-			faces.group([-3.08, y, z], [0, 0, tilt], () =>
-				faces.picture(
-					[0.0245, 0.15, 0],
-					0.18,
-					0.25,
-					[0, Math.PI / 2, 0],
-					[face / cards, 0, (face + 1) / cards, 1]
-				)
+			// Graded slabs: clear case, card, red label. The card's picture sits just in
+			// front of its yellow face, which shows until the atlas has loaded.
+			let slot = 0;
+			const slab = (z: number, y: number, art: string, tilt = 0) => {
+				const face = slot < cards ? slot : -1;
+				slot++;
+				lit.group([0.145, y, z], [0, 0, tilt], () => {
+					lit.box('#dfe9ec', [0, 0.17, 0], [0.04, 0.34, 0.22]);
+					lit.box('#e8c85a', [0.021, 0.15, 0], [0.006, 0.25, 0.18]);
+					if (face < 0) lit.box(art, [0.025, 0.17, 0], [0.004, 0.12, 0.14]);
+					lit.box('#c23b3b', [0.021, 0.3, 0], [0.042, 0.045, 0.2]);
+				});
+				if (face >= 0)
+					faces.group([0.145, y, z], [0, 0, tilt], () =>
+						faces.picture(
+							[0.0245, 0.15, 0],
+							0.18,
+							0.25,
+							[0, Math.PI / 2, 0],
+							[face / cards, 0, (face + 1) / cards, 1]
+						)
+					);
+			};
+			// Row 1: the favourite cards side by side, left to right.
+			for (const z of [0.39, 0.13, -0.13, -0.39]) slab(z, row(3), '#9fb8d4', 0.12);
+
+			// Row 2: the Batman cowl (sized to fit a head) and the LEGO DeLorean.
+			const { cowl, delorean } = SHELF;
+			lit.group([cowl.x, row(2), cowl.z], cowl.angle, () => batmanCowl(lit), cowl.scale);
+			lit.group(
+				[delorean.x, row(2), delorean.z],
+				delorean.angle,
+				() => legoDelorean(lit),
+				delorean.scale
 			);
-	};
-	// Row 1: the favourite cards side by side, left to right as the camera sees
-	// them (screen-left is +z), clear of the side panel nearest the room.
-	for (const z of [-1.985, -2.22, -2.455, -2.69]) slab(z, row(3), '#9fb8d4', 0.12);
 
-	// Row 2: the Batman cowl (sized to fit a head) and the LEGO DeLorean.
-	const { cowl, delorean } = SHELF;
-	lit.group([cowl.x, row(2), cowl.z], cowl.angle, () => batmanCowl(lit), cowl.scale);
-	lit.group(
-		[delorean.x, row(2), delorean.z],
-		delorean.angle,
-		() => legoDelorean(lit),
-		delorean.scale
+			// Row 3: books, spines out.
+			let z = 0.54;
+			for (const [color, height, thickness] of BOOKS) {
+				z -= thickness;
+				lit.box(color, [-0.025, row(1) + height / 2, z + thickness / 2], [0.26, height, thickness]);
+				lit.box(
+					'#f1e9d2',
+					[0.106, row(1) + height * 0.78, z + thickness / 2],
+					[0.002, 0.014, thickness * 0.7]
+				);
+				z -= 0.004;
+			}
+
+			// Bottom row: binders and sealed boxes.
+			lit.box('#355a8a', [0.025, row(0) + 0.165, 0.5], [0.34, 0.33, 0.07]);
+			lit.box('#e8e0c8', [0.205, row(0) + 0.2, 0.5], [0.01, 0.12, 0.05]);
+			lit.box('#8c3f36', [0.025, row(0) + 0.155, 0.42], [0.34, 0.31, 0.07]);
+			lit.box('#c24a3a', [0.025, row(0) + 0.13, 0.18], [0.4, 0.26, 0.3]);
+			lit.box('#3d6f9e', [0.025, row(0) + 0.11, -0.14], [0.4, 0.22, 0.3]);
+			lit.box('#e2c35a', [0.025, row(0) + 0.09, -0.42], [0.4, 0.18, 0.22]);
+
+			// Pride of place: Blastoise on top, facing the room.
+			lit.group([0.045, 2.305, 0], Math.PI / 2, () => blastoise(lit));
+		})
 	);
-
-	// Row 3: books, spines out.
-	let z = -2.74;
-	for (const [color, height, thickness] of BOOKS) {
-		lit.box(color, [-3.25, row(1) + height / 2, z + thickness / 2], [0.26, height, thickness]);
-		lit.box(
-			'#f1e9d2',
-			[-3.119, row(1) + height * 0.78, z + thickness / 2],
-			[0.002, 0.014, thickness * 0.7]
-		);
-		z += thickness + 0.004;
-	}
-
-	// Bottom row: binders and sealed boxes.
-	lit.box('#355a8a', [-3.2, row(0) + 0.165, -2.7], [0.34, 0.33, 0.07]);
-	lit.box('#e8e0c8', [-3.02, row(0) + 0.2, -2.7], [0.01, 0.12, 0.05]);
-	lit.box('#8c3f36', [-3.2, row(0) + 0.155, -2.62], [0.34, 0.31, 0.07]);
-	lit.box('#c24a3a', [-3.2, row(0) + 0.13, -2.38], [0.4, 0.26, 0.3]);
-	lit.box('#3d6f9e', [-3.2, row(0) + 0.11, -2.06], [0.4, 0.22, 0.3]);
-	lit.box('#e2c35a', [-3.2, row(0) + 0.09, -1.78], [0.4, 0.18, 0.22]);
-
-	// Pride of place: Blastoise on top, facing the room.
-	lit.group([-3.18, 2.305, -2.2], Math.PI / 2, () => blastoise(lit));
 }
 
 export function buildBedroom(lit: Batch) {
@@ -675,7 +712,7 @@ export function buildLanyards(lit: Batch) {
 }
 
 export function buildMirror(lit: Batch) {
-	lit.group([-3.38, 0, -0.95], [0, 0, 0.08], () => {
+	lit.group([-3.38, 0, -0.85], [0, 0, 0.08], () => {
 		lit.box('#8f6a4c', [0, 0.97, 0], [0.08, 1.92, 0.82]);
 		lit.box('#d6e3df', [0.045, 0.99, 0], [0.02, 1.76, 0.66]);
 		for (const [y, z] of [
@@ -754,9 +791,6 @@ export function buildDoorSlab(b: Batch) {
 
 export function buildDecor(lit: Batch, unlit: Batch, flag: Batch) {
 	manUtdFlag(lit, flag);
-	// Chargers and cables.
-	lit.box('#2f3530', [1.35, 1.065, -2.62], [0.5, 0.01, 0.02], [0, 0.3, 0]);
-	lit.box('#2f3530', [1.55, 1.07, -2.05], [0.14, 0.02, 0.08]);
 
 	// Reading corner: armchair, headphones, books, lamp.
 	const armchair = FOOTPRINTS.armchair;

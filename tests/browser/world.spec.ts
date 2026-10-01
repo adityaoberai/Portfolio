@@ -92,7 +92,7 @@ test('keyboard and floor movement stop at rest; the desk opens and focus returns
 
 test('walking up to a station and pressing E inspects it', async ({ page }) => {
 	await openRoom(page);
-	const target = await floor(page, -2.4, -1.9);
+	const target = await floor(page, 0.75, -1.95);
 	await page.mouse.click(target.x, target.y);
 	const canvas = page.locator('canvas');
 	await expect(canvas).toHaveAttribute('data-near', 'shelf');
