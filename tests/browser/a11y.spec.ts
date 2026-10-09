@@ -81,9 +81,7 @@ test('the room, its guide, and every station meet WCAG 2.2 AA (automated checks)
 	await expect(page.getByRole('dialog')).not.toBeVisible();
 });
 
-test('the gramophone’s sheet and the music chip meet WCAG 2.2 AA (automated checks)', async ({
-	page
-}) => {
+test('the gramophone’s player card meets WCAG 2.2 AA (automated checks)', async ({ page }) => {
 	// Spotify's player is stubbed out: its contents aren't this site's to audit.
 	await page.route('https://open.spotify.com/**', (route) =>
 		route.fulfill({
@@ -100,13 +98,9 @@ test('the gramophone’s sheet and the music chip meet WCAG 2.2 AA (automated ch
 	await page.getByRole('button', { name: 'In the room', exact: true }).click();
 	await page.getByText('Little things in the room').click();
 	await page.getByRole('button', { name: 'Put the record on' }).click();
-	await expect(page.getByRole('dialog')).toBeVisible();
-	await page
-		.locator('dialog.music')
-		.evaluate((dialog) => Promise.all(dialog.getAnimations().map((a) => a.finished)));
-	await audit(page, '/world (gramophone open)');
-	await page.keyboard.press('Escape');
-	await expect(page.getByRole('group', { name: 'Gramophone' })).toBeVisible();
+	const dock = page.getByRole('region', { name: 'Gramophone' });
+	await expect(dock).toBeVisible();
+	await dock.evaluate((card) => Promise.all(card.getAnimations().map((a) => a.finished)));
 	await audit(page, '/world (music on)');
 });
 

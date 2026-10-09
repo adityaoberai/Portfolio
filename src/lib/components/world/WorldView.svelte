@@ -19,7 +19,6 @@
 	let menu: HTMLDivElement;
 	let dialog: HTMLDialogElement;
 	let poemDialog: HTMLDialogElement;
-	let musicDialog: HTMLDialogElement;
 	let room: RoomController | undefined;
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
 	let reducedMotion = $state(false);
@@ -34,15 +33,11 @@
 	// The little thing whose poem is open (the bed's).
 	let poemOf = $state<CuriosityId | null>(null);
 	const poem = $derived((poemOf && curiosities[poemOf].poem) || null);
-	// The gramophone's music: on once it's used, until it's used again or stopped. Its
-	// sheet can close while it plays.
-	const gramophone = (Object.keys(curiosities) as CuriosityId[]).find(
-		(id) => curiosities[id].music
-	);
-	const music = gramophone && curiosities[gramophone].music;
+	// The gramophone's music: on once it's used, until it's used again or stopped.
+	const music = Object.values(curiosities).find((item) => item.music)?.music;
 	let musicOn = $state(false);
-	let musicSheet = $state(false);
-	let recordPlaying = $state(false);
+	// What Spotify last reported: nothing yet (still loading), playing, or paused.
+	let recordPlaying = $state<boolean | null>(null);
 	let musicNews = $state('');
 	let returnFocus: HTMLElement | null = null;
 
@@ -149,7 +144,7 @@
 		event.stopPropagation();
 		sheet.close();
 	}
-	const sheetOpen = () => [dialog, poemDialog, musicDialog].find((sheet) => sheet.open);
+	const sheetOpen = () => [dialog, poemDialog].find((sheet) => sheet.open);
 	// The wheel over the room beside an open sheet scrolls the sheet; the room behind can't scroll.
 	function wheelToSheet(event: WheelEvent) {
 		const sheet = sheetOpen();
@@ -185,7 +180,7 @@
 	function showCuriosity(id: CuriosityId) {
 		const item = curiosities[id];
 		if (item.poem) return void showPoem(id);
-		if (item.music) return useGramophone();
+		if (item.music) return setMusic(!musicOn);
 		note = item;
 		window.clearTimeout(noteTimer);
 		noteTimer = window.setTimeout(() => (note = null), 5000);
@@ -213,35 +208,14 @@
 		room?.setPaused(false);
 		backToRoom();
 	}
-	// The gramophone: using it puts the record on and opens its sheet, with Spotify's player.
-	// Closing the sheet leaves the music playing, with a chip in the corner to show it again or
-	// stop it; using the gramophone while it plays stops it. The room follows what Spotify
-	// reports: the arm sets down and the record turns once the music plays.
+	// The gramophone: using it puts the record on, and Spotify's player shows over the hint
+	// card, to play, pause, and skip from; using it again, or Stop, takes the record off. The
+	// room follows what Spotify reports: the arm sets down and the record turns once it plays.
 	function setMusic(value: boolean) {
 		musicOn = value;
-		musicNews = value ? 'The record is on.' : 'The record is off.';
-	}
-	function useGramophone() {
-		if (musicOn) return setMusic(false);
-		setMusic(true);
-		void showMusic();
-	}
-	async function showMusic() {
-		window.clearTimeout(noteTimer);
-		note = null;
-		musicSheet = true;
-		room?.setPaused(true);
-		if (gramophone) room?.look(gramophone);
-		hover = null;
-		await tick();
-		if (!musicDialog.open) musicDialog.showModal();
-		musicDialog.focus(quietFocus);
-	}
-	function closeMusic() {
-		musicSheet = false;
-		room?.release();
-		room?.setPaused(false);
-		backToRoom();
+		musicNews = value
+			? 'The record is on. Spotify’s player is in the bottom corner, with a Stop button.'
+			: 'The record is off.';
 	}
 	function musicPlayback(playing: boolean) {
 		recordPlaying = playing;
@@ -249,14 +223,20 @@
 	}
 	function stopMusic() {
 		setMusic(false);
-		if (musicDialog.open) musicDialog.close();
-		else backToRoom();
+		backToRoom();
 	}
 	function musicFromMenu() {
 		if (menu.matches(':popover-open')) menu.hidePopover();
-		if (!musicOn) return useGramophone();
-		setMusic(false);
+		setMusic(!musicOn);
 		backToRoom();
+	}
+	// A click in Spotify's player takes the keyboard into it, out of the room's reach. The next
+	// time the mouse moves over the room, the room has it back, so WASD walks straight away.
+	// (The card can't tell when the pointer leaves it: Spotify's frame swallows that.)
+	function roomAfterPlayer(event: PointerEvent) {
+		if (event.pointerType !== 'mouse' || status !== 'ready') return;
+		const focused = document.activeElement;
+		if (focused instanceof HTMLIFrameElement && focused.closest('.dock')) focusRoom();
 	}
 	function onHover(target: HoverTarget | null, x: number, y: number) {
 		if (!target) {
@@ -336,7 +316,7 @@
 					}
 				});
 				measureInsets();
-				room.setRecord(recordPlaying);
+				room.setRecord(recordPlaying === true);
 				if (diagnostics) Reflect.set(window, '__room', room);
 			})
 			.catch(() => {
@@ -359,6 +339,7 @@
 	<canvas
 		bind:this={canvas}
 		tabindex={status === 'ready' ? 0 : -1}
+		onpointermove={roomAfterPlayer}
 		aria-label="Aditya's room. Use WASD or arrow keys to walk and E to inspect what's nearby, or tap the floor and objects. Every object is also listed in the menu."
 		aria-describedby="room-instructions"
 		class:loaded={status === 'ready'}
@@ -420,14 +401,24 @@
 	{/if}
 	<div class="corner" bind:this={cornerEl}>
 		<div bind:this={dockEl}>
-			{#if musicOn && !musicSheet}
-				<div class="chip" role="group" aria-label="Gramophone">
-					<span class="disc" class:turning={recordPlaying && !reducedMotion} aria-hidden="true"
-					></span>
-					<span>{recordPlaying ? 'On the gramophone' : 'Gramophone, paused'}</span>
-					<button onclick={showMusic}>Show</button>
-					<button onclick={stopMusic}>Stop</button>
-				</div>
+			{#if music}
+				<section class="dock" aria-label="Gramophone" hidden={!musicOn}>
+					<div class="dock-top">
+						<span class="disc" class:turning={recordPlaying && !reducedMotion} aria-hidden="true"
+						></span>
+						<span class="eyebrow"
+							>{recordPlaying === null
+								? 'Putting the record on…'
+								: recordPlaying
+									? 'On the gramophone'
+									: 'Gramophone · paused'}</span
+						>
+						<button class="dock-button" onclick={stopMusic}
+							>Stop<span aria-hidden="true">&nbsp;×</span></button
+						>
+					</div>
+					<RecordPlayer spotify={music.spotify} on={musicOn} onplayback={musicPlayback} />
+				</section>
 			{/if}
 		</div>
 		{#if status === 'ready'}
@@ -603,39 +594,6 @@
 			{/each}
 		</div>
 		<button class="back-button" onclick={() => poemDialog.close()}>← Back to the room</button>
-	{/if}
-</dialog>
-
-<!-- The gramophone's sheet, like a station's. Closing it leaves the music playing. -->
-<dialog
-	bind:this={musicDialog}
-	class="sheet music"
-	onclose={closeMusic}
-	onkeydown={sheetKeys}
-	aria-labelledby="music-title"
-	tabindex="-1"
->
-	{#if gramophone && music}
-		<div class="sheet-top">
-			{#if !coarse}<span class="sheet-hint" aria-hidden="true"
-					><kbd>E</kbd> or <kbd>Esc</kbd> to close · the music plays on</span
-				>{/if}
-			<button
-				class="close"
-				onclick={() => musicDialog.close()}
-				aria-label="Close and return to the room">Close ×</button
-			>
-		</div>
-		<p class="poem-eyebrow">{curiosities[gramophone].label} · Spotify</p>
-		<h2 id="music-title">{music.title}</h2>
-		<p class="music-line">{music.line}</p>
-		<div class="music-player">
-			<RecordPlayer spotify={music.spotify} on={musicOn} height={352} onplayback={musicPlayback} />
-		</div>
-		<div class="music-actions">
-			<button class="back-button" onclick={() => musicDialog.close()}>← Back to the room</button>
-			<button class="stop-record" onclick={stopMusic}>Stop the record</button>
-		</div>
 	{/if}
 </dialog>
 
@@ -1082,8 +1040,7 @@
 		text-transform: uppercase;
 		color: #5f6755;
 	}
-	.poem h2,
-	.music h2 {
+	.poem h2 {
 		margin-top: 14px;
 		font-size: clamp(26px, 2.6vw, 32px);
 		letter-spacing: -0.035em;
@@ -1104,69 +1061,66 @@
 	.poem .back-button {
 		margin-top: 22px;
 	}
-	/* The gramophone's sheet: its line, the player, then back to the room or stop. */
-	.music-line {
-		margin-top: 12px;
-		font-size: 17px;
-		line-height: 1.5;
-		color: #3f4d40;
-	}
-	.music-player {
-		margin-top: 20px;
-	}
-	.music-actions {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 12px 20px;
-		margin-top: 28px;
-	}
-	.music .back-button {
-		margin-top: 0;
-	}
-	.stop-record {
-		min-height: 44px;
-		font:
-			14px system-ui,
-			sans-serif;
-		color: #304e42;
-		text-decoration: underline;
-		text-underline-offset: 4px;
-		cursor: pointer;
-	}
-	/* While the music plays with its sheet closed: a small turning record, Show and Stop. */
-	.chip {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
+	/* Over the hint card while the record is on: a small turning record, what's happening,
+	   Stop, then Spotify's compact player, which shows just the song that's playing. */
+	.dock {
+		display: grid;
+		gap: 8px;
+		/* Wide enough for Spotify's controls, play and pause included, when the listener is
+		   logged in and a progress bar joins them; on phones the corner sets the width. */
+		width: 400px;
 		margin-bottom: 10px;
-		padding: 6px 8px 6px 10px;
+		padding: 8px 10px 10px 12px;
 		background: #faf7eb;
 		border: 1px solid #d2cfbb;
-		border-radius: 999px;
+		border-radius: 8px;
 		box-shadow: 0 3px 0 #bfc5b52b;
 		pointer-events: auto;
+	}
+	.dock[hidden] {
+		display: none;
+	}
+	.dock-top {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+	.dock-top .eyebrow {
+		flex: 1;
+		font-size: 10px;
+	}
+	.dock-button {
+		display: inline-flex;
+		align-items: center;
+		min-height: 32px;
+		padding: 0 8px;
+		border-radius: 4px;
 		font:
-			13px system-ui,
+			12px system-ui,
 			sans-serif;
-		color: #3f4d40;
+		color: #304e42;
+		cursor: pointer;
+	}
+	.dock-button:hover {
+		background: #ece6d3;
+		text-decoration: underline;
+		text-underline-offset: 3px;
 	}
 	.disc {
-		width: 22px;
-		height: 22px;
+		width: 18px;
+		height: 18px;
 		flex: none;
-		margin-right: 4px;
 		border-radius: 50%;
 		background:
-			linear-gradient(90deg, transparent 47%, #f1e6c8 47% 53%, transparent 53%) center / 9px 2px
+			linear-gradient(90deg, transparent 47%, #f1e6c8 47% 53%, transparent 53%) center / 7px 2px
 				no-repeat,
 			radial-gradient(
 				circle,
 				#d9d4c7 0 1.5px,
-				#c23b3b 2px 5px,
-				#1c1c1e 5.5px 7px,
-				#3a3a3e 7.5px 8px,
-				#1c1c1e 8.5px
+				#c23b3b 2px 4px,
+				#1c1c1e 4.5px 6px,
+				#3a3a3e 6.5px 7px,
+				#1c1c1e 7.5px
 			);
 	}
 	@media (prefers-reduced-motion: no-preference) {
@@ -1178,18 +1132,6 @@
 				transform: rotate(360deg);
 			}
 		}
-	}
-	.chip button {
-		min-height: 32px;
-		padding: 0 8px;
-		border-radius: 999px;
-		color: #304e42;
-		text-decoration: underline;
-		text-underline-offset: 3px;
-		cursor: pointer;
-	}
-	.chip button:hover {
-		background: #ece6d3;
 	}
 	.thing-action {
 		text-decoration: underline;
@@ -1230,7 +1172,8 @@
 		.sheet[open] {
 			animation: slide-in 260ms ease-out;
 		}
-		.menu:popover-open {
+		.menu:popover-open,
+		.dock:not([hidden]) {
 			animation: rise 180ms ease-out;
 		}
 		@keyframes slide-in {
@@ -1257,9 +1200,8 @@
 			border-radius: 14px 14px 0 0;
 			box-shadow: 0 -18px 60px #25352926;
 		}
-		/* Taller for the poem, so it's whole on a phone, and for the player and its tracks. */
-		.sheet.poem,
-		.sheet.music {
+		/* Taller for the poem, so it's whole on a phone. */
+		.sheet.poem {
 			max-height: 94dvh;
 		}
 		.sheet::backdrop {
@@ -1292,6 +1234,9 @@
 			right: 16px;
 			bottom: 84px;
 			align-items: stretch;
+		}
+		.dock {
+			width: auto;
 		}
 		.room-hint {
 			padding: 10px 14px;

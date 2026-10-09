@@ -322,8 +322,7 @@ export interface CuriosityLayout {
 	approach?: Point;
 	beside?: Footprint;
 	facing?: number;
-	// Where the camera pushes toward while its sheet (the poem, the music) is open, as
-	// for a station.
+	// Where the camera pushes toward while its poem is open, as for a station.
 	focus?: Vec3;
 }
 
@@ -378,9 +377,7 @@ export const CURIOSITIES: CuriosityLayout[] = [
 		id: 'gramophone',
 		hit: { center: [SIDE_TABLE.x, 0.7, SIDE_TABLE.z], size: [0.62, 1.4, 0.62] },
 		approach: { x: -2.4, z: 1.35 },
-		beside: FOOTPRINTS.sideTable,
-		// The gramophone while its sheet is open.
-		focus: [SIDE_TABLE.x + 0.1, 0.95, SIDE_TABLE.z]
+		beside: FOOTPRINTS.sideTable
 	}
 ];
 

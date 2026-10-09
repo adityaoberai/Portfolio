@@ -223,50 +223,57 @@ test('trying to sleep on the bed turns the character away, and Frost’s poem po
 	await expect(canvas).toBeFocused();
 });
 
-test('the gramophone plays the playlist, keeps playing with its sheet closed, and stops', async ({
+test('the gramophone plays the playlist, with Spotify’s player over the hint card', async ({
 	page
 }) => {
 	await stubSpotify(page);
 	await openRoom(page);
 	await settle(page);
 	const canvas = page.locator('canvas');
-	const sheet = page.getByRole('dialog', { name: 'adi’s playlist' });
-	const chip = page.getByRole('group', { name: 'Gramophone' });
-	// Clicking it walks over and puts the record on: the sheet opens with Spotify's player.
+	const dock = page.getByRole('region', { name: 'Gramophone' });
+	const hint = page.locator('.room-hint');
+	await expect(dock).toBeHidden();
+	// Clicking it walks over and puts the record on: Spotify's player shows over the hint card,
+	// and the room keeps the keyboard.
 	const gramophone = await anchor(page, 'gramophone');
 	await page.mouse.click(gramophone.x, gramophone.y);
-	await expect(sheet).toBeVisible();
+	await expect(dock).toBeVisible();
 	await expect(canvas).toHaveAttribute('data-x', '-2.400');
 	await expect(canvas).toHaveAttribute('data-z', '1.350');
-	await expect(sheet.locator('iframe')).toHaveAttribute('title', 'Spotify player');
+	await expect(dock.locator('iframe')).toHaveAttribute('title', 'Spotify player');
 	await expect.poll(() => spotifyCalls(page)).toEqual(['play']);
-	// Closing the sheet leaves it playing: the record keeps turning, and the chip shows.
-	await page.keyboard.press('Escape');
-	await expect(sheet).not.toBeVisible();
-	await expect(chip).toContainText('On the gramophone');
+	await expect(dock).toContainText('On the gramophone');
+	const dockBox = (await dock.boundingBox())!;
+	expect(dockBox.y + dockBox.height).toBeLessThanOrEqual((await hint.boundingBox())!.y);
 	await expect(canvas).toBeFocused();
+	// The record turns while it plays.
 	const frames = Number(await canvas.getAttribute('data-frames'));
 	await expect
 		.poll(async () => Number(await canvas.getAttribute('data-frames')))
 		.toBeGreaterThan(frames + 5);
+	// Spotify's compact player: just the song that's playing.
+	expect((await dock.locator('iframe').boundingBox())!.height).toBe(80);
+	// A click in the player keeps the keyboard there; moving over the room gives it back.
+	await dock.locator('iframe').click();
+	await expect(canvas).not.toBeFocused();
+	await page.mouse.move(dockBox.x + dockBox.width + 120, dockBox.y - 120);
+	await expect(canvas).toBeFocused();
 	// Beside it, E lifts the needle: the music stops, and so does the room.
-	await expect(page.locator('.room-hint')).toContainText('Press E to stop');
+	await expect(hint).toContainText('Press E to stop');
 	await page.keyboard.press('e');
-	await expect(chip).not.toBeVisible();
+	await expect(dock).toBeHidden();
 	await expect.poll(() => spotifyCalls(page)).toEqual(['play', 'pause']);
 	await settle(page);
-	// E again puts it back on, where it stopped; the chip's Show reopens the sheet.
-	await expect(page.locator('.room-hint')).toContainText('Press E to play');
+	// E again puts it back on, where it stopped.
+	await expect(hint).toContainText('Press E to play');
 	await page.keyboard.press('e');
-	await expect(sheet).toBeVisible();
+	await expect(dock).toBeVisible();
 	await expect.poll(() => spotifyCalls(page)).toEqual(['play', 'pause', 'resume']);
-	await page.getByRole('button', { name: 'Back to the room' }).click();
-	await chip.getByRole('button', { name: 'Show' }).click();
-	await expect(sheet).toBeVisible();
-	await page.getByRole('button', { name: 'Stop the record' }).click();
-	await expect(sheet).not.toBeVisible();
-	await expect(chip).not.toBeVisible();
+	// Stop takes it off, and the room has the keyboard.
+	await dock.getByRole('button', { name: 'Stop' }).click();
+	await expect(dock).toBeHidden();
 	await expect(canvas).toBeFocused();
+	await expect.poll(() => spotifyCalls(page)).toEqual(['play', 'pause', 'resume', 'pause']);
 	// Standing on the corkboard's spot still opens the corkboard.
 	await page.evaluate(() =>
 		(window as unknown as { __room: { visit: (id: string) => void } }).__room.visit('corkboard')
@@ -279,19 +286,20 @@ test('closing the menu gives the keyboard back to the room', async ({ page }) =>
 	await settle(page);
 	const canvas = page.locator('canvas');
 	const menuButton = page.getByRole('button', { name: 'In the room', exact: true });
-	for (const close of [
-		() => page.keyboard.press('Escape'),
-		() => page.getByRole('button', { name: 'Close the menu' }).click(),
-		() => menuButton.click()
-	]) {
+	// Right, left, right: never far enough to reach a wall, however fast the frames come.
+	for (const [close, key] of [
+		[() => page.keyboard.press('Escape'), 'd'],
+		[() => page.getByRole('button', { name: 'Close the menu' }).click(), 'a'],
+		[() => menuButton.click(), 'd']
+	] as const) {
 		await openMenu(page);
 		await close();
 		await expect(page.getByRole('navigation', { name: 'In the room' })).not.toBeVisible();
 		await expect(canvas).toBeFocused();
 		const x = await canvas.getAttribute('data-x');
-		await page.keyboard.down('d');
+		await page.keyboard.down(key);
 		await page.waitForTimeout(250);
-		await page.keyboard.up('d');
+		await page.keyboard.up(key);
 		await expect(canvas).not.toHaveAttribute('data-x', x!);
 		await settle(page);
 	}

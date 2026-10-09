@@ -166,9 +166,8 @@ export interface Curiosity {
 	// A poem that pops up instead of the note (the bed's). The menu's list of
 	// little things shows `line` and a button to read it.
 	poem?: Poem;
-	// Music it plays instead of showing the note (the gramophone's), in a sheet like a
-	// station's; closing the sheet leaves it playing. Using it again, or Stop, stops
-	// it. The menu's list has a button for it too.
+	// Music it plays instead of showing the note (the gramophone's): Spotify's player shows
+	// over the hint card until it's used again, or Stop. The menu's list has a button too.
 	music?: Music;
 }
 
@@ -179,12 +178,9 @@ export interface Hint {
 }
 
 // What the gramophone plays: a Spotify link (open.spotify.com, a playlist, album, or
-// track), the title and line in its sheet, and the hint shown beside it while the
-// music is on.
+// track), and the hint shown beside it while the music is on.
 export interface Music {
 	spotify: string;
-	title: string;
-	line: string;
 	stop: Hint;
 }
 
@@ -499,15 +495,13 @@ export const world: WorldConfig = {
 			label: 'Football',
 			line: 'A Premier League ball by the bed, a little scuffed. It has seen some games.'
 		},
-		// Using it plays Aditya's playlist through Spotify's player, in the sheet.
+		// Using it plays Aditya's playlist, with Spotify's player over the hint card.
 		gramophone: {
 			label: 'Gramophone',
 			line: 'A wind-up gramophone on the side table. It plays my playlist.',
 			use: { title: 'Put a record on?', keys: 'to play', touch: 'Tap the gramophone to play' },
 			music: {
 				spotify: 'https://open.spotify.com/playlist/529YYSE5ZPtqODX4MWF222',
-				title: 'adi’s playlist',
-				line: 'Logged in to Spotify, you’ll hear whole songs. If not, it plays 30 seconds of each, then moves on to the next.',
 				stop: { title: 'Lift the needle?', keys: 'to stop', touch: 'Tap the gramophone to stop' }
 			}
 		},

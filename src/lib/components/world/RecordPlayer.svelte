@@ -42,20 +42,20 @@
 </script>
 
 <script lang="ts">
-	// The gramophone's music: Spotify's player, in the gramophone's sheet. Once it has
-	// started it stays loaded, playing on while the sheet is closed, and picks up where
-	// it stopped when the record goes back on.
+	// The gramophone's music: Spotify's player. Once it has started it stays loaded, hidden
+	// while the record is off, and picks up where it stopped when the record goes back on.
+	// At 80 px, Spotify lays it out compact: just the song that's playing (cover, title,
+	// artist), with previous, play or pause, and next. Taller, it adds the track list.
 	import { untrack } from 'svelte';
 
 	interface Props {
 		/** An open.spotify.com playlist, album, or track. */
 		spotify: string;
 		on: boolean;
-		height: number;
 		/** Whether the music is actually playing, as Spotify reports it. */
 		onplayback: (playing: boolean) => void;
 	}
-	let { spotify, on, height, onplayback }: Props = $props();
+	let { spotify, on, onplayback }: Props = $props();
 
 	let holder: HTMLDivElement;
 	let controller: EmbedController | undefined;
@@ -85,7 +85,7 @@
 			if (destroyed) return;
 			const slot = document.createElement('div');
 			holder.replaceChildren(slot);
-			IFrameAPI.createController(slot, { url: spotify, width: '100%', height }, (embed) => {
+			IFrameAPI.createController(slot, { url: spotify, width: '100%', height: 80 }, (embed) => {
 				if (destroyed) return embed.destroy();
 				controller = embed;
 				holder.querySelector('iframe')?.setAttribute('title', 'Spotify player');
@@ -122,7 +122,7 @@
 	});
 </script>
 
-<div class="player" class:failed bind:this={holder} style:min-height="{height}px"></div>
+<div class="player" class:failed bind:this={holder}></div>
 {#if failed}
 	<p class="line">
 		Spotify’s player didn’t load here.
@@ -137,8 +137,9 @@
 {/if}
 
 <style>
-	/* Room for the player while it loads, so the sheet doesn't jump. */
+	/* Room for the player while it loads, so the card doesn't jump. */
 	.player {
+		min-height: 80px;
 		border-radius: 12px;
 		background: #ece6d3;
 	}
