@@ -6,18 +6,21 @@ import {
 	isFree,
 	keyboardDirection,
 	nearest,
+	reach,
 	route,
 	SPEED,
 	stepToward
 } from '../src/lib/world/movement.ts';
 import {
 	CAMERA_OFFSET,
+	CHARACTER_RADIUS,
 	CURIOSITIES,
 	FOOTPRINTS,
+	GRAMOPHONE,
 	MIRROR,
+	SIDE_TABLE,
 	START,
 	STATIONS,
-	USE_RADIUS,
 	WALKABLE
 } from '../src/lib/world/layout.ts';
 
@@ -29,9 +32,12 @@ test('every piece of furniture is solid, including the chairs and the floor lamp
 	}
 });
 
+const walkUps = CURIOSITIES.filter((item) => item.approach);
+const spots = [START, ...STATIONS.map((s) => s.approach), ...walkUps.map((c) => c.approach)];
+
 test('walking into furniture slides along it: never inside, never a jump', () => {
 	const step = SPEED / 60;
-	for (const start of [START, ...STATIONS.map((s) => s.approach)])
+	for (const start of spots)
 		for (let i = 0; i < 24; i++) {
 			const angle = (i / 24) * Math.PI * 2;
 			let point = start;
@@ -49,10 +55,9 @@ test('walking into furniture slides along it: never inside, never a jump', () =>
 });
 
 test('click-to-walk goes around furniture instead of through it', () => {
-	const starts = [START, ...STATIONS.map((s) => s.approach)];
 	let detours = 0;
-	for (const from of starts)
-		for (const station of STATIONS) {
+	for (const from of spots)
+		for (const station of [...STATIONS, ...walkUps]) {
 			const path = route(from, station.approach);
 			assert.deepEqual(path.at(-1), station.approach);
 			// Where furniture is in the way, the walk turns at least once.
@@ -177,11 +182,68 @@ test('trying to sleep: the bed can be walked up to, and the character turns its 
 	assert.ok(isFree(bed.approach), 'beside the bed is inside furniture');
 	// No station is near there, so E tries the bed; and the room doesn't start beside it.
 	assert.equal(nearest(bed.approach, STATIONS), undefined);
-	assert.equal(nearest(bed.approach, [bed], USE_RADIUS), bed);
-	assert.equal(nearest(START, [bed], USE_RADIUS), undefined);
+	assert.equal(reach(bed.approach, STATIONS, walkUps).thing, bed);
+	assert.equal(reach(START, STATIONS, walkUps).thing, undefined);
 	const facing = { x: Math.sin(bed.facing), z: Math.cos(bed.facing) };
 	const toBed = { x: FOOTPRINTS.bed.x - bed.approach.x, z: FOOTPRINTS.bed.z - bed.approach.z };
 	assert.ok(facing.x * toBed.x + facing.z * toBed.z < 0, 'the character faces the bed');
+});
+
+test('putting a record on: E reaches the gramophone beside it, and the stations nearby still open', () => {
+	const gramophone = CURIOSITIES.find((item) => item.id === 'gramophone');
+	assert.ok(isFree(gramophone.approach), 'in front of the gramophone is inside furniture');
+	// The corkboard and the door are in reach from there too, but the gramophone is nearer.
+	assert.ok(nearest(gramophone.approach, STATIONS));
+	assert.deepEqual(reach(gramophone.approach, STATIONS, walkUps), { thing: gramophone });
+	for (const station of STATIONS)
+		assert.equal(reach(station.approach, STATIONS, walkUps).station?.id, station.id);
+	const bed = CURIOSITIES.find((item) => item.id === 'bed');
+	assert.deepEqual(reach(bed.approach, STATIONS, walkUps), { thing: bed });
+	assert.equal(reach(START, STATIONS, walkUps).thing, undefined);
+});
+
+test('anywhere beside the bed or the gramophone’s table, E reaches it', () => {
+	const step = CHARACTER_RADIUS + 0.1;
+	for (const item of walkUps) {
+		const f = item.beside;
+		let checked = 0;
+		// Points a step out from each edge, all the way round; the free ones are beside it.
+		for (let i = 0; i <= 40; i++) {
+			const t = i / 40;
+			for (const local of [
+				{ x: -f.halfX + 2 * f.halfX * t, z: -f.halfZ - step },
+				{ x: -f.halfX + 2 * f.halfX * t, z: f.halfZ + step },
+				{ x: -f.halfX - step, z: -f.halfZ + 2 * f.halfZ * t },
+				{ x: f.halfX + step, z: -f.halfZ + 2 * f.halfZ * t }
+			]) {
+				const c = Math.cos(f.angle);
+				const s = Math.sin(f.angle);
+				const point = { x: f.x + c * local.x + s * local.z, z: f.z - s * local.x + c * local.z };
+				if (!isFree(point)) continue;
+				checked++;
+				assert.equal(
+					reach(point, STATIONS, walkUps).thing,
+					item,
+					`${item.id} at ${JSON.stringify(point)}`
+				);
+			}
+		}
+		assert.ok(checked > 10, `${item.id}: hardly anywhere to stand beside it`);
+	}
+});
+
+test('the gramophone stands on its table, and its arm sets down on the record only to play', () => {
+	const { arm, record } = GRAMOPHONE;
+	// The case (0.35 square, plinth included) stays on the table top, whichever way it turns.
+	assert.ok(Math.hypot(0.175, 0.175) < SIDE_TABLE.radius);
+	const needle = (angle) => {
+		const x = arm.x + Math.sin(angle) * arm.length - record.x;
+		const z = arm.z + Math.cos(angle) * arm.length - record.z;
+		return Math.hypot(x, z);
+	};
+	// Playing: in the grooves, between the label and the edge. At rest: clear of the record.
+	assert.ok(needle(arm.play) > 0.05 && needle(arm.play) < record.radius - 0.01);
+	assert.ok(needle(arm.rest) > record.radius + 0.02);
 });
 
 test('nothing is near in the middle of the room', () => {

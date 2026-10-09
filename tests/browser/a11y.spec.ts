@@ -3,6 +3,9 @@ import AxeBuilder from '@axe-core/playwright';
 
 const tags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
+// An audit takes a few seconds, and the page and room tests run a dozen each (30-40 s here).
+test.describe.configure({ timeout: 90_000 });
+
 async function audit(page: Page, label: string) {
 	const { violations } = await new AxeBuilder({ page }).withTags(tags).analyze();
 	const summary = violations.map(
@@ -76,6 +79,35 @@ test('the room, its guide, and every station meet WCAG 2.2 AA (automated checks)
 	await audit(page, '/world (poem open)');
 	await page.keyboard.press('Escape');
 	await expect(page.getByRole('dialog')).not.toBeVisible();
+});
+
+test('the gramophone’s sheet and the music chip meet WCAG 2.2 AA (automated checks)', async ({
+	page
+}) => {
+	// Spotify's player is stubbed out: its contents aren't this site's to audit.
+	await page.route('https://open.spotify.com/**', (route) =>
+		route.fulfill({
+			contentType: 'text/javascript',
+			body: `window.onSpotifyIframeApiReady({ createController(element, options, created) {
+				const frame = document.createElement('iframe');
+				element.replaceWith(frame);
+				created({ addListener() {}, play() {}, resume() {}, pause() {}, destroy() {} });
+			} });`
+		})
+	);
+	await page.goto('/world');
+	await expect(page.locator('canvas')).toHaveClass(/\bloaded\b/);
+	await page.getByRole('button', { name: 'In the room', exact: true }).click();
+	await page.getByText('Little things in the room').click();
+	await page.getByRole('button', { name: 'Put the record on' }).click();
+	await expect(page.getByRole('dialog')).toBeVisible();
+	await page
+		.locator('dialog.music')
+		.evaluate((dialog) => Promise.all(dialog.getAnimations().map((a) => a.finished)));
+	await audit(page, '/world (gramophone open)');
+	await page.keyboard.press('Escape');
+	await expect(page.getByRole('group', { name: 'Gramophone' })).toBeVisible();
+	await audit(page, '/world (music on)');
 });
 
 test('the room fallback meets WCAG 2.2 AA without WebGL', async ({ browser }) => {

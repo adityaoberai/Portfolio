@@ -8,8 +8,9 @@
 // panel       What opens when a station is inspected: a title, an optional
 //             lead, then any number of `blocks`, stacked in order, then
 //             `links`. Mix blocks freely; any station can use any block.
-// curiosities One-line notes on the small objects. The bed's is a quote, with
-//             `cite`, and `use` for the hint shown while standing beside it.
+// curiosities One-line notes on the small objects. The ones you walk up to have
+//             `use`, the hint shown while standing beside them. The bed opens a
+//             `poem`; the gramophone plays `music`, a Spotify playlist.
 //
 // BLOCKS (see the `Block` type below for every option)
 //   items    A list of artifacts. `style`: 'list' | 'pages' | 'pins' | 'badges'
@@ -159,12 +160,32 @@ export interface WorldConfig {
 export interface Curiosity {
 	label: string;
 	line: string;
-	// For something you walk up to (the bed): the hint card while beside it,
-	// "Press E <keys>" or, on touch screens, `touch`.
-	use?: { title: string; keys: string; touch: string };
+	// For something you walk up to (the bed, the gramophone): the hint card while
+	// beside it, "Press E <keys>" or, on touch screens, `touch`.
+	use?: Hint;
 	// A poem that pops up instead of the note (the bed's). The menu's list of
 	// little things shows `line` and a button to read it.
 	poem?: Poem;
+	// Music it plays instead of showing the note (the gramophone's), in a sheet like a
+	// station's; closing the sheet leaves it playing. Using it again, or Stop, stops
+	// it. The menu's list has a button for it too.
+	music?: Music;
+}
+
+export interface Hint {
+	title: string;
+	keys: string;
+	touch: string;
+}
+
+// What the gramophone plays: a Spotify link (open.spotify.com, a playlist, album, or
+// track), the title and line in its sheet, and the hint shown beside it while the
+// music is on.
+export interface Music {
+	spotify: string;
+	title: string;
+	line: string;
+	stop: Hint;
 }
 
 export interface Poem {
@@ -399,10 +420,8 @@ export const world: WorldConfig = {
 			panel: {
 				title: about.headline,
 				lead: about.standfirst,
-				blocks: [
-					{ type: 'profile', text: about.intro },
-					{ type: 'list', heading: 'What I care about', items: about.careAbout }
-				],
+				// What Aditya cares about is in the longer story (/about).
+				blocks: [{ type: 'profile', text: about.intro }],
 				links: [{ label: 'The longer story' }]
 			}
 		},
@@ -479,6 +498,18 @@ export const world: WorldConfig = {
 		football: {
 			label: 'Football',
 			line: 'A Premier League ball by the bed, a little scuffed. It has seen some games.'
+		},
+		// Using it plays Aditya's playlist through Spotify's player, in the sheet.
+		gramophone: {
+			label: 'Gramophone',
+			line: 'A wind-up gramophone on the side table. It plays my playlist.',
+			use: { title: 'Put a record on?', keys: 'to play', touch: 'Tap the gramophone to play' },
+			music: {
+				spotify: 'https://open.spotify.com/playlist/529YYSE5ZPtqODX4MWF222',
+				title: 'adi’s playlist',
+				line: 'Logged in to Spotify, you’ll hear whole songs. If not, it plays 30 seconds of each, then moves on to the next.',
+				stop: { title: 'Lift the needle?', keys: 'to stop', touch: 'Tap the gramophone to stop' }
+			}
 		},
 		// Trying to sleep turns the character away from the bed, and the poem pops
 		// up. The poem is Robert Frost's (1923, public domain); the rest is Claude's.

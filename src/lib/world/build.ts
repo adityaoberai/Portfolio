@@ -22,10 +22,12 @@ import {
 	FLAG,
 	BOARD,
 	FOOTPRINTS,
+	GRAMOPHONE,
 	LANYARDS,
 	LAPTOP,
 	MIRROR,
 	SHELF,
+	SIDE_TABLE,
 	type Vec3
 } from './layout';
 
@@ -395,6 +397,103 @@ export function twoSeatSofa(b: Batch) {
 	});
 }
 
+// The rotation that turns `from` to point along `to`: for a cone, a cylinder, or a
+// disc laid along a slanted axis.
+function turn(from: Vector3, to: Vector3): Vec3 {
+	const q = new Quaternion().setFromUnitVectors(from, to.clone().normalize());
+	const e = new Euler().setFromQuaternion(q);
+	return [e.x, e.y, e.z];
+}
+
+// The side table by the sofa and the gramophone on it (SIDE_TABLE and GRAMOPHONE
+// in layout.ts): a round walnut table on a pedestal, a cream doily, then the
+// player in its own frame (+z to its front). A walnut case on a darker plinth,
+// with a brass plate and a crank; a green felt platter; the arm's rest; and the
+// brass horn, rising from the foot of the arm at the back and flaring towards the
+// room. The record and the arm are drawn on their own (buildRecord,
+// buildTonearm), since they move.
+export function buildGramophone(lit: Batch) {
+	const { x, z, radius, y } = SIDE_TABLE;
+	lit.group([x, 0, z], 0, () => {
+		lit.cylinder('#7c5a3e', [0, 0.015, 0], 0.17, 0.03);
+		lit.cylinder('#8f6a4c', [0, y / 2, 0], 0.035, y - 0.04);
+		lit.cylinder('#a9805c', [0, y - 0.02, 0], radius, 0.04);
+		lit.add('disc', '#efe4c8', [0, y + 0.002, 0], [0.22, 0.22, 1], [-Math.PI / 2, 0, 0]);
+	});
+	const { record, arm } = GRAMOPHONE;
+	const brass = '#c9a24a';
+	lit.group([x, y, z], GRAMOPHONE.angle, () => {
+		lit.box('#5e3b27', [0, 0.0125, 0], [0.35, 0.025, 0.35]);
+		lit.box('#7a4e33', [0, 0.07, 0], [0.32, 0.1, 0.32]);
+		lit.box('#5e3b27', [0, 0.1225, 0], [0.33, 0.005, 0.33]);
+		lit.box(brass, [0, 0.07, 0.161], [0.09, 0.035, 0.004]);
+		// The crank on the left-hand side, the one the camera sees.
+		lit.cylinder(brass, [-0.185, 0.075, 0.04], 0.008, 0.05, [0, 0, Math.PI / 2]);
+		lit.box(brass, [-0.21, 0.045, 0.04], [0.008, 0.07, 0.012]);
+		lit.cylinder('#3a2a1e', [-0.225, 0.015, 0.04], 0.012, 0.035, [0, 0, Math.PI / 2]);
+		lit.cylinder('#3f5b4a', [record.x, record.y - 0.004, record.z], record.radius + 0.012, 0.008);
+		// The rest, under the soundbox while the record is off.
+		const rest = {
+			x: arm.x + Math.sin(arm.rest) * arm.length,
+			z: arm.z + Math.cos(arm.rest) * arm.length
+		};
+		lit.cylinder('#3a2a1e', [rest.x, arm.y + 0.006, rest.z], 0.012, 0.012);
+		// The horn: a foot around the arm's pivot, a neck up to an elbow, then a
+		// petalled cone that flares into a wider bell, dark inside its mouth.
+		lit.cylinder(brass, [arm.x, arm.y + 0.015, arm.z], 0.03, 0.03);
+		const elbow = new Vector3(arm.x, 0.34, arm.z - 0.02);
+		lit.cylinder(brass, [arm.x, (arm.y + elbow.y) / 2, arm.z - 0.01], 0.02, elbow.y - arm.y);
+		lit.add('sphere', brass, elbow.toArray(), [0.03, 0.03, 0.03]);
+		const out = new Vector3(-0.15, 0.62, 0.77).normalize();
+		const back = turn(new Vector3(0, 1, 0), out.clone().negate());
+		const length = 0.38;
+		const bell = 0.15;
+		const mouth = 0.18;
+		const at = (distance: number) => elbow.clone().addScaledVector(out, distance).toArray();
+		lit.add('cone', brass, at(length / 2), [0.12, length, 0.12], back);
+		lit.add('cone', '#d4ad55', at(length - bell / 2), [mouth, bell, mouth], back);
+		lit.add(
+			'disc',
+			'#5a4220',
+			at(length + 0.002),
+			[mouth - 0.025, mouth - 0.025, 1],
+			turn(new Vector3(0, 0, 1), out)
+		);
+	});
+}
+
+// The record, centred on the spindle with its underside at 0: black vinyl with a
+// few lighter grooves, a red label with a cream band (so the turning shows), and
+// the spindle.
+export function buildRecord(b: Batch) {
+	const { radius } = GRAMOPHONE.record;
+	const flat = [-Math.PI / 2, 0, 0] as Vec3;
+	b.cylinder('#1c1c1e', [0, 0.004, 0], radius, 0.008);
+	[0.118, 0.112, 0.095, 0.089, 0.072, 0.066].forEach((r, i) =>
+		b.add('disc', i % 2 ? '#1c1c1e' : '#3a3a3e', [0, 0.0085 + i * 0.0003, 0], [r, r, 1], flat)
+	);
+	b.add('disc', '#c23b3b', [0, 0.0104, 0], [0.045, 0.045, 1], flat);
+	b.box('#f1e6c8', [0, 0.0106, 0.02], [0.05, 0.0004, 0.012]);
+	b.cylinder('#d9d4c7', [0, 0.014, 0], 0.005, 0.012);
+}
+
+// The tonearm, from its pivot (the origin) out along +z: a brass post and arm,
+// then the soundbox, a silver disc across the arm's end, with its needle reaching
+// down to the record.
+export function buildTonearm(b: Batch) {
+	const { arm, record } = GRAMOPHONE;
+	const brass = '#c9a24a';
+	// The record's top face, above the pivot; the soundbox sits just over it.
+	const groove = record.y + 0.008 - arm.y;
+	const soundbox = groove + 0.04;
+	const height = soundbox + 0.005;
+	b.cylinder(brass, [0, height / 2, 0], 0.014, height);
+	b.cylinder(brass, [0, height, arm.length / 2], 0.008, arm.length, [Math.PI / 2, 0, 0]);
+	b.cylinder('#cfd2d0', [0, soundbox, arm.length], 0.03, 0.014, [Math.PI / 2, 0, 0]);
+	b.cylinder('#8d8b84', [0, soundbox, arm.length + 0.008], 0.02, 0.004, [Math.PI / 2, 0, 0]);
+	b.box('#2f3133', [0, groove + 0.005, arm.length], [0.005, 0.01, 0.005]);
+}
+
 export function buildShell(lit: Batch, unlit: Batch) {
 	unlit.decal('#d7d8c8', 0, 0.1, 5.1, 4.4, -0.35);
 	lit.box('#ad805b', [-0.075, -0.2, 0.025], [7.15, 0.32, 6.35]);
@@ -645,8 +744,8 @@ export function buildBedroom(lit: Batch) {
 		lit.box('#749287', [0, 0.66, 0.325], [1.36, 0.1, 1.45]);
 		lit.box('#a7b6a1', [0, 0.72, -0.375], [1.38, 0.03, 0.3]);
 		lit.box('#f0e3c7', [0.1, 0.7, -0.755], [0.95, 0.16, 0.4]);
-		// Squirtle plush by the pillow, facing the room and the camera.
-		lit.group([-0.18, 0.62, -0.545], Math.PI / 3 - BED.angle, () => squirtle(lit), 0.72);
+		// Squirtle plush sitting on the pillow, facing the room and the camera.
+		lit.group([-0.18, 0.78, -0.72], Math.PI / 3 - BED.angle, () => squirtle(lit), 0.72);
 	});
 }
 

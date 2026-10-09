@@ -169,6 +169,8 @@ function resolvePanel(panel: Panel, section: SectionId, where: string): Resolved
 	};
 }
 
+const spotifyLink = /^https:\/\/open\.spotify\.com\/(playlist|album|track)\/[A-Za-z0-9]+$/;
+
 // Every object in the room needs content, and every configured station must exist.
 const layoutIds = new Set<string>(STATIONS.map((s) => s.id));
 const configured = new Set<string>(world.stations.map((s) => s.id));
@@ -191,6 +193,12 @@ for (const curiosity of CURIOSITIES) {
 	const poem = world.curiosities[curiosity.id].poem;
 	if (poem?.bold && !poem.stanzas.flat().some((line) => line.startsWith(poem.bold!)))
 		throw problem(`curiosity "${curiosity.id}"`, `no line of its poem starts with "${poem.bold}".`);
+	const music = world.curiosities[curiosity.id].music;
+	if (music && !spotifyLink.test(music.spotify))
+		throw problem(
+			`curiosity "${curiosity.id}"`,
+			`"${music.spotify}" isn't a Spotify playlist, album, or track link (https://open.spotify.com/playlist/…, without ?si=…).`
+		);
 }
 
 const visible = world.stations.filter((s) => !s.hidden);

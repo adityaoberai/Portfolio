@@ -39,11 +39,14 @@ import {
 	buildDesk,
 	buildDoorFrame,
 	buildDoorSlab,
+	buildGramophone,
 	buildLanyards,
 	buildLeg,
 	buildMirror,
 	buildPhotography,
+	buildRecord,
 	buildShell,
+	buildTonearm,
 	buildWindow,
 	WINDOW
 } from './build';
@@ -56,14 +59,16 @@ import {
 	DOOR_HINGE,
 	DOOR_OPEN,
 	FLAG,
+	GRAMOPHONE,
 	LAPTOP,
 	MIRROR,
 	ROOM,
+	SIDE_TABLE,
 	START,
 	STATIONS,
-	USE_RADIUS,
 	type CuriosityId,
 	type CuriosityLayout,
+	type Footprint,
 	type StationId,
 	type StationLayout,
 	type Vec3
@@ -71,7 +76,7 @@ import {
 import {
 	clampPoint,
 	keyboardDirection,
-	nearest,
+	reach,
 	route,
 	SPEED,
 	stepToward,
@@ -83,7 +88,8 @@ export interface RoomState {
 	z: number;
 	moving: boolean;
 	near: StationId | null;
-	// A little thing to walk up to (the bed), when no station is near.
+	// A little thing to walk up to (the bed, the gramophone), when it's nearer than
+	// any station.
 	nearCuriosity: CuriosityId | null;
 	focused: StationId | null;
 	frames: number;
@@ -110,6 +116,9 @@ interface Options {
 
 const FOCUS_ZOOM = 1.55;
 const TWEEN_MS = 480;
+// 33⅓ rpm, in radians a second; and how fast the tonearm swings.
+const SPIN = ((100 / 3) * Math.PI * 2) / 60;
+const SWING = 2.4;
 const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 
 export function createRoom(canvas: HTMLCanvasElement, options: Options) {
@@ -150,6 +159,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	buildMirror(lit);
 	buildCorkboard(lit);
 	buildDoorFrame(lit);
+	buildGramophone(lit);
 	const flag = new Batch();
 	buildDecor(lit, unlit, flag);
 	scene.add(new Mesh(keep(lit.build()), litMaterial));
@@ -222,6 +232,25 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	buildDoorSlab(doorBatch);
 	door.add(new Mesh(keep(doorBatch.build()), litMaterial));
 	scene.add(door);
+
+	// The gramophone's record and tonearm, in its frame: while the music plays the
+	// arm swings onto the record and the record turns (it stays still with less
+	// motion); otherwise the arm is on its rest.
+	const gramophone = new Group();
+	gramophone.position.set(SIDE_TABLE.x, SIDE_TABLE.y, SIDE_TABLE.z);
+	gramophone.rotation.y = GRAMOPHONE.angle;
+	const recordBatch = new Batch();
+	buildRecord(recordBatch);
+	const record = new Mesh(keep(recordBatch.build()), litMaterial);
+	record.position.set(GRAMOPHONE.record.x, GRAMOPHONE.record.y, GRAMOPHONE.record.z);
+	const armBatch = new Batch();
+	buildTonearm(armBatch);
+	const arm = new Mesh(keep(armBatch.build()), litMaterial);
+	arm.position.set(GRAMOPHONE.arm.x, GRAMOPHONE.arm.y, GRAMOPHONE.arm.z);
+	arm.rotation.y = GRAMOPHONE.arm.rest;
+	gramophone.add(record, arm);
+	scene.add(gramophone);
+	let playing = false;
 
 	// Character: one merged body, two swinging legs.
 	const character = new Group();
@@ -406,8 +435,9 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	let stalled = 0;
 	let near: StationLayout | undefined;
 	let nearCuriosity: CuriosityLayout | undefined;
-	const walkUps = CURIOSITIES.filter((item): item is CuriosityLayout & { approach: Point } =>
-		Boolean(item.approach)
+	const walkUps = CURIOSITIES.filter(
+		(item): item is CuriosityLayout & { approach: Point; beside: Footprint } =>
+			Boolean(item.approach && item.beside)
 	);
 	let focused: StationLayout | null = null;
 	// What the camera is pushed in on: an open station, or the bed while its poem is open.
@@ -540,6 +570,15 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	function draw(time: number) {
 		frame = 0;
 		if (disposed || document.hidden) return;
+		const armTo = playing ? GRAMOPHONE.arm.play : GRAMOPHONE.arm.rest;
+		const spinning = playing && !reducedMotion;
+		// While nothing moves but the record, half the frame rate is plenty.
+		const onlySpinning =
+			spinning && !keys.size && !path.length && !tween && arm.rotation.y === armTo;
+		if (onlySpinning && lastTime && time - lastTime < 30) {
+			requestFrame();
+			return;
+		}
 		const delta = lastTime ? Math.min((time - lastTime) / 1000, 0.05) : 1 / 60;
 		lastTime = time;
 		const direction = keyboardDirection(keys);
@@ -577,8 +616,9 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 						moving && !reducedMotion ? Math.sin(time * 0.014 + i * Math.PI) * 0.4 : 0)
 			);
 
-		const nowNear = focused ?? nearest(position(), active);
-		nearCuriosity = nowNear ? undefined : nearest(position(), walkUps, USE_RADIUS);
+		const inReach = focused ? { station: focused } : reach(position(), active, walkUps);
+		const nowNear = inReach.station;
+		nearCuriosity = inReach.thing;
 		const ringAt = (nowNear ?? nearCuriosity)?.approach;
 		if (ringAt) nearRing.position.set(ringAt.x, 0.066, ringAt.z);
 		if (nowNear !== near) {
@@ -591,6 +631,13 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		nearRing.visible = Boolean(ringAt) && !focused;
 
 		let animating = false;
+		if (spinning) record.rotation.y = (record.rotation.y - SPIN * delta) % (Math.PI * 2);
+		if (arm.rotation.y !== armTo) {
+			const swing = armTo - arm.rotation.y;
+			const step = reducedMotion ? Math.abs(swing) : SWING * delta;
+			arm.rotation.y = Math.abs(swing) <= step ? armTo : arm.rotation.y + Math.sign(swing) * step;
+			animating = arm.rotation.y !== armTo;
+		}
 		if (tween) {
 			const t = Math.min(1, (performance.now() - tween.start) / TWEEN_MS);
 			const k = ease(t);
@@ -616,7 +663,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		}
 		frames++;
 		report();
-		if (moving || animating) requestFrame();
+		if (moving || animating || spinning) requestFrame();
 		else lastTime = 0;
 	}
 	function moveTo(point: Point, arrive: (() => void) | null = null) {
@@ -645,8 +692,9 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			inspect(station);
 		else moveTo(station.approach, () => inspect(station));
 	}
-	// Walk up to a little thing (the bed): look at it, then turn as it says (away
-	// from the bed) and show its note. Walking off before the turn cancels it.
+	// Walk up to a little thing (the bed, the gramophone): look at it, then turn as
+	// it says (away from the bed), if at all, and use it. Walking off before the turn
+	// cancels it.
 	function use(item: CuriosityLayout) {
 		stopMovement();
 		standUp();
@@ -758,8 +806,9 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			requestFrame();
 		} else if ((key === 'e' || key === 'enter') && (near || nearCuriosity) && !event.repeat) {
 			event.preventDefault();
-			if (near) inspect(near);
-			else if (nearCuriosity) use(nearCuriosity);
+			// Like a click: to the spot first (clear of the door's swing), then open or use it.
+			if (near) visit(near.id);
+			else if (nearCuriosity) walkUp(nearCuriosity);
 		}
 	}
 	function keyUp(event: KeyboardEvent) {
@@ -883,6 +932,11 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		setPaused(value: boolean) {
 			if (value) stopMovement();
 			paused = value;
+			requestFrame();
+		},
+		// The gramophone follows the music: arm down and the record turning while it plays.
+		setRecord(value: boolean) {
+			playing = value;
 			requestFrame();
 		},
 		setReducedMotion(value: boolean) {

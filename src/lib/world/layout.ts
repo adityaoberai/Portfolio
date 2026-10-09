@@ -115,6 +115,30 @@ export const MIRROR = {
 // (build.ts), where -z is the headboard end; `length` is the frame's.
 export const BED = { x: 2.8, z: 2.1, angle: Math.PI, length: 2.15 };
 
+// A round side table at the sofa's door end, and on it a gramophone turned towards
+// the room and the camera, its brass horn rising from the back. `y` is the table
+// top. In the gramophone's frame (+z to its front), `record` is the record's centre
+// and `arm` the tonearm's pivot at the foot of the horn. The record and the arm
+// move (scene.ts): while the music plays, the arm sets down in the outer grooves
+// (`play`, its turn about the pivot) and the record turns; otherwise the arm sits
+// on its rest.
+export const SIDE_TABLE = { x: -3.14, z: 1.3, radius: 0.27, y: 0.62 };
+const record = { x: 0, y: 0.13, z: 0.02, radius: 0.13 };
+const pivot = { x: 0.11, y: 0.12, z: -0.12 };
+const groove = { x: record.x + 0.075, z: record.z + 0.06 };
+const play = Math.atan2(groove.x - pivot.x, groove.z - pivot.z);
+export const GRAMOPHONE = {
+	// Its front faces the room, so the horn flares out to the right on screen.
+	angle: 1.75,
+	record,
+	arm: {
+		...pivot,
+		length: Math.hypot(groove.x - pivot.x, groove.z - pivot.z),
+		play,
+		rest: play + 0.42
+	}
+};
+
 export const FOOTPRINTS = {
 	desk: { x: DESK.x, z: DESK.z, halfX: DESK.length / 2, halfZ: DESK.depth / 2, angle: DESK.angle },
 	deskChair: { x: -2.4, z: -2.15, halfX: 0.26, halfZ: 0.25, angle: Math.PI / 2 - 0.3 },
@@ -129,7 +153,15 @@ export const FOOTPRINTS = {
 	football: { x: 1.25, z: 2.85, halfX: 0.13, halfZ: 0.13, angle: 0 },
 	// A two-seat sofa against the left wall under the board, on a small rug, with
 	// room for one person between it and the desk.
-	sofa: { x: -3.08, z: 0.05, halfX: 0.75, halfZ: 0.4, angle: Math.PI / 2 }
+	sofa: { x: -3.08, z: 0.05, halfX: 0.75, halfZ: 0.4, angle: Math.PI / 2 },
+	// Too close to the sofa to walk between them.
+	sideTable: {
+		x: SIDE_TABLE.x,
+		z: SIDE_TABLE.z,
+		halfX: SIDE_TABLE.radius,
+		halfZ: SIDE_TABLE.radius,
+		angle: 0
+	}
 } satisfies Record<string, Footprint>;
 
 export type StationId =
@@ -270,33 +302,45 @@ export const FLAG = {
 	pixels: { width: 400, height: 248 }
 };
 
-export type CuriosityId = 'plush' | 'cowl' | 'delorean' | 'flag' | 'suitcase' | 'football' | 'bed';
+export type CuriosityId =
+	| 'plush'
+	| 'cowl'
+	| 'delorean'
+	| 'flag'
+	| 'suitcase'
+	| 'football'
+	| 'gramophone'
+	| 'bed';
 
 export interface CuriosityLayout {
 	id: CuriosityId;
 	hit: Box;
-	// Something to walk up to (the bed): clicking it, or pressing E within
-	// USE_RADIUS of `approach`, walks the character there and turns it to `facing`
-	// before the note shows. Other little things just show their note.
+	// Something to walk up to (the bed, the gramophone): clicking it, or pressing E
+	// anywhere within USE_RADIUS of `beside` (the furniture it is or stands on),
+	// walks the character to `approach`, looks at it, and turns it to `facing`, if
+	// any, before it's used. Other little things just show their note.
 	approach?: Point;
+	beside?: Footprint;
 	facing?: number;
-	// Where the camera pushes toward while its poem is open, as for a station.
+	// Where the camera pushes toward while its sheet (the poem, the music) is open, as
+	// for a station.
 	focus?: Vec3;
 }
 
 // Environmental details: a one-line note, not a navigation destination.
 export const CURIOSITIES: CuriosityLayout[] = [
-	// Just the plush, by the pillow, so clicks on the rest of the bed reach the bed.
-	{ id: 'plush', hit: { center: [BED.x + 0.18, 0.82, BED.z + 0.545], size: [0.45, 0.45, 0.45] } },
+	// Just the plush, on the pillow, so clicks on the rest of the bed reach the bed.
+	{ id: 'plush', hit: { center: [BED.x + 0.18, 1.02, BED.z + 0.72], size: [0.3, 0.48, 0.3] } },
 	{
-		// Trying to sleep: the character walks to the bed's side, looks at the bed, then
-		// turns its back on it to face the room and the camera (world.ts has why). It
-		// stands a step out and back from the suitcase, so the bed, its headboard, and
-		// the suitcase hide no more than its feet.
+		// Trying to sleep: from anywhere beside the bed, the character walks to its side,
+		// looks at the bed, then turns its back on it to face the room and the camera
+		// (world.ts has why). It stands a step out and back from the suitcase, so the
+		// bed, its headboard, and the suitcase hide no more than its feet.
 		// The plush on the bed wins clicks on itself (the nearest hit wins).
 		id: 'bed',
 		hit: { center: [BED.x, 0.4, BED.z], size: [1.42, 0.8, BED.length] },
 		approach: { x: 1.6, z: 1.85 },
+		beside: FOOTPRINTS.bed,
 		facing: Math.atan2(-0.4, 1),
 		// Between the bed and the character turned away from it.
 		focus: [2.25, 0.75, 2.1]
@@ -326,6 +370,17 @@ export const CURIOSITIES: CuriosityLayout[] = [
 			center: [FOOTPRINTS.football.x, 0.14, FOOTPRINTS.football.z],
 			size: [0.42, 0.42, 0.42]
 		}
+	},
+	{
+		// Putting a record on: the character walks up in front of the table, and the
+		// music starts (WorldView); doing it again stops it. The corkboard and the door
+		// are in reach from here too, but the gramophone is nearer.
+		id: 'gramophone',
+		hit: { center: [SIDE_TABLE.x, 0.7, SIDE_TABLE.z], size: [0.62, 1.4, 0.62] },
+		approach: { x: -2.4, z: 1.35 },
+		beside: FOOTPRINTS.sideTable,
+		// The gramophone while its sheet is open.
+		focus: [SIDE_TABLE.x + 0.1, 0.95, SIDE_TABLE.z]
 	}
 ];
 
@@ -335,5 +390,6 @@ export const DOOR_OPEN = 0.6;
 
 // Generous: the character only needs to be roughly in front of an object.
 export const INTERACTION_RADIUS = 1.35;
-// Tighter for the bed, so the room's start point isn't already beside it.
-export const USE_RADIUS = 0.75;
+// How far from the edge of a little thing you walk up to counts as beside it: about
+// a step. Within it, the little thing beats a station that is further away.
+export const USE_RADIUS = 0.6;

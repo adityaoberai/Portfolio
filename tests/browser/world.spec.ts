@@ -37,6 +37,40 @@ async function openMenu(page: Page) {
 	await expect(page.getByRole('navigation', { name: 'In the room' })).toBeVisible();
 }
 
+// Spotify's iFrame API, stubbed: a blank player that reports playing and paused at once,
+// and records what it was asked to do in window.__spotify. Nothing reaches Spotify.
+async function stubSpotify(page: Page) {
+	await page.route('https://open.spotify.com/**', (route) =>
+		route.fulfill({
+			contentType: 'text/javascript',
+			body: `window.__spotify = [];
+			window.onSpotifyIframeApiReady({
+				createController(element, options, created) {
+					const frame = document.createElement('iframe');
+					frame.height = options.height;
+					element.replaceWith(frame);
+					const listeners = {};
+					const emit = (name, data) => (listeners[name] || []).forEach((fn) => fn({ data }));
+					const say = (call, paused) => () => {
+						window.__spotify.push(call);
+						emit('playback_update', { isPaused: paused, isBuffering: false, position: 0, duration: 29713 });
+					};
+					created({
+						addListener: (name, fn) => (listeners[name] ||= []).push(fn),
+						play: say('play', false),
+						resume: say('resume', false),
+						pause: say('pause', true),
+						destroy: () => frame.remove()
+					});
+					setTimeout(() => emit('ready'), 50);
+				}
+			});`
+		})
+	);
+}
+const spotifyCalls = (page: Page) =>
+	page.evaluate(() => (window as unknown as { __spotify?: string[] }).__spotify ?? []);
+
 async function openRoom(page: Page) {
 	await page.goto('/world?diagnostics=1');
 	await expect(page.locator('canvas')).toHaveClass(/\bloaded\b/);
@@ -141,14 +175,22 @@ test('trying to sleep on the bed turns the character away, and Frost’s poem po
 	await settle(page);
 	const canvas = page.locator('canvas');
 	const poem = page.getByRole('dialog', { name: 'Stopping by Woods on a Snowy Evening' });
-	// Walking up beside the bed offers it; E tries to sleep.
-	// A floor spot near the bed that neither the bed nor the suitcase covers on screen.
-	const beside = await floor(page, 1.25, 1.7);
-	await page.mouse.click(beside.x, beside.y);
+	// Walking up beside the bed offers it; E walks round to its side and tries to sleep.
+	// A floor spot a step from the bed that neither the bed nor the suitcase covers on
+	// screen; from there, a short walk to the right ends against the bed's side.
+	const near = await floor(page, 1.25, 1.7);
+	await page.mouse.click(near.x, near.y);
+	await expect(canvas).toHaveAttribute('data-x', '1.250');
+	await expect(page.locator('.room-hint')).not.toContainText('Press E to sleep');
+	await page.keyboard.down('d');
+	await page.waitForTimeout(200);
+	await page.keyboard.up('d');
 	await expect(page.locator('.room-hint')).toContainText('Press E to sleep');
 	await page.keyboard.press('e');
 	// The whole poem, with its last two lines in bold.
 	await expect(poem).toBeVisible();
+	await expect(canvas).toHaveAttribute('data-x', '1.600');
+	await expect(canvas).toHaveAttribute('data-z', '1.850');
 	await expect(poem).toContainText('Whose woods these are I think I know.');
 	await expect(poem).toContainText('Robert Frost');
 	await expect(poem.locator('strong')).toHaveText([
@@ -179,6 +221,57 @@ test('trying to sleep on the bed turns the character away, and Frost’s poem po
 	await expect(canvas).toHaveAttribute('data-z', '1.850');
 	await page.getByRole('button', { name: 'Back to the room' }).click();
 	await expect(canvas).toBeFocused();
+});
+
+test('the gramophone plays the playlist, keeps playing with its sheet closed, and stops', async ({
+	page
+}) => {
+	await stubSpotify(page);
+	await openRoom(page);
+	await settle(page);
+	const canvas = page.locator('canvas');
+	const sheet = page.getByRole('dialog', { name: 'adi’s playlist' });
+	const chip = page.getByRole('group', { name: 'Gramophone' });
+	// Clicking it walks over and puts the record on: the sheet opens with Spotify's player.
+	const gramophone = await anchor(page, 'gramophone');
+	await page.mouse.click(gramophone.x, gramophone.y);
+	await expect(sheet).toBeVisible();
+	await expect(canvas).toHaveAttribute('data-x', '-2.400');
+	await expect(canvas).toHaveAttribute('data-z', '1.350');
+	await expect(sheet.locator('iframe')).toHaveAttribute('title', 'Spotify player');
+	await expect.poll(() => spotifyCalls(page)).toEqual(['play']);
+	// Closing the sheet leaves it playing: the record keeps turning, and the chip shows.
+	await page.keyboard.press('Escape');
+	await expect(sheet).not.toBeVisible();
+	await expect(chip).toContainText('On the gramophone');
+	await expect(canvas).toBeFocused();
+	const frames = Number(await canvas.getAttribute('data-frames'));
+	await expect
+		.poll(async () => Number(await canvas.getAttribute('data-frames')))
+		.toBeGreaterThan(frames + 5);
+	// Beside it, E lifts the needle: the music stops, and so does the room.
+	await expect(page.locator('.room-hint')).toContainText('Press E to stop');
+	await page.keyboard.press('e');
+	await expect(chip).not.toBeVisible();
+	await expect.poll(() => spotifyCalls(page)).toEqual(['play', 'pause']);
+	await settle(page);
+	// E again puts it back on, where it stopped; the chip's Show reopens the sheet.
+	await expect(page.locator('.room-hint')).toContainText('Press E to play');
+	await page.keyboard.press('e');
+	await expect(sheet).toBeVisible();
+	await expect.poll(() => spotifyCalls(page)).toEqual(['play', 'pause', 'resume']);
+	await page.getByRole('button', { name: 'Back to the room' }).click();
+	await chip.getByRole('button', { name: 'Show' }).click();
+	await expect(sheet).toBeVisible();
+	await page.getByRole('button', { name: 'Stop the record' }).click();
+	await expect(sheet).not.toBeVisible();
+	await expect(chip).not.toBeVisible();
+	await expect(canvas).toBeFocused();
+	// Standing on the corkboard's spot still opens the corkboard.
+	await page.evaluate(() =>
+		(window as unknown as { __room: { visit: (id: string) => void } }).__room.visit('corkboard')
+	);
+	await expect(page.getByRole('heading', { name: 'Pinned to the corkboard' })).toBeVisible();
 });
 
 test('closing the menu gives the keyboard back to the room', async ({ page }) => {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 	import V3Header from '$lib/components/V3Header.svelte';
+	import RecordPlayer from './RecordPlayer.svelte';
 	import StationPanel from './StationPanel.svelte';
 	// All copy and content comes from src/lib/data/world.ts (resolved in room.ts).
 	import { curiosities, page as copy, stationById, stations } from '$lib/data/room';
@@ -12,10 +13,13 @@
 	let frameEl: HTMLElement;
 	let topEl: HTMLDivElement;
 	let hintEl = $state<HTMLDivElement>();
+	let cornerEl: HTMLDivElement;
+	let dockEl: HTMLDivElement;
 	let menuButton: HTMLButtonElement;
 	let menu: HTMLDivElement;
 	let dialog: HTMLDialogElement;
 	let poemDialog: HTMLDialogElement;
+	let musicDialog: HTMLDialogElement;
 	let room: RoomController | undefined;
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
 	let reducedMotion = $state(false);
@@ -30,12 +34,26 @@
 	// The little thing whose poem is open (the bed's).
 	let poemOf = $state<CuriosityId | null>(null);
 	const poem = $derived((poemOf && curiosities[poemOf].poem) || null);
+	// The gramophone's music: on once it's used, until it's used again or stopped. Its
+	// sheet can close while it plays.
+	const gramophone = (Object.keys(curiosities) as CuriosityId[]).find(
+		(id) => curiosities[id].music
+	);
+	const music = gramophone && curiosities[gramophone].music;
+	let musicOn = $state(false);
+	let musicSheet = $state(false);
+	let recordPlaying = $state(false);
+	let musicNews = $state('');
 	let returnFocus: HTMLElement | null = null;
 
 	const near = $derived((roomState?.near && stationById[roomState.near]) || null);
 	// Something to walk up to (the bed), when no station is near.
 	const nearThing = $derived(
 		(!near && roomState?.nearCuriosity && curiosities[roomState.nearCuriosity]) || null
+	);
+	// Its hint: beside the gramophone while the music plays, how to stop it.
+	const nearHint = $derived(
+		nearThing && (nearThing.music && musicOn ? nearThing.music.stop : nearThing.use)
 	);
 
 	// Keyboard play should work the moment the room appears. Focus it on arrival, unless the
@@ -66,7 +84,7 @@
 	// If focus drifts to the page itself, movement keys still reach the room. Focused
 	// controls, the menu, and open stations are never interrupted, and Tab still leaves.
 	function forwardRoomKeys(event: KeyboardEvent) {
-		if (status !== 'ready' || !nothingFocused() || dialog.open || poemDialog.open) return;
+		if (status !== 'ready' || !nothingFocused() || sheetOpen()) return;
 		if (menu.matches(':popover-open') || event.altKey || event.ctrlKey || event.metaKey) return;
 		if (!roomKeys.has(event.key.toLowerCase())) return;
 		event.preventDefault();
@@ -131,9 +149,10 @@
 		event.stopPropagation();
 		sheet.close();
 	}
+	const sheetOpen = () => [dialog, poemDialog, musicDialog].find((sheet) => sheet.open);
 	// The wheel over the room beside an open sheet scrolls the sheet; the room behind can't scroll.
 	function wheelToSheet(event: WheelEvent) {
-		const sheet = dialog.open ? dialog : poemDialog.open ? poemDialog : null;
+		const sheet = sheetOpen();
 		if (!sheet) return;
 		const box = sheet.getBoundingClientRect();
 		const { clientX: x, clientY: y } = event;
@@ -159,13 +178,14 @@
 	// room, unless the visitor has moved on to something else or opened something from it.
 	function menuToggled(event: ToggleEvent) {
 		if (event.newState !== 'closed' || status !== 'ready') return;
-		if (dialog.open || poemDialog.open) return;
+		if (sheetOpen()) return;
 		const focused = document.activeElement;
 		if (nothingFocused() || focused === menuButton || menu.contains(focused)) focusRoom();
 	}
 	function showCuriosity(id: CuriosityId) {
 		const item = curiosities[id];
 		if (item.poem) return void showPoem(id);
+		if (item.music) return useGramophone();
 		note = item;
 		window.clearTimeout(noteTimer);
 		noteTimer = window.setTimeout(() => (note = null), 5000);
@@ -193,6 +213,51 @@
 		room?.setPaused(false);
 		backToRoom();
 	}
+	// The gramophone: using it puts the record on and opens its sheet, with Spotify's player.
+	// Closing the sheet leaves the music playing, with a chip in the corner to show it again or
+	// stop it; using the gramophone while it plays stops it. The room follows what Spotify
+	// reports: the arm sets down and the record turns once the music plays.
+	function setMusic(value: boolean) {
+		musicOn = value;
+		musicNews = value ? 'The record is on.' : 'The record is off.';
+	}
+	function useGramophone() {
+		if (musicOn) return setMusic(false);
+		setMusic(true);
+		void showMusic();
+	}
+	async function showMusic() {
+		window.clearTimeout(noteTimer);
+		note = null;
+		musicSheet = true;
+		room?.setPaused(true);
+		if (gramophone) room?.look(gramophone);
+		hover = null;
+		await tick();
+		if (!musicDialog.open) musicDialog.showModal();
+		musicDialog.focus(quietFocus);
+	}
+	function closeMusic() {
+		musicSheet = false;
+		room?.release();
+		room?.setPaused(false);
+		backToRoom();
+	}
+	function musicPlayback(playing: boolean) {
+		recordPlaying = playing;
+		room?.setRecord(playing);
+	}
+	function stopMusic() {
+		setMusic(false);
+		if (musicDialog.open) musicDialog.close();
+		else backToRoom();
+	}
+	function musicFromMenu() {
+		if (menu.matches(':popover-open')) menu.hidePopover();
+		if (!musicOn) return useGramophone();
+		setMusic(false);
+		backToRoom();
+	}
 	function onHover(target: HoverTarget | null, x: number, y: number) {
 		if (!target) {
 			hover = null;
@@ -207,15 +272,16 @@
 				: curiosities[target.id].label;
 		hover = { label, x, y };
 	}
-	// Keep the room clear of the floating title, hint card, and menu button.
+	// Keep the room clear of the floating title, the hint card (and the gramophone's player
+	// above it), and the menu button.
 	function measureInsets() {
 		if (!room || !frameEl) return;
 		const height = frameEl.clientHeight;
 		const narrow = frameEl.clientWidth < 820;
-		const lowest = Math.min(
-			menuButton.getBoundingClientRect().top,
-			hintEl?.getBoundingClientRect().top ?? height
-		);
+		const cornerTop = cornerEl.getBoundingClientRect().top;
+		// Notes on phones float above the corner.
+		frameEl.style.setProperty('--corner', `${Math.max(0, height - cornerTop)}px`);
+		const lowest = Math.min(menuButton.getBoundingClientRect().top, cornerTop);
 		const titleBottom = topEl.getBoundingClientRect().bottom;
 		room.setInsets(
 			narrow
@@ -244,6 +310,7 @@
 		const observer = new ResizeObserver(measureInsets);
 		observer.observe(frameEl);
 		observer.observe(topEl);
+		observer.observe(dockEl);
 		const timeout = window.setTimeout(() => {
 			if (status === 'loading') status = 'error';
 		}, 15000);
@@ -269,6 +336,7 @@
 					}
 				});
 				measureInsets();
+				room.setRecord(recordPlaying);
 				if (diagnostics) Reflect.set(window, '__room', room);
 			})
 			.catch(() => {
@@ -350,32 +418,46 @@
 	{#if note}
 		<p class="note">{note.line}</p>
 	{/if}
-	{#if status === 'ready'}
-		<div class="room-hint" aria-hidden="true" bind:this={hintEl}>
-			{#if near}
-				<span class="eyebrow">{near.number} / {near.area}</span>
-				<span class="hint-title">{near.object}</span>
-				<span class="hint-key"
-					>{#if coarse}{copy.hint.nearTouch}{:else}Press <kbd>E</kbd>
-						{copy.hint.nearKeys}{/if}</span
-				>
-			{:else if nearThing?.use}
-				<span class="eyebrow">{nearThing.label}</span>
-				<span class="hint-title">{nearThing.use.title}</span>
-				<span class="hint-key"
-					>{#if coarse}{nearThing.use.touch}{:else}Press <kbd>E</kbd>
-						{nearThing.use.keys}{/if}</span
-				>
-			{:else}
-				<span class="eyebrow">{copy.hint.idleKicker}</span>
-				<span class="hint-title">{copy.hint.idleTitle}</span>
-				<span class="hint-key"
-					>{#if coarse}{copy.hint.idleTouch}{:else}<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>
-						{copy.hint.idleKeys}{/if}</span
-				>
+	<div class="corner" bind:this={cornerEl}>
+		<div bind:this={dockEl}>
+			{#if musicOn && !musicSheet}
+				<div class="chip" role="group" aria-label="Gramophone">
+					<span class="disc" class:turning={recordPlaying && !reducedMotion} aria-hidden="true"
+					></span>
+					<span>{recordPlaying ? 'On the gramophone' : 'Gramophone, paused'}</span>
+					<button onclick={showMusic}>Show</button>
+					<button onclick={stopMusic}>Stop</button>
+				</div>
 			{/if}
 		</div>
-	{/if}
+		{#if status === 'ready'}
+			<div class="room-hint" aria-hidden="true" bind:this={hintEl}>
+				{#if near}
+					<span class="eyebrow">{near.number} / {near.area}</span>
+					<span class="hint-title">{near.object}</span>
+					<span class="hint-key"
+						>{#if coarse}{copy.hint.nearTouch}{:else}Press <kbd>E</kbd>
+							{copy.hint.nearKeys}{/if}</span
+					>
+				{:else if nearThing && nearHint}
+					<span class="eyebrow">{nearThing.label}</span>
+					<span class="hint-title">{nearHint.title}</span>
+					<span class="hint-key"
+						>{#if coarse}{nearHint.touch}{:else}Press <kbd>E</kbd>
+							{nearHint.keys}{/if}</span
+					>
+				{:else}
+					<span class="eyebrow">{copy.hint.idleKicker}</span>
+					<span class="hint-title">{copy.hint.idleTitle}</span>
+					<span class="hint-key"
+						>{#if coarse}{copy.hint.idleTouch}{:else}<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd
+							>
+							{copy.hint.idleKeys}{/if}</span
+					>
+				{/if}
+			</div>
+		{/if}
+	</div>
 
 	<button class="menu-button" popovertarget="room-menu" bind:this={menuButton}
 		><span class="bars" aria-hidden="true"><span></span></span>{copy.menuTitle}</button
@@ -418,8 +500,10 @@
 				{#each Object.entries(curiosities) as [id, item] (id)}
 					<li>
 						<strong>{item.label}</strong> · {item.line}{#if item.poem}{' '}<button
-								class="read-poem"
+								class="thing-action"
 								onclick={() => readPoem(id as CuriosityId)}>Read “{item.poem.title}”</button
+							>{:else if item.music}{' '}<button class="thing-action" onclick={musicFromMenu}
+								>{musicOn ? 'Stop the record' : 'Put the record on'}</button
 							>{/if}
 					</li>
 				{/each}
@@ -458,10 +542,11 @@
 	<p class="sr-only" aria-live="polite">
 		{near
 			? `Near the ${near.short}. Press E while the room is focused to inspect it.`
-			: nearThing?.use
-				? `Near the ${nearThing.label.toLowerCase()}. Press E while the room is focused ${nearThing.use.keys}.`
+			: nearThing && nearHint
+				? `Near the ${nearThing.label.toLowerCase()}. Press E while the room is focused ${nearHint.keys}.`
 				: ''}{note ? ` ${note.line}` : ''}
 	</p>
+	<p class="sr-only" aria-live="polite">{musicNews}</p>
 </section>
 
 <dialog
@@ -518,6 +603,39 @@
 			{/each}
 		</div>
 		<button class="back-button" onclick={() => poemDialog.close()}>← Back to the room</button>
+	{/if}
+</dialog>
+
+<!-- The gramophone's sheet, like a station's. Closing it leaves the music playing. -->
+<dialog
+	bind:this={musicDialog}
+	class="sheet music"
+	onclose={closeMusic}
+	onkeydown={sheetKeys}
+	aria-labelledby="music-title"
+	tabindex="-1"
+>
+	{#if gramophone && music}
+		<div class="sheet-top">
+			{#if !coarse}<span class="sheet-hint" aria-hidden="true"
+					><kbd>E</kbd> or <kbd>Esc</kbd> to close · the music plays on</span
+				>{/if}
+			<button
+				class="close"
+				onclick={() => musicDialog.close()}
+				aria-label="Close and return to the room">Close ×</button
+			>
+		</div>
+		<p class="poem-eyebrow">{curiosities[gramophone].label} · Spotify</p>
+		<h2 id="music-title">{music.title}</h2>
+		<p class="music-line">{music.line}</p>
+		<div class="music-player">
+			<RecordPlayer spotify={music.spotify} on={musicOn} height={352} onplayback={musicPlayback} />
+		</div>
+		<div class="music-actions">
+			<button class="back-button" onclick={() => musicDialog.close()}>← Back to the room</button>
+			<button class="stop-record" onclick={stopMusic}>Stop the record</button>
+		</div>
 	{/if}
 </dialog>
 
@@ -605,11 +723,18 @@
 		font-size: 16px;
 		line-height: 1.45;
 	}
-	.room-hint {
+	/* Bottom left: the gramophone's player while the music is on, over the hint card. */
+	.corner {
 		position: absolute;
 		z-index: 2;
 		left: var(--gutter);
 		bottom: 24px;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		pointer-events: none;
+	}
+	.room-hint {
 		display: grid;
 		gap: 2px;
 		padding: 14px 18px;
@@ -957,7 +1082,8 @@
 		text-transform: uppercase;
 		color: #5f6755;
 	}
-	.poem h2 {
+	.poem h2,
+	.music h2 {
 		margin-top: 14px;
 		font-size: clamp(26px, 2.6vw, 32px);
 		letter-spacing: -0.035em;
@@ -978,7 +1104,94 @@
 	.poem .back-button {
 		margin-top: 22px;
 	}
-	.read-poem {
+	/* The gramophone's sheet: its line, the player, then back to the room or stop. */
+	.music-line {
+		margin-top: 12px;
+		font-size: 17px;
+		line-height: 1.5;
+		color: #3f4d40;
+	}
+	.music-player {
+		margin-top: 20px;
+	}
+	.music-actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 12px 20px;
+		margin-top: 28px;
+	}
+	.music .back-button {
+		margin-top: 0;
+	}
+	.stop-record {
+		min-height: 44px;
+		font:
+			14px system-ui,
+			sans-serif;
+		color: #304e42;
+		text-decoration: underline;
+		text-underline-offset: 4px;
+		cursor: pointer;
+	}
+	/* While the music plays with its sheet closed: a small turning record, Show and Stop. */
+	.chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		margin-bottom: 10px;
+		padding: 6px 8px 6px 10px;
+		background: #faf7eb;
+		border: 1px solid #d2cfbb;
+		border-radius: 999px;
+		box-shadow: 0 3px 0 #bfc5b52b;
+		pointer-events: auto;
+		font:
+			13px system-ui,
+			sans-serif;
+		color: #3f4d40;
+	}
+	.disc {
+		width: 22px;
+		height: 22px;
+		flex: none;
+		margin-right: 4px;
+		border-radius: 50%;
+		background:
+			linear-gradient(90deg, transparent 47%, #f1e6c8 47% 53%, transparent 53%) center / 9px 2px
+				no-repeat,
+			radial-gradient(
+				circle,
+				#d9d4c7 0 1.5px,
+				#c23b3b 2px 5px,
+				#1c1c1e 5.5px 7px,
+				#3a3a3e 7.5px 8px,
+				#1c1c1e 8.5px
+			);
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		.disc.turning {
+			animation: turn 1.8s linear infinite;
+		}
+		@keyframes turn {
+			to {
+				transform: rotate(360deg);
+			}
+		}
+	}
+	.chip button {
+		min-height: 32px;
+		padding: 0 8px;
+		border-radius: 999px;
+		color: #304e42;
+		text-decoration: underline;
+		text-underline-offset: 3px;
+		cursor: pointer;
+	}
+	.chip button:hover {
+		background: #ece6d3;
+	}
+	.thing-action {
 		text-decoration: underline;
 		text-underline-offset: 3px;
 		cursor: pointer;
@@ -1044,8 +1257,9 @@
 			border-radius: 14px 14px 0 0;
 			box-shadow: 0 -18px 60px #25352926;
 		}
-		/* Taller for the poem, so it's whole on a phone. */
-		.sheet.poem {
+		/* Taller for the poem, so it's whole on a phone, and for the player and its tracks. */
+		.sheet.poem,
+		.sheet.music {
 			max-height: 94dvh;
 		}
 		.sheet::backdrop {
@@ -1073,10 +1287,13 @@
 			width: auto;
 			max-height: calc(100dvh - 168px);
 		}
-		.room-hint {
+		.corner {
 			left: 16px;
 			right: 16px;
 			bottom: 84px;
+			align-items: stretch;
+		}
+		.room-hint {
 			padding: 10px 14px;
 		}
 		.hint-title {
@@ -1085,7 +1302,7 @@
 		.note {
 			left: 16px;
 			right: 16px;
-			bottom: 190px;
+			bottom: calc(var(--corner, 160px) + 16px);
 			max-width: none;
 		}
 		.desktop-instructions {

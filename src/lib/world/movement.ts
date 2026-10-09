@@ -4,6 +4,7 @@ import {
 	FOOTPRINTS,
 	INTERACTION_RADIUS,
 	START,
+	USE_RADIUS,
 	WALKABLE,
 	type Footprint,
 	type Point
@@ -211,4 +212,32 @@ export function nearest<T extends { approach: Point }>(
 		}
 	}
 	return best;
+}
+
+// How far a point is from a footprint's edge (0 inside it).
+export function fromEdge(point: Point, f: Footprint): number {
+	const p = toLocal(point, f);
+	return Math.hypot(Math.max(0, Math.abs(p.x) - f.halfX), Math.max(0, Math.abs(p.z) - f.halfZ));
+}
+
+// What E reaches from a point: the nearest station, unless the character is beside
+// a little thing to walk up to (the bed, the gramophone: within USE_RADIUS of its
+// edge) and nearer to it than to the station's spot.
+export function reach<S extends { approach: Point }, T extends { beside: Footprint }>(
+	point: Point,
+	stations: S[],
+	things: T[]
+): { station?: S; thing?: T } {
+	const station = nearest(point, stations);
+	let thing: T | undefined;
+	let best = USE_RADIUS;
+	for (const item of things) {
+		const d = fromEdge(point, item.beside);
+		if (d <= best) {
+			thing = item;
+			best = d;
+		}
+	}
+	if (thing && (!station || best < distance(point, station.approach))) return { thing };
+	return { station };
 }
