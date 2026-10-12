@@ -639,3 +639,4 @@
 - Corkboard: photos replaced with two certificates and a sticky note.
 - Camera station: city tags removed.
 - Shelf: Blastoise joins the other three cards in one 2x2 grid (slab dropped from the panel).
+- Shelf: book covers (Open Library, static/books) shown as a 3-up grid in the panel.

@@ -180,11 +180,24 @@
 			</p>
 		{:else if block.type === 'list'}
 			{#if block.heading}<h3 class="subhead">{block.heading}</h3>{/if}
-			<ul class="entries">
-				{#each block.items as item (item.title)}
-					<li><p><strong>{item.title}</strong>: {item.text}</p></li>
-				{/each}
-			</ul>
+			{#if block.items.every((item) => item.image)}
+				<ul class="cards covers">
+					{#each block.items as item (item.title)}
+						<li>
+							<figure>
+								<img src={item.image} alt="Cover of {item.title}" loading="lazy" />
+								<figcaption><strong>{item.title}</strong><span>{item.text}</span></figcaption>
+							</figure>
+						</li>
+					{/each}
+				</ul>
+			{:else}
+				<ul class="entries">
+					{#each block.items as item (item.title)}
+						<li><p><strong>{item.title}</strong>: {item.text}</p></li>
+					{/each}
+				</ul>
+			{/if}
 		{:else if block.type === 'facts'}
 			{#if block.heading}<h3 class="subhead">{block.heading}</h3>{/if}
 			<dl class="now">
@@ -596,6 +609,14 @@
 	}
 	.cards span {
 		display: block;
+	}
+	.cards.covers {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		max-width: none;
+	}
+	.covers img {
+		aspect-ratio: 2 / 3;
+		border-radius: 2px;
 	}
 	.links {
 		display: flex;

@@ -101,7 +101,12 @@ export type Block =
 	| { type: 'profile'; text: string; portrait?: boolean }
 	| { type: 'text'; text: string }
 	| { type: 'tags'; tags: string[] }
-	| { type: 'list'; heading?: string; items: { title: string; text: string }[] }
+	| {
+			type: 'list';
+			heading?: string;
+			/** With images, the items show as covers in a grid. */
+			items: { title: string; text: string; image?: string }[];
+		}
 	| { type: 'facts'; heading?: string; rows: { label: string; text: string; href?: string }[] }
 	| { type: 'contact'; email?: string; places: { label: string; detail: string; href: string }[] }
 	| { type: 'links'; links: Link[] };
@@ -334,7 +339,7 @@ export const world: WorldConfig = {
 					{
 						type: 'list',
 						heading: 'Books on the shelf',
-						items: books.map((book) => ({ title: book.title, text: book.author }))
+						items: books.map((book) => ({ title: book.title, text: book.author, image: book.cover }))
 					}
 				],
 				links: [{ label: 'Open the binder on Collectr', href: collection.showcaseUrl }]

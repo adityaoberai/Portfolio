@@ -8,11 +8,14 @@ export interface Book {
 	band: string;
 	height: number;
 	thickness: number;
+	/** Cover image in static/books (from Open Library). */
+	cover: string;
 }
 
 export const books: Book[] = [
 	{
 		title: 'The Godfather',
+		cover: '/books/godfather.jpg',
 		author: 'Mario Puzo',
 		spine: '#1b1b1d',
 		band: '#e8e2d4',
@@ -21,6 +24,7 @@ export const books: Book[] = [
 	},
 	{
 		title: 'Around the World in 80 Days',
+		cover: '/books/around-the-world.jpg',
 		author: 'Jules Verne',
 		spine: '#2e5e6e',
 		band: '#d9b45a',
@@ -29,6 +33,7 @@ export const books: Book[] = [
 	},
 	{
 		title: 'The Da Vinci Code',
+		cover: '/books/da-vinci-code.jpg',
 		author: 'Dan Brown',
 		spine: '#6e2a1c',
 		band: '#e3c27a',
@@ -37,6 +42,7 @@ export const books: Book[] = [
 	},
 	{
 		title: 'Animal Farm',
+		cover: '/books/animal-farm.jpg',
 		author: 'George Orwell',
 		spine: '#e07b39',
 		band: '#f4efe2',
@@ -45,6 +51,7 @@ export const books: Book[] = [
 	},
 	{
 		title: 'The Myth of Sisyphus',
+		cover: '/books/myth-of-sisyphus.jpg',
 		author: 'Albert Camus',
 		spine: '#d9d4c7',
 		band: '#2b2b2a',
@@ -53,6 +60,7 @@ export const books: Book[] = [
 	},
 	{
 		title: 'The Killing Joke',
+		cover: '/books/killing-joke.jpg',
 		author: 'Alan Moore and Brian Bolland',
 		spine: '#4b2f7a',
 		band: '#7ab648',
