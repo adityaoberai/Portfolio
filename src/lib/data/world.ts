@@ -308,12 +308,10 @@ export const world: WorldConfig = {
 				title: `${collection.favourite} gets the top shelf.`,
 				lead: 'The shelf is where the things I love live: Pokémon cards, Batman, Back to the Future, and a row of favourite books. Blastoise is my favourite Pokémon, so it gets pride of place; the whole card collection is catalogued on Collectr.',
 				blocks: [
-					{ type: 'slab', item: 'collectible-blastoise' },
 					{
 						type: 'items',
 						style: 'cards',
-						heading: 'More favourite cards',
-						items: [{ type: 'collectible', featured: false }]
+						items: ['collectible-blastoise', { type: 'collectible', featured: false }]
 					},
 					{
 						type: 'list',

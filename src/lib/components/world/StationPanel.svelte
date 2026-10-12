@@ -562,7 +562,8 @@
 	}
 	.cards {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		max-width: 360px;
 		gap: 16px;
 		margin: 14px 0 0;
 		padding: 0;
