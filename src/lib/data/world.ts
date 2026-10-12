@@ -45,7 +45,7 @@ import { books } from './books';
 import { collection } from './collection';
 import { socialLinks, sponsorLink } from './links';
 import { now } from './now';
-import { cameraBody, pexelsProfile, photoPlaces } from './photography';
+import { cameraBody, pexelsProfile } from './photography';
 import { site } from './site';
 import { talks } from './talks';
 import { workThemes } from './work';
@@ -286,7 +286,7 @@ export const world: WorldConfig = {
 				blocks: [
 					{
 						type: 'tags',
-						tags: [cameraBody, ...photoPlaces.filter((place): place is string => Boolean(place))]
+						tags: [cameraBody]
 					},
 					{ type: 'items', style: 'photos', items: [{ type: 'photo', limit: 6 }] }
 				],

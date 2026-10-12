@@ -886,7 +886,7 @@ export function buildCorkboard(lit: Batch) {
 	const { y, z, width, height } = BOARD;
 	lit.box('#8f6a4c', [-3.47, y, z], [0.05, height, width]);
 	lit.box('#c49a6c', [-3.45, y, z], [0.03, height - 0.1, width - 0.1]);
-	// The notes and photos fill the half nearer the door; the lanyards hang on the
+	// The notes and certificates fill the half nearer the door; the lanyards hang on the
 	// half nearer the desk (buildLanyards).
 	lit.group([0, 0.05, -0.35], 0, () => pinned(lit));
 }
@@ -895,19 +895,29 @@ function pinned(lit: Batch) {
 	const x = -3.43;
 	const pin = (y: number, z: number) =>
 		lit.add('sphere', '#c23b3b', [x + 0.01, y, z], [0.02, 0.02, 0.02]);
-	// Photos from walks and meetups.
+	// Certificates: cream paper inside a thin gold rule, a title, two lines of
+	// text, and a gold seal, pinned at both top corners.
 	[
-		[2.1, 0.35, '#9fb7c9', 0.1],
-		[1.95, 0.72, '#e0a36a', -0.08],
-		[1.6, 1.42, '#8fae84', 0.06]
-	].forEach(([y, z, color, tilt]) => {
-		lit.group([x, y as number, z as number], [tilt as number, 0, 0], () => {
-			lit.box('#faf6ec', [0, 0, 0], [0.008, 0.28, 0.23]);
-			lit.box(color as string, [0.003, 0.03, 0], [0.004, 0.18, 0.18]);
+		[2.08, 0.38, 0.03],
+		[1.95, 0.75, -0.04]
+	].forEach(([y, z, tilt]) => {
+		lit.group([x, y, z], [tilt, 0, 0], () => {
+			lit.box('#f7f1df', [0, 0, 0], [0.008, 0.24, 0.32]);
+			lit.box('#b89a5a', [0.003, 0, 0], [0.002, 0.21, 0.29]);
+			lit.box('#f7f1df', [0.004, 0, 0], [0.002, 0.19, 0.27]);
+			lit.box('#5a4a3a', [0.006, 0.06, 0], [0.002, 0.025, 0.16]);
+			for (const dy of [0.01, -0.025]) lit.box('#a89a86', [0.006, dy, 0], [0.002, 0.008, 0.2]);
+			lit.add('sphere', '#c9a24a', [0.007, -0.065, 0.09], [0.004, 0.025, 0.025]);
 		});
-		pin((y as number) + 0.12, z as number);
+		pin(y + 0.1, z - 0.12);
+		pin(y + 0.1, z + 0.12);
 	});
-	// Tickets, notes, and a small poster.
+	// A sticky note with scribbled lines.
+	lit.group([x, 1.6, 1.42], [0.06, 0, 0], () => {
+		lit.box('#f5d76e', [0, 0, 0], [0.006, 0.2, 0.2]);
+		for (const dy of [0.04, 0, -0.04]) lit.box('#9a8240', [0.004, dy, 0], [0.002, 0.008, 0.13]);
+	});
+	// Tickets, sticky notes, and a small poster.
 	lit.box('#e0b84a', [x, 1.62, 0.4], [0.006, 0.09, 0.3], [0.15, 0, 0]);
 	lit.box('#c9573c', [x, 1.52, 0.72], [0.006, 0.09, 0.28], [-0.1, 0, 0]);
 	lit.box('#f2dc8c', [x, 1.64, 1.05], [0.006, 0.2, 0.2], [0.05, 0, 0]);
