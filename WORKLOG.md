@@ -630,3 +630,4 @@
 - Validation: `npm run check` 0/0, `npm test` 26/26, `npm run test:e2e` 29/29, `npm run lint` exit 0.
 
 - Section summaries: dropped the counts (projects, speaking, community, photography); they are featured lists, not totals.
+- Collection section relabelled "Pokémon cards"; summary reworded.

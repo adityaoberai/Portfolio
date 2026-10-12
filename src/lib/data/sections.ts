@@ -70,10 +70,10 @@ export const sections: Section[] = [
 	},
 	{
 		id: 'collection',
-		label: 'Collection',
+		label: 'Pokémon cards',
 		href: '/collection',
 		external: false,
-		summary: `Pokémon cards. ${collection.favourite} gets pride of place.`
+		summary: `The cards I collect, with ${collection.favourite} in pride of place.`
 	},
 	{
 		id: 'about',
