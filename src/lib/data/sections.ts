@@ -1,10 +1,5 @@
 import { collection } from './collection';
-import { communityInitiatives } from './community';
-import { photographs } from './photography';
-import { podcasts } from './podcasts';
-import { projects } from './projects';
 import { site } from './site';
-import { talks } from './talks';
 import { writingSamples } from './writing';
 
 // The site's sections. World (room guide, station links) and Index link through
@@ -43,14 +38,14 @@ export const sections: Section[] = [
 		label: 'Projects',
 		href: '/projects',
 		external: false,
-		summary: `${projects.length} things I've built, most of them to teach something or test an idea.`
+		summary: `Things I've built, most of them to teach something or test an idea.`
 	},
 	{
 		id: 'speaking',
 		label: 'Speaking',
 		href: '/speaking',
 		external: false,
-		summary: `${talks.length} talks and ${podcasts.length} podcasts and streams, from Tokyo to Atlanta.`
+		summary: `Talks, podcasts and streams, from Tokyo to Atlanta.`
 	},
 	{
 		id: 'writing',
@@ -64,14 +59,14 @@ export const sections: Section[] = [
 		label: 'Community',
 		href: '/community',
 		external: false,
-		summary: `${communityInitiatives.length} spaces for people to write, walk, meet, and build together.`
+		summary: `Spaces for people to write, walk, meet, and build together.`
 	},
 	{
 		id: 'photography',
 		label: 'Photography',
 		href: '/photography',
 		external: false,
-		summary: `Street and travel photographs from Bengaluru, Toronto, Jaipur and beyond. ${photographs.length} on Pexels.`
+		summary: `Street and travel photographs from Bengaluru, Toronto, Jaipur and beyond.`
 	},
 	{
 		id: 'collection',

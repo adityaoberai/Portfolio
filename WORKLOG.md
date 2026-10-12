@@ -628,3 +628,5 @@
 - Verified with the real player (installed Chrome, logged out, desktop and phone width): the card sits over the hint card, Spotify's own pause stops the record in the room, and moving over the room returns the keyboard. Screenshots at both widths. No console errors.
 - The room still and OG images are unchanged; the card isn't in them.
 - Validation: `npm run check` 0/0, `npm test` 26/26, `npm run test:e2e` 29/29, `npm run lint` exit 0.
+
+- Section summaries: dropped the counts (projects, speaking, community, photography); they are featured lists, not totals.
