@@ -104,8 +104,10 @@ export type Block =
 	| {
 			type: 'list';
 			heading?: string;
-			/** With images, the items show as covers in a grid. */
+			/** With images, the items show in a grid: book covers (2:3, cropped) or
+			 * objects (square, whole image on a light ground). */
 			items: { title: string; text: string; image?: string }[];
+			images?: 'covers' | 'objects';
 		}
 	| { type: 'facts'; heading?: string; rows: { label: string; text: string; href?: string }[] }
 	| { type: 'contact'; email?: string; places: { label: string; detail: string; href: string }[] }
@@ -321,18 +323,22 @@ export const world: WorldConfig = {
 					{
 						type: 'list',
 						heading: 'Other favourites',
+						images: 'objects',
 						items: [
 							{
 								title: 'Batman',
-								text: 'My favourite DC character. The cowl on the second shelf is mine, and it fits.'
+								text: 'My favourite DC character. The cowl on the second shelf is mine, and it fits.',
+								image: '/favourites/batman-cowl.jpg'
 							},
 							{
 								title: 'Back to the Future',
-								text: 'The LEGO DeLorean time machine, antenna and all.'
+								text: 'The LEGO DeLorean time machine, antenna and all.',
+								image: '/favourites/delorean.jpg'
 							},
 							{
 								title: 'Manchester United',
-								text: 'The flag above the desk and the scarf by the door. Glory, glory.'
+								text: 'The flag above the desk and the scarf by the door. Glory, glory.',
+								image: '/favourites/manutd-crest.png'
 							}
 						]
 					},

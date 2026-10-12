@@ -181,7 +181,7 @@
 		{:else if block.type === 'list'}
 			{#if block.heading}<h3 class="subhead">{block.heading}</h3>{/if}
 			{#if block.items.every((item) => item.image)}
-				<ul class="cards covers">
+				<ul class="cards covers" class:objects={block.images === 'objects'}>
 					{#each block.items as item (item.title)}
 						<li>
 							<figure>
@@ -614,7 +614,14 @@
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 		max-width: none;
 	}
-	.covers img {
+	.objects img {
+		aspect-ratio: 1;
+		object-fit: contain;
+		padding: 8%;
+		background: #fffdf6;
+		border-radius: 4px;
+	}
+	.covers:not(.objects) img {
 		aspect-ratio: 2 / 3;
 		border-radius: 2px;
 	}
