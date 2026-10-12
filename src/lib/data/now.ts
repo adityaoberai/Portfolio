@@ -34,7 +34,7 @@ export const now = {
 		},
 		{
 			label: 'Photographing',
-			text: `Bengaluru's streets, markets, and cats, on a ${cameraBody}.`,
+			text: `Bengaluru's streets, markets, people, and animals, on a ${cameraBody}.`,
 			href: sectionById.photography.href
 		},
 		{
