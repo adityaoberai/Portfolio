@@ -633,3 +633,4 @@
 - Collection section relabelled "Pokémon cards"; summary reworded.
 - Index: removed "A few things to start with".
 - Index: Now dropped from the directory (still in the room).
+- Now: "Working on" line reworded.

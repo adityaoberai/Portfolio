@@ -23,7 +23,7 @@ export const now = {
 	items: [
 		{
 			label: 'Working on',
-			text: 'Leading Developer Relations at Appwrite: launches, documentation, and AI tooling for developers building with Claude Code, Codex, and Cursor.',
+			text: 'Leading Developer Relations at Appwrite: launches, documentation, integrations, and developer experience.',
 			href: sectionById.work.href
 		},
 		{ label: 'Writing', text: `“${essay.title}”, the latest essay.`, href: essay.href },
