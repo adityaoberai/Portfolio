@@ -3,37 +3,6 @@
 	import Portrait from '$lib/components/Portrait.svelte';
 	import { highlights } from '$lib/data/highlights';
 	import { sections } from '$lib/data/sections';
-	import { featured, type Artifact } from '$lib/data/artifacts';
-
-	// One starting point per kind of thing, all from the shared artifacts.
-	const kicker: Record<Artifact['type'], (a: Artifact) => string> = {
-		work: () => 'At Appwrite',
-		project: () => 'Built',
-		talk: (a) => `${a.context} · ${a.date}`,
-		essay: (a) => `Written · ${a.date}`,
-		community: () => 'Together',
-		photo: (a) => `Photographed${a.context ? ` · ${a.context}` : ''}`,
-		collectible: () => 'Collected',
-		note: () => 'Note'
-	};
-	const order: Artifact['type'][] = [
-		'work',
-		'project',
-		'talk',
-		'essay',
-		'community',
-		'photo',
-		'collectible'
-	];
-	const starters = order
-		.map((type) => featured.find((a) => a.type === type))
-		.filter((a): a is Artifact => Boolean(a))
-		.map((a) => ({
-			...a,
-			label: kicker[a.type](a),
-			link: a.href ?? a.externalUrl ?? '/index',
-			external: !a.href && Boolean(a.externalUrl)
-		}));
 </script>
 
 <div class="index-page">
@@ -66,7 +35,7 @@
 	<nav class="directory" aria-labelledby="directory-title">
 		<h2 id="directory-title" class="eyebrow">Find your way</h2>
 		<ul class="chapters">
-			{#each sections as section, i (section.id)}
+			{#each sections.filter((s) => s.id !== 'now') as section, i (section.id)}
 				<li>
 					<a href={section.href} class="chapter"
 						><span class="number">{String(i + 1).padStart(2, '0')}</span>
@@ -82,19 +51,6 @@
 		</ul>
 	</nav>
 
-	<section class="selected" aria-labelledby="selected-title">
-		<h2 id="selected-title">A few things to start with</h2>
-		{#each starters as item (item.id)}
-			<a href={item.link} class="selected-row"
-				><span class="eyebrow">{item.label}</span>
-				<div>
-					<h3>{item.title}</h3>
-					{#if item.description}<p>{item.description}</p>{/if}
-				</div>
-				<span aria-hidden="true">{item.external ? '↗' : '→'}</span></a
-			>
-		{/each}
-	</section>
 	<footer>
 		<span>Made of many interests. <a href="/world">The room</a> tells the same story.</span><a
 			href="mailto:{site.email}">{site.email}</a
@@ -193,29 +149,16 @@
 		font-size: 23px;
 		line-height: 1.25;
 	}
-	.chapter p,
-	.selected-row p {
+	.chapter p {
 		color: #606456;
 		font-size: 16px;
 		line-height: 1.5;
 		margin-top: 6px;
 	}
-	.chapter:hover h3,
-	.selected-row:hover h3 {
+	.chapter:hover h3 {
 		text-decoration: underline;
 		text-underline-offset: 4px;
 		color: #304e42;
-	}
-	.selected h2 {
-		font-size: 30px;
-		margin: 12px 0 24px;
-	}
-	.selected-row {
-		display: grid;
-		grid-template-columns: 170px 1fr 20px;
-		gap: 22px;
-		padding: 26px 0;
-		border-top: 1px solid #dedbcf;
 	}
 	footer {
 		display: flex;
@@ -244,13 +187,6 @@
 		}
 		.chapters {
 			grid-template-columns: 1fr;
-		}
-		.selected-row {
-			grid-template-columns: 1fr 18px;
-			gap: 8px;
-		}
-		.selected-row > .eyebrow {
-			grid-column: 1 / -1;
 		}
 	}
 </style>

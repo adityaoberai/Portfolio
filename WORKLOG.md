@@ -631,3 +631,5 @@
 
 - Section summaries: dropped the counts (projects, speaking, community, photography); they are featured lists, not totals.
 - Collection section relabelled "Pokémon cards"; summary reworded.
+- Index: removed "A few things to start with".
+- Index: Now dropped from the directory (still in the room).
