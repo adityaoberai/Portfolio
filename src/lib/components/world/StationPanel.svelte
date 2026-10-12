@@ -169,7 +169,7 @@
 			</div>
 		{:else if block.type === 'profile'}
 			<div class="reflection" class:no-portrait={block.portrait === false}>
-				{#if block.portrait !== false}<Portrait width={120} height={150} />{/if}
+				{#if block.portrait !== false}<Portrait width={120} />{/if}
 				<p>{fill(block.text)}</p>
 			</div>
 		{:else if block.type === 'text'}
@@ -435,7 +435,7 @@
 	}
 	.reflection :global(img) {
 		width: 120px;
-		height: 150px;
+		height: 120px;
 		object-fit: cover;
 		border-radius: 60px 60px 6px 6px;
 		border: 6px solid #8f6a4c;

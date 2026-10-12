@@ -635,3 +635,4 @@
 - Index: Now dropped from the directory (still in the room).
 - Now: "Working on" line reworded.
 - Now: "Photographing" line reworded.
+- Mirror: portrait frame made square (was 120x150, cropping the square photo).
