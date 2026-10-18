@@ -538,7 +538,11 @@
 					<RecordPlayer spotify={music.spotify} on={musicOn} onplayback={musicPlayback} />
 				</div>
 			</section>{/if}
-		{#if status === 'ready'}<div class="room-hint" id="room-instructions">
+		{#if status === 'ready'}<div
+				class="room-hint"
+				id="room-instructions"
+				hidden={(narrow || coarse) && musicOn && Boolean(nearThing?.music) && !selected}
+			>
 				{#if selected}<p role="status">Heading to <strong>{selected.area}</strong>…</p>
 				{:else if near}<button onclick={() => visit(near.id)}
 						>{near.area}<span>{coarse ? 'Tap to explore' : 'E to explore'}</span></button

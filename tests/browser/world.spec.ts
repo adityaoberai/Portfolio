@@ -295,14 +295,26 @@ test('mobile music controls stay compact and return after reading a panel', asyn
 	const page = await context.newPage();
 	await stubSpotify(page);
 	await openRoom(page);
-	await page.getByRole('button', { name: 'In the room', exact: true }).tap();
-	await page.getByText('Little things in the room', { exact: true }).click();
-	await page.getByRole('button', { name: 'Put the record on', exact: true }).tap();
+	await settle(page);
+	const gramophone = await anchor(page, 'gramophone');
+	await page.touchscreen.tap(gramophone.x, gramophone.y);
 	const dock = page.getByRole('region', { name: 'Gramophone' });
+	const hint = page.locator('.room-hint');
 	await expect(dock.getByRole('button', { name: 'Open player', exact: true })).toBeVisible();
+	await expect(hint).toContainText('Lift the needle?');
+	await expect(hint).toBeHidden();
 	await expect(dock.locator('iframe')).not.toBeVisible();
 	await dock.getByRole('button', { name: 'Open player', exact: true }).tap();
 	await expect(dock.locator('iframe')).toBeVisible();
+	await page.setViewportSize({ width: 844, height: 390 });
+	await expect(hint).toBeHidden();
+	await page.setViewportSize({ width: 320, height: 844 });
+	await dock.getByRole('button', { name: 'Stop', exact: true }).tap();
+	await expect(hint).toBeVisible();
+	await expect(hint).toContainText('Put a record on?');
+	await hint.getByRole('button').tap();
+	await expect(dock.getByRole('button', { name: 'Open player', exact: true })).toBeVisible();
+	await expect(hint).toBeHidden();
 	await page
 		.getByRole('navigation', { name: 'Explore the room', exact: true })
 		.getByRole('button', { name: 'Writing', exact: true })
@@ -310,6 +322,7 @@ test('mobile music controls stay compact and return after reading a panel', asyn
 	await expect(page.getByRole('dialog')).toBeVisible();
 	await page.getByRole('button', { name: 'Close and return to the room' }).tap();
 	await expect(dock.getByRole('button', { name: 'Stop', exact: true })).toBeInViewport();
+	await expect(hint).toBeVisible();
 	expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
 	await dock.getByRole('button', { name: 'Stop', exact: true }).tap();
 	await expect(dock).not.toBeVisible();

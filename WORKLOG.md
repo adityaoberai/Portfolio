@@ -49,6 +49,12 @@
 
 ## Change log
 
+### 2026-10-18 — One gramophone card on mobile
+
+- User's phone screenshot showed the active music controls above a second “Lift the needle?” card that repeated the Stop action.
+- Hide that duplicate contextual hint while the music controls are present on narrow or coarse-pointer screens, including phone landscape. Other destinations and object hints remain available, and the play hint returns after stopping.
+- Extended the existing mobile music regression to cover starting at the gramophone, one visible card, landscape, stopping/restarting, and returning from another object's panel. All three focused music/accessibility browser checks pass; type checks, lint, and the production build pass. Publish only to `v3-world`.
+
 ### 2026-10-18 — UX audit implementation
 
 - User approved implementing the UX and typography audit on `v3-world`.
