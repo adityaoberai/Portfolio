@@ -105,6 +105,8 @@ test('the gramophone’s player card meets WCAG 2.2 AA (automated checks)', asyn
 			contentType: 'text/javascript',
 			body: `window.onSpotifyIframeApiReady({ createController(element, options, created) {
 				const frame = document.createElement('iframe');
+				frame.width = options.width;
+				frame.height = options.height;
 				element.replaceWith(frame);
 				created({ addListener() {}, play() {}, resume() {}, pause() {}, destroy() {} });
 			} });`
@@ -117,8 +119,12 @@ test('the gramophone’s player card meets WCAG 2.2 AA (automated checks)', asyn
 	await page.getByRole('button', { name: 'Put the record on' }).click();
 	const dock = page.getByRole('region', { name: 'Gramophone' });
 	await expect(dock).toBeVisible();
+	await expect(dock.getByRole('img', { name: 'Loading music', exact: true })).toBeVisible();
 	await dock.evaluate((card) => Promise.all(card.getAnimations().map((a) => a.finished)));
 	await audit(page, '/world (music on)');
+	await dock.getByRole('button', { name: 'Hide player', exact: true }).click();
+	await expect(dock.getByRole('button', { name: 'Open player', exact: true })).toBeVisible();
+	await audit(page, '/world (music player collapsed)');
 });
 
 test('the room fallback meets WCAG 2.2 AA without WebGL', async ({ browser }) => {

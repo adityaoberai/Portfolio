@@ -49,6 +49,13 @@
 
 ## Change log
 
+### 2026-10-18 — Icon controls for the music card
+
+- Replaced the music card's visible Open/Hide player and Stop captions with chevrons and a stop square. The buttons keep accessible names, hover descriptions, expansion state, keyboard operation, and at least 44 × 44px touch targets.
+- Simplified the card label to “Gramophone” with loading, playing, or paused icons that follow Spotify's reported playback. Status indicators have accessible labels; motion respects the reduced-motion preference. Spotify's embedded playback controls remain the source of play/pause actions.
+- Extended the existing music regressions to cover pause/resume status updates, keyboard expansion/collapse without interrupting playback, mobile touch target sizes, and automated accessibility scans in both card states. The Spotify stubs now honor the requested frame width and height so mobile geometry reflects the real embed.
+- Validation: all three focused browser cases pass, including both automated WCAG 2.2 AA scans. All 30 unit tests pass; type checks report 0 errors/0 warnings; lint and the production build pass. Inspected the mobile card at 320px and 390px and the desktop card; 200% text stays within the mobile gutters, and reduced motion disables the record animation. A fresh build resolved incomplete local compressed assets; all 162 compressed outputs were verified against their sources before the passing browser run. Publish only to `v3-world`.
+
 ### 2026-10-18 — Mobile room menu and camera label cleanup
 
 - User feedback: the horizontal mobile destination strip felt awkward, and the camera model was repeated as a pill beneath the same model in the panel title.

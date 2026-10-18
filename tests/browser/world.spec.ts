@@ -37,8 +37,8 @@ async function openMenu(page: Page) {
 	await expect(page.getByRole('navigation', { name: 'In the room' })).toBeVisible();
 }
 
-// Spotify's iFrame API, stubbed: a blank player that reports playing and paused at once,
-// and records what it was asked to do in window.__spotify. Nothing reaches Spotify.
+// Spotify's iFrame API, stubbed: a blank player that reports playback changes
+// and records what it was asked to do. Nothing reaches Spotify.
 async function stubSpotify(page: Page) {
 	await page.route('https://open.spotify.com/**', (route) =>
 		route.fulfill({
@@ -47,13 +47,16 @@ async function stubSpotify(page: Page) {
 			window.onSpotifyIframeApiReady({
 				createController(element, options, created) {
 					const frame = document.createElement('iframe');
+					frame.width = options.width;
 					frame.height = options.height;
 					element.replaceWith(frame);
 					const listeners = {};
 					const emit = (name, data) => (listeners[name] || []).forEach((fn) => fn({ data }));
+					window.__spotifyPlayback = (paused) =>
+						emit('playback_update', { isPaused: paused, isBuffering: false, position: 0, duration: 29713 });
 					const say = (call, paused) => () => {
 						window.__spotify.push(call);
-						emit('playback_update', { isPaused: paused, isBuffering: false, position: 0, duration: 29713 });
+						window.__spotifyPlayback(paused);
 					};
 					created({
 						addListener: (name, fn) => (listeners[name] ||= []).push(fn),
@@ -70,6 +73,14 @@ async function stubSpotify(page: Page) {
 }
 const spotifyCalls = (page: Page) =>
 	page.evaluate(() => (window as unknown as { __spotify?: string[] }).__spotify ?? []);
+const spotifyPlayback = (page: Page, paused: boolean) =>
+	page.evaluate(
+		(value) =>
+			(window as unknown as { __spotifyPlayback: (paused: boolean) => void }).__spotifyPlayback(
+				value
+			),
+		paused
+	);
 
 async function openRoom(page: Page) {
 	await page.goto('/world?diagnostics=1');
@@ -247,7 +258,7 @@ test('the gramophone plays the playlist, with Spotify’s player over the hint c
 	await expect(canvas).toHaveAttribute('data-z', '1.350');
 	await expect(dock.locator('iframe')).toHaveAttribute('title', 'Spotify player');
 	await expect.poll(() => spotifyCalls(page)).toEqual(['play']);
-	await expect(dock).toContainText('On the gramophone');
+	await expect(dock.getByRole('img', { name: 'Playing', exact: true })).toBeVisible();
 	const dockBox = (await dock.boundingBox())!;
 	expect(dockBox.y + dockBox.height).toBeLessThanOrEqual((await hint.boundingBox())!.y);
 	await expect(canvas).toBeFocused();
@@ -258,6 +269,25 @@ test('the gramophone plays the playlist, with Spotify’s player over the hint c
 		.toBeGreaterThan(frames + 5);
 	// Spotify's compact player: just the song that's playing.
 	expect((await dock.locator('iframe').boundingBox())!.height).toBe(80);
+	// Spotify reports pause independently of whether its player is visible.
+	await spotifyPlayback(page, true);
+	await expect(dock.getByRole('img', { name: 'Paused', exact: true })).toBeVisible();
+	await dock.getByRole('button', { name: 'Hide player', exact: true }).focus();
+	await page.keyboard.press('Enter');
+	await expect(dock.locator('iframe')).toBeHidden();
+	await expect(dock.getByRole('button', { name: 'Open player', exact: true })).toHaveAttribute(
+		'aria-expanded',
+		'false'
+	);
+	await page.keyboard.press('Enter');
+	await expect(dock.locator('iframe')).toBeVisible();
+	await expect(dock.getByRole('button', { name: 'Hide player', exact: true })).toHaveAttribute(
+		'aria-expanded',
+		'true'
+	);
+	await expect.poll(() => spotifyCalls(page)).toEqual(['play']);
+	await spotifyPlayback(page, false);
+	await expect(dock.getByRole('img', { name: 'Playing', exact: true })).toBeVisible();
 	// A click in the player keeps the keyboard there; moving over the room gives it back.
 	await dock.locator('iframe').click();
 	await expect(canvas).not.toBeFocused();
@@ -301,11 +331,25 @@ test('mobile music controls stay compact and return after reading a panel', asyn
 	const dock = page.getByRole('region', { name: 'Gramophone' });
 	const hint = page.locator('.room-hint');
 	await expect(dock.getByRole('button', { name: 'Open player', exact: true })).toBeVisible();
+	for (const name of ['Open player', 'Stop']) {
+		const button = dock.getByRole('button', { name, exact: true });
+		const box = (await button.boundingBox())!;
+		expect(box.width).toBeGreaterThanOrEqual(44);
+		expect(box.height).toBeGreaterThanOrEqual(44);
+		await expect(button).toHaveText('');
+	}
+	await spotifyPlayback(page, true);
+	await expect(dock.getByRole('img', { name: 'Paused', exact: true })).toBeVisible();
+	await spotifyPlayback(page, false);
+	await expect(dock.getByRole('img', { name: 'Playing', exact: true })).toBeVisible();
 	await expect(hint).toContainText('Lift the needle?');
 	await expect(hint).toBeHidden();
 	await expect(dock.locator('iframe')).not.toBeVisible();
 	await dock.getByRole('button', { name: 'Open player', exact: true }).tap();
 	await expect(dock.locator('iframe')).toBeVisible();
+	const expandedBox = (await dock.boundingBox())!;
+	expect(expandedBox.x).toBeGreaterThanOrEqual(16);
+	expect(expandedBox.x + expandedBox.width).toBeLessThanOrEqual(304);
 	await page.setViewportSize({ width: 844, height: 390 });
 	await expect(hint).toBeHidden();
 	await page.setViewportSize({ width: 320, height: 844 });

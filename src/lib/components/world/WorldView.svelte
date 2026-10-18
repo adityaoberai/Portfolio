@@ -41,6 +41,9 @@
 	let musicOn = $state(false);
 	let playerExpanded = $state(true);
 	let recordPlaying = $state<boolean | null>(null);
+	const playbackLabel = $derived(
+		recordPlaying === null ? 'Loading music' : recordPlaying ? 'Playing' : 'Paused'
+	);
 	let musicNews = $state('');
 	let firstPlayback = true;
 	let returnFocus: HTMLElement | null = null;
@@ -543,18 +546,39 @@
 		{#if music}<section class="dock" aria-label="Gramophone" hidden={!musicOn}>
 				<div class="dock-top">
 					<span class="disc" class:turning={recordPlaying && !reducedMotion} aria-hidden="true"
-					></span><span
-						>{recordPlaying === null
-							? 'Putting the record on…'
-							: recordPlaying
-								? 'On the gramophone'
-								: 'Gramophone · paused'}</span
-					><button
-						aria-expanded={playerExpanded}
-						aria-controls="music-player"
-						onclick={() => (playerExpanded = !playerExpanded)}
-						>{playerExpanded ? 'Hide player' : 'Open player'}</button
-					><button onclick={stopMusic}>Stop<span aria-hidden="true"> ×</span></button>
+					></span>
+					<span class="dock-label">
+						Gramophone
+						<span class="playback" role="img" aria-label={playbackLabel} title={playbackLabel}>
+							<svg viewBox="0 0 24 24" aria-hidden="true" class:loading={recordPlaying === null}>
+								{#if recordPlaying === null}
+									<path d="M20 12a8 8 0 1 1-8-8" />
+								{:else if recordPlaying}
+									<path d="m8 5 11 7-11 7Z" fill="currentColor" stroke="none" />
+								{:else}
+									<path d="M6 5h4v14H6zM14 5h4v14h-4z" fill="currentColor" stroke="none" />
+								{/if}
+							</svg>
+						</span>
+					</span>
+					<div class="dock-actions">
+						<button
+							aria-label={playerExpanded ? 'Hide player' : 'Open player'}
+							title={playerExpanded ? 'Hide player' : 'Open player'}
+							aria-expanded={playerExpanded}
+							aria-controls="music-player"
+							onclick={() => (playerExpanded = !playerExpanded)}
+						>
+							<svg viewBox="0 0 24 24" aria-hidden="true">
+								<path d={playerExpanded ? 'm6 15 6-6 6 6' : 'm6 9 6 6 6-6'} />
+							</svg>
+						</button>
+						<button aria-label="Stop" title="Stop music" onclick={stopMusic}>
+							<svg viewBox="0 0 24 24" aria-hidden="true">
+								<rect x="6" y="6" width="12" height="12" rx="1" fill="currentColor" stroke="none" />
+							</svg>
+						</button>
+					</div>
 				</div>
 				<div id="music-player" hidden={!playerExpanded}>
 					<RecordPlayer spotify={music.spotify} on={musicOn} onplayback={musicPlayback} />
@@ -1169,14 +1193,47 @@
 		gap: 4px 8px;
 		font: 0.8125rem/1.5 var(--font-ui);
 	}
-	.dock-top > span:not(.disc) {
+	.dock-label {
+		display: flex;
+		align-items: center;
 		flex: 1;
+		gap: 8px;
+	}
+	.playback {
+		display: inline-flex;
+		flex: none;
+		color: var(--color-accent);
+	}
+	.dock-actions {
+		display: flex;
+		gap: 4px;
+		margin-left: auto;
 	}
 	.dock-top button {
+		display: inline-grid;
+		place-items: center;
+		min-width: 44px;
 		min-height: 44px;
-		padding: 4px 6px;
+		padding: 0;
+		border-radius: 6px;
 		color: var(--color-accent);
 		cursor: pointer;
+	}
+	.dock-top button:hover {
+		background: #eeece1;
+	}
+	.dock-top svg {
+		width: 20px;
+		height: 20px;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.75;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+	.playback svg {
+		width: 16px;
+		height: 16px;
 	}
 	#music-player {
 		padding-bottom: 4px;
@@ -1203,6 +1260,9 @@
 		}
 		.disc.turning {
 			animation: turn 1.8s linear infinite;
+		}
+		.playback .loading {
+			animation: turn 1.2s linear infinite;
 		}
 		@keyframes turn {
 			to {
