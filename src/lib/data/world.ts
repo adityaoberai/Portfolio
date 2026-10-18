@@ -290,13 +290,7 @@ export const world: WorldConfig = {
 			panel: {
 				title: cameraBody,
 				lead: 'Street, travel, and the moments between conference sessions.',
-				blocks: [
-					{
-						type: 'tags',
-						tags: [cameraBody]
-					},
-					{ type: 'items', style: 'photos', items: [{ type: 'photo', limit: 6 }] }
-				],
+				blocks: [{ type: 'items', style: 'photos', items: [{ type: 'photo', limit: 6 }] }],
 				links: [
 					{ label: 'All photographs' },
 					{ label: 'The full archive on Pexels', href: pexelsProfile }

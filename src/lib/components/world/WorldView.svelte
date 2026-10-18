@@ -3,6 +3,7 @@
 	import { beforeNavigate, pushState, replaceState } from '$app/navigation';
 	import { page as route } from '$app/state';
 	import V3Header from '$lib/components/V3Header.svelte';
+	import ModeSwitch from '$lib/components/ModeSwitch.svelte';
 	import RecordPlayer from './RecordPlayer.svelte';
 	import StationPanel from './StationPanel.svelte';
 	import { curiosities, page as copy, stationById, stations } from '$lib/data/room';
@@ -16,7 +17,6 @@
 	let frameEl = $state<HTMLElement>(null!);
 	let topEl: HTMLDivElement;
 	let cornerEl: HTMLDivElement;
-	let toolsEl: HTMLDivElement;
 	let menuButton: HTMLButtonElement;
 	let menu: HTMLDivElement;
 	let dialog: HTMLDialogElement;
@@ -346,13 +346,13 @@
 		const inspecting = Boolean(open || poemOf);
 		const cornerTop = cornerEl.getBoundingClientRect().top;
 		frameEl.style.setProperty('--corner', `${Math.max(0, height - cornerTop)}px`);
-		const lowest = Math.min(toolsEl.getBoundingClientRect().top, cornerTop);
+		frameEl.style.setProperty('--menu-top', `${menuButton.getBoundingClientRect().bottom + 12}px`);
 		const titleBottom = topEl.getBoundingClientRect().bottom;
 		room.setInsets(
 			small
 				? {
 						top: titleBottom + 8,
-						bottom: inspecting ? 16 : Math.max(24, height - lowest + 12),
+						bottom: inspecting ? 16 : Math.max(24, height - cornerTop + 12),
 						units: 9.4
 					}
 				: { top: inspecting ? 80 : titleBottom * 0.5, bottom: 24, units: 8.6 }
@@ -401,7 +401,9 @@
 		window.addEventListener('wheel', wheelToSheet, { passive: true });
 		window.addEventListener('pagehide', remember);
 		const observer = new ResizeObserver(measureLayout);
-		[frameEl, topEl, cornerEl, toolsEl, dialog, poemDialog].forEach((el) => observer.observe(el));
+		[frameEl, topEl, cornerEl, menuButton, dialog, poemDialog].forEach((el) =>
+			observer.observe(el)
+		);
 		const timeout = window.setTimeout(() => {
 			if (status === 'loading') status = 'error';
 		}, 15000);
@@ -454,6 +456,26 @@
 	});
 </script>
 
+{#snippet roomMenu()}
+	<button
+		class="menu-button"
+		popovertarget="room-menu"
+		aria-label="Room menu"
+		bind:this={menuButton}
+	>
+		<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false">
+			<path
+				d="M3 5h14M3 10h14M3 15h14"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.6"
+				stroke-linecap="round"
+			/>
+		</svg>
+		Menu
+	</button>
+{/snippet}
+
 <section
 	class="world"
 	class:inspecting={Boolean(open || poemOf)}
@@ -501,7 +523,7 @@
 		</p></noscript
 	>
 	<div class="top" bind:this={topEl}>
-		<V3Header overlay />
+		<V3Header overlay menu={roomMenu} />
 		<div class="welcome">
 			<h1 id="world-title">{copy.title}</h1>
 			<p>{site.role}. Writer, photographer, and community builder.</p>
@@ -540,6 +562,7 @@
 			</section>{/if}
 		{#if status === 'ready'}<div
 				class="room-hint"
+				class:idle={!selected && !near && !(nearThing && nearHint)}
 				id="room-instructions"
 				hidden={(narrow || coarse) && musicOn && Boolean(nearThing?.music) && !selected}
 			>
@@ -554,21 +577,10 @@
 					>
 				{:else}<p>
 						{coarse || narrow
-							? 'Choose a destination below, or tap the floor to wander.'
+							? 'Tap an object to explore, or open Menu.'
 							: 'WASD or arrows to wander. E to look closer.'}
 					</p>{/if}
 			</div>{/if}
-	</div>
-	<div class="room-tools" bind:this={toolsEl}>
-		<nav class="destinations" aria-label="Explore the room">
-			{#each stations as station (station.id)}<button
-					class:selected={pending === station.id || open === station.id}
-					onclick={(event) => visit(station.id, event)}>{station.area}</button
-				>{/each}
-		</nav>
-		<button class="menu-button" popovertarget="room-menu" bind:this={menuButton}
-			><span aria-hidden="true">☷</span> In the room</button
-		>
 	</div>
 	<div id="room-menu" class="menu" popover bind:this={menu} ontoggle={menuToggled}>
 		<div class="menu-head">
@@ -577,6 +589,7 @@
 				>×</button
 			>
 		</div>
+		<div class="menu-surface"><ModeSwitch /></div>
 		<nav aria-label="In the room">
 			<ul class="guide">
 				{#each stations as station (station.id)}<li class:is-near={roomState?.near === station.id}>
@@ -629,11 +642,10 @@
 				>
 			</div>
 		</details>
-		<p class="menu-foot"><a href="/index">See it on paper →</a></p>
 	</div>
 	<p class="sr-only" aria-live="polite">
 		{near
-			? `Near the ${near.short}. ${coarse ? 'Use the explore button or the object menu.' : 'Press E while the room is focused to explore.'}`
+			? `Near the ${near.short}. ${coarse ? 'Tap the object or use Menu to explore.' : 'Press E while the room is focused to explore.'}`
 			: ''}{note ? ` ${note.line}` : ''}
 	</p>
 	<p class="sr-only" aria-live="polite">{musicNews}</p>
@@ -766,7 +778,7 @@
 		display: none;
 	}
 	.inspecting .corner,
-	.inspecting .room-tools {
+	.inspecting .menu-button {
 		visibility: hidden;
 	}
 	.diagnostics {
@@ -833,37 +845,28 @@
 	.room-hint button span {
 		color: var(--color-secondary);
 	}
-	.room-tools {
-		position: absolute;
-		z-index: 4;
-		right: var(--gutter);
-		bottom: max(24px, env(safe-area-inset-bottom));
-	}
 	.menu-button {
 		display: inline-flex;
 		align-items: center;
-		gap: 10px;
-		min-height: 52px;
-		padding: 0 20px;
-		border-radius: 100px;
-		background: var(--color-accent);
-		color: #fffaf0;
-		box-shadow: 0 6px 20px #1f2a242b;
+		gap: 8px;
+		min-height: 44px;
+		padding: 8px 12px;
+		border: 1px solid #b7bda5;
+		border-radius: 8px;
+		background: #faf7ed;
+		color: var(--color-accent);
 		font: 500 0.9375rem/1.4 var(--font-ui);
 		cursor: pointer;
 		white-space: nowrap;
 	}
 	.menu-button:hover {
-		background: #213a30;
-	}
-	.destinations {
-		display: none;
+		background: #eeeee2;
 	}
 	.menu {
 		position: fixed;
-		inset: auto var(--gutter) 92px auto;
+		inset: var(--menu-top, 80px) var(--gutter) auto auto;
 		width: min(380px, calc(100vw - 32px));
-		max-height: calc(100dvh - 160px);
+		max-height: calc(100dvh - var(--menu-top, 80px) - 16px);
 		margin: 0;
 		overflow-y: auto;
 		padding: 8px 20px 16px;
@@ -912,6 +915,9 @@
 		min-height: 56px;
 		padding: 8px 0;
 		font-size: 1.25rem;
+	}
+	.guide a > span:first-child {
+		min-width: 0;
 	}
 	.guide a:hover {
 		color: var(--color-accent);
@@ -988,18 +994,9 @@
 		width: 18px;
 		height: 18px;
 	}
-	.menu-foot {
-		padding-top: 12px;
-		border-top: 1px solid var(--color-hairline);
-		font: 0.9375rem/1.5 var(--font-ui);
-	}
-	.menu-foot a {
-		display: inline-flex;
-		align-items: center;
-		min-height: 44px;
-		text-decoration: underline;
-		text-underline-offset: 4px;
-		color: var(--color-accent);
+	.menu-surface {
+		padding: 4px 0 8px;
+		border-bottom: 1px solid var(--color-hairline);
 	}
 	.fallback {
 		position: absolute;
@@ -1222,55 +1219,10 @@
 			max-width: 42ch;
 			margin-top: 8px;
 		}
-		.room-tools {
-			left: 12px;
-			right: 12px;
-			bottom: max(12px, env(safe-area-inset-bottom));
-			display: grid;
-			grid-template-columns: minmax(0, 1fr) auto;
-			align-items: center;
-			gap: 8px;
-			padding: 6px;
-			border: 1px solid #c9c4b6;
-			border-radius: 14px;
-			background: #faf7ed;
-			box-shadow: 0 4px 16px #2535291a;
-		}
-		.destinations {
-			display: flex;
-			align-items: center;
-			gap: 6px;
-			overflow-x: auto;
-			scrollbar-width: thin;
-			padding-bottom: 3px;
-		}
-		.destinations button {
-			flex: 0 0 auto;
-			min-height: 46px;
-			padding: 8px 14px;
-			border-radius: 8px;
-			background: #eeeee2;
-			font: 0.9375rem/1.4 var(--font-ui);
-			cursor: pointer;
-		}
-		.destinations button.selected {
-			background: var(--color-accent);
-			color: #fffaf0;
-		}
-		.menu-button {
-			min-height: 48px;
-			padding: 0 12px;
-			border-radius: 8px;
-			box-shadow: none;
-			font-size: 0.875rem;
-		}
-		.menu-button > span {
-			display: none;
-		}
 		.corner {
 			left: 16px;
 			right: 16px;
-			bottom: max(96px, calc(env(safe-area-inset-bottom) + 84px));
+			bottom: max(20px, env(safe-area-inset-bottom));
 			max-width: none;
 			justify-items: stretch;
 		}
@@ -1283,6 +1235,14 @@
 		.room-hint p {
 			padding: 8px 12px;
 		}
+		.room-hint.idle {
+			background: transparent;
+			border: 0;
+			color: var(--color-secondary);
+		}
+		.room-hint.idle p {
+			padding: 0;
+		}
 		.note {
 			left: 16px;
 			right: 16px;
@@ -1290,9 +1250,20 @@
 			max-width: none;
 		}
 		.menu {
-			inset: auto 12px max(94px, calc(env(safe-area-inset-bottom) + 82px));
-			width: auto;
-			max-height: calc(100dvh - 160px);
+			inset: 0 0 0 auto;
+			width: min(380px, calc(100vw - 24px));
+			height: 100dvh;
+			max-height: 100dvh;
+			padding: 0 20px max(20px, env(safe-area-inset-bottom));
+			border: 0;
+			border-left: 1px solid var(--color-hairline-strong);
+			border-radius: 0;
+			box-shadow: -16px 0 48px #25352926;
+			overscroll-behavior: contain;
+		}
+		.menu-head {
+			top: 0;
+			padding: max(12px, env(safe-area-inset-top)) 0 8px;
 		}
 		.sheet {
 			inset: auto 0 0;

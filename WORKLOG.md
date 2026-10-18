@@ -49,6 +49,13 @@
 
 ## Change log
 
+### 2026-10-18 — Mobile room menu and camera label cleanup
+
+- User feedback: the horizontal mobile destination strip felt awkward, and the camera model was repeated as a pill beneath the same model in the panel title.
+- Replaced the strip with a labeled hamburger in the world header. On mobile it opens a vertical drawer with all eight destinations, a contextual “See it on paper” invitation, curiosities, and settings. Native popover dismissal and the no-JavaScript destination links are retained. Desktop uses the same header button with a compact dropdown.
+- Reduced the idle mobile hint to quiet text, reclaimed the bottom spacing, and updated the camera framing insets. Removed the camera model's duplicate tags block from the photography panel.
+- Validation: all 38 browser checks pass, including the mobile drawer at 320/390/430px, scrollable content, sticky Close, keyboard dismissal, the single camera label, no-JavaScript links, music interactions, and automated WCAG 2.2 AA scans. All 30 unit tests pass; type checks report 0 errors/0 warnings; lint and the production build pass. Visually inspected the mobile room, the drawer at 390px and 320px, and the expanded photography panel. Publish only to `v3-world`.
+
 ### 2026-10-18 — One gramophone card on mobile
 
 - User's phone screenshot showed the active music controls above a second “Lift the needle?” card that repeated the Stop action.

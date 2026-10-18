@@ -4,7 +4,7 @@ test('an object is addressable, Back dismisses it, and Forward restores it', asy
 	await page.goto('/index');
 	await page.getByRole('navigation', { name: 'Explore another way' }).getByRole('link').click();
 	await expect(page.locator('canvas')).toHaveClass(/loaded/);
-	await page.getByRole('button', { name: 'In the room', exact: true }).click();
+	await page.getByRole('button', { name: 'Room menu', exact: true }).click();
 	await page
 		.getByRole('navigation', { name: 'In the room', exact: true })
 		.getByRole('link', { name: 'Collection', exact: true })
@@ -23,13 +23,15 @@ test('an object is addressable, Back dismisses it, and Forward restores it', asy
 test('a cold shared link closes within the room', async ({ page }) => {
 	await page.goto('/world#camera');
 	await expect(page.getByRole('heading', { name: 'Fujifilm X-T30 II', exact: true })).toBeVisible();
+	await expect(page.getByText('Fujifilm X-T30 II', { exact: true })).toHaveCount(1);
+	await expect(page.locator('.exif')).toHaveCount(0);
 	await page.getByRole('button', { name: 'Close and return to the room' }).click();
 	await expect(page).toHaveURL(/\/world$/);
 	await expect(page.locator('canvas')).toHaveClass(/loaded/);
 });
 
 for (const width of [320, 390, 430]) {
-	test(`mobile destinations and measured previews at ${width}px`, async ({ browser }) => {
+	test(`mobile menu and measured previews at ${width}px`, async ({ browser }) => {
 		const context = await browser.newContext({
 			viewport: { width, height: 844 },
 			isMobile: true,
@@ -40,9 +42,23 @@ for (const width of [320, 390, 430]) {
 		page.on('pageerror', (e) => errors.push(e.message));
 		await page.goto('/world?diagnostics=1');
 		await expect(page.locator('canvas')).toHaveClass(/loaded/);
-		const destinations = page.getByRole('navigation', { name: 'Explore the room', exact: true });
-		await expect(destinations).toBeVisible();
-		await destinations.getByRole('button', { name: 'Photography', exact: true }).tap();
+		await expect(page.locator('.destinations')).toHaveCount(0);
+		const menuButton = page.getByRole('button', { name: 'Room menu', exact: true });
+		const buttonBox = (await menuButton.boundingBox())!;
+		expect(buttonBox.y).toBeLessThan(100);
+		expect(buttonBox.height).toBeGreaterThanOrEqual(44);
+		await menuButton.tap();
+		const menu = page.locator('#room-menu');
+		await expect(menu).toBeVisible();
+		expect((await menu.boundingBox())!.height).toBeCloseTo(844, 0);
+		await expect(menu.getByRole('link', { name: 'See it on paper', exact: true })).toBeVisible();
+		const destinations = menu.getByRole('navigation', { name: 'In the room', exact: true });
+		await expect(destinations.getByRole('link')).toHaveCount(8);
+		for (const link of await destinations.getByRole('link').all())
+			expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+		await menu.evaluate((element) => (element.scrollTop = element.scrollHeight));
+		await expect(menu.getByRole('button', { name: 'Close the menu' })).toBeInViewport();
+		await destinations.getByRole('link', { name: 'Photography', exact: true }).tap();
 		const sheet = page.locator('dialog.sheet:not(.poem)');
 		await expect(sheet).toBeVisible();
 		await expect(page).toHaveURL(/#camera$/);
@@ -72,6 +88,10 @@ for (const width of [320, 390, 430]) {
 		await page.setViewportSize({ width, height: 844 });
 		await sheet.getByRole('button', { name: 'Close and return to the room' }).tap();
 		await expect(sheet).not.toBeVisible();
+		await menuButton.tap();
+		await page.keyboard.press('Escape');
+		await expect(menu).not.toBeVisible();
+		await expect(page.locator('canvas')).toBeFocused();
 		expect(
 			await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)
 		).toBeLessThanOrEqual(0);

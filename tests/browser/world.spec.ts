@@ -33,7 +33,7 @@ async function settle(page: Page) {
 
 // Every station is listed in the floating "In the room" menu.
 async function openMenu(page: Page) {
-	await page.getByRole('button', { name: 'In the room', exact: true }).click();
+	await page.getByRole('button', { name: 'Room menu', exact: true }).click();
 	await expect(page.getByRole('navigation', { name: 'In the room' })).toBeVisible();
 }
 
@@ -315,9 +315,10 @@ test('mobile music controls stay compact and return after reading a panel', asyn
 	await hint.getByRole('button').tap();
 	await expect(dock.getByRole('button', { name: 'Open player', exact: true })).toBeVisible();
 	await expect(hint).toBeHidden();
+	await page.getByRole('button', { name: 'Room menu', exact: true }).tap();
 	await page
-		.getByRole('navigation', { name: 'Explore the room', exact: true })
-		.getByRole('button', { name: 'Writing', exact: true })
+		.getByRole('navigation', { name: 'In the room', exact: true })
+		.getByRole('link', { name: 'Writing', exact: true })
 		.tap();
 	await expect(page.getByRole('dialog')).toBeVisible();
 	await page.getByRole('button', { name: 'Close and return to the room' }).tap();
@@ -333,7 +334,7 @@ test('closing the menu gives the keyboard back to the room', async ({ page }) =>
 	await openRoom(page);
 	await settle(page);
 	const canvas = page.locator('canvas');
-	const menuButton = page.getByRole('button', { name: 'In the room', exact: true });
+	const menuButton = page.getByRole('button', { name: 'Room menu', exact: true });
 	// Right, left, right: never far enough to reach a wall, however fast the frames come.
 	for (const [close, key] of [
 		[() => page.keyboard.press('Escape'), 'd'],
@@ -407,7 +408,7 @@ test('portrait touch input, reduced motion, and low-power DPR', async ({ browser
 	await openRoom(page);
 	const canvas = page.locator('canvas');
 	// Settings live in the menu; the OS preference is reflected there.
-	await page.getByRole('button', { name: 'In the room', exact: true }).tap();
+	await page.getByRole('button', { name: 'Room menu', exact: true }).tap();
 	await page.getByText('Room settings', { exact: true }).click();
 	await expect(page.getByRole('checkbox', { name: 'Less motion' })).toBeChecked();
 	await page.keyboard.press('Escape');
@@ -419,7 +420,7 @@ test('portrait touch input, reduced motion, and low-power DPR', async ({ browser
 	await page.touchscreen.tap(desk.x, desk.y);
 	await expect(page.getByRole('dialog')).toBeVisible();
 	await page.getByRole('button', { name: 'Back to the room' }).tap();
-	await page.getByRole('button', { name: 'In the room', exact: true }).tap();
+	await page.getByRole('button', { name: 'Room menu', exact: true }).tap();
 	await page.getByRole('checkbox', { name: 'Low power' }).check();
 	await expect(page.locator('output')).toContainText('DPR 1 ·');
 	const size = await page.evaluate(() => ({
@@ -476,7 +477,7 @@ test('WebGL failure and disabled JavaScript preserve the content and Index escap
 		'The interactive room needs JavaScript.'
 	);
 	// The menu is a native popover, so it opens without JavaScript too.
-	await staticPage.getByRole('button', { name: 'In the room', exact: true }).click();
+	await staticPage.getByRole('button', { name: 'Room menu', exact: true }).click();
 	// One link per visible station (the lanyards are part of the corkboard).
 	await expect(
 		staticPage.getByRole('navigation', { name: 'In the room' }).getByRole('link')

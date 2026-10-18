@@ -42,7 +42,7 @@ test('the room, its guide, and every station meet WCAG 2.2 AA (automated checks)
 	await page.goto('/world');
 	await expect(page.locator('canvas')).toHaveClass(/\bloaded\b/);
 	await audit(page, '/world');
-	const menuButton = page.getByRole('button', { name: 'In the room', exact: true });
+	const menuButton = page.getByRole('button', { name: 'Room menu', exact: true });
 	await menuButton.click();
 	await expect(page.getByRole('navigation', { name: 'In the room' })).toBeVisible();
 	await audit(page, '/world (menu open)');
@@ -112,7 +112,7 @@ test('the gramophone’s player card meets WCAG 2.2 AA (automated checks)', asyn
 	);
 	await page.goto('/world');
 	await expect(page.locator('canvas')).toHaveClass(/\bloaded\b/);
-	await page.getByRole('button', { name: 'In the room', exact: true }).click();
+	await page.getByRole('button', { name: 'Room menu', exact: true }).click();
 	await page.getByText('Little things in the room').click();
 	await page.getByRole('button', { name: 'Put the record on' }).click();
 	const dock = page.getByRole('region', { name: 'Gramophone' });

@@ -1,19 +1,27 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { page } from '$app/state';
 	import ModeSwitch from './ModeSwitch.svelte';
 	import { sections } from '$lib/data/sections';
 
 	// Deep pages get a section nav; World and Index have their own wayfinding.
 	// `overlay` floats the header over the full-page room.
-	let { nav = false, overlay = false }: { nav?: boolean; overlay?: boolean } = $props();
+	let {
+		nav = false,
+		overlay = false,
+		menu
+	}: { nav?: boolean; overlay?: boolean; menu?: Snippet } = $props();
 	const links = sections.filter((s) => s.id !== 'resume');
 	const path = $derived(page.url.pathname.replace(/\/$/, ''));
 </script>
 
-<header class="v3-header" class:overlay>
+<header class="v3-header" class:overlay class:with-menu={Boolean(menu)}>
 	<div class="bar">
 		<a href="/" class="identity">Aditya Oberai<span>Bengaluru, India</span></a>
-		<ModeSwitch />
+		<div class="header-actions">
+			<div class="surface"><ModeSwitch /></div>
+			{#if menu}{@render menu()}{/if}
+		</div>
 	</div>
 	{#if nav}
 		<nav aria-label="Sections">
@@ -63,6 +71,11 @@
 		font-size: 24px;
 		line-height: 1.15;
 		letter-spacing: -0.015em;
+	}
+	.header-actions {
+		display: flex;
+		align-items: center;
+		gap: 20px;
 	}
 	.identity span {
 		display: block;
@@ -127,6 +140,11 @@
 		}
 		.bar {
 			padding-block: 14px;
+		}
+	}
+	@media (max-width: 820px) {
+		.overlay.with-menu .surface {
+			display: none;
 		}
 	}
 </style>
