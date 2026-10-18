@@ -108,7 +108,7 @@ export type Block =
 			 * objects (square, whole image on a light ground). */
 			items: { title: string; text: string; image?: string }[];
 			images?: 'covers' | 'objects';
-		}
+	  }
 	| { type: 'facts'; heading?: string; rows: { label: string; text: string; href?: string }[] }
 	| { type: 'contact'; email?: string; places: { label: string; detail: string; href: string }[] }
 	| { type: 'links'; links: Link[] };
@@ -202,7 +202,7 @@ export interface Poem {
 export const world: WorldConfig = {
 	page: {
 		description:
-			"Come spend a minute in Aditya Oberai's world. A small, warm room to explore, with an accessible Index a click away.",
+			"Come spend a minute in Aditya Oberai's world. A small, warm room to explore, with the same story on paper a click away.",
 		eyebrow: "Aditya's room · Bengaluru",
 		title: 'Come spend a minute in my world.',
 		hint: {
@@ -215,14 +215,14 @@ export const world: WorldConfig = {
 		},
 		menuTitle: 'In the room',
 		menuFoot: 'A work in progress, just like the person who lives here.',
-		indexLink: "Prefer a list? Here's the Index →",
+		indexLink: 'See it on paper →',
 		loading: {
 			title: 'Opening the room…',
 			text: 'A small space for the things I make and care about.'
 		},
 		failed: {
 			title: 'The room couldn’t open here.',
-			text: 'Everything in it is still in the menu, and in the Index.'
+			text: 'You can still explore every object from the menu, or see the same story on paper.'
 		}
 	},
 
@@ -345,7 +345,11 @@ export const world: WorldConfig = {
 					{
 						type: 'list',
 						heading: 'Books on the shelf',
-						items: books.map((book) => ({ title: book.title, text: book.author, image: book.cover }))
+						items: books.map((book) => ({
+							title: book.title,
+							text: book.author,
+							image: book.cover
+						}))
 					}
 				],
 				links: [{ label: 'Open the binder on Collectr', href: collection.showcaseUrl }]

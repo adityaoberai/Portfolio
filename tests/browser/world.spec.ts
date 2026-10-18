@@ -79,11 +79,16 @@ async function openRoom(page: Page) {
 test('Index is meaningful HTML and does not request the scene bundle', async ({ page }) => {
 	const scripts: string[] = [];
 	page.on('response', async (response) => {
-		if (response.request().resourceType() === 'script') scripts.push(await response.text());
+		if (response.request().resourceType() === 'script')
+			scripts.push(await response.text().catch(() => '')); // A later navigation can discard a response body.
 	});
 	await page.goto('/index');
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('bring people together');
-	await expect(page.getByRole('link', { name: /Visit my room/ })).toBeVisible();
+	await expect(
+		page
+			.getByRole('navigation', { name: 'Explore another way' })
+			.getByRole('link', { name: /Step into my room/ })
+	).toBeVisible();
 	await page.waitForLoadState('networkidle');
 	expect(scripts.some((script) => script.includes('WebGLRenderer'))).toBe(false);
 });
@@ -111,7 +116,7 @@ test('keyboard and floor movement stop at rest; the desk opens and focus returns
 	await expect(canvas).toHaveAttribute('data-frames', frames!);
 
 	await openMenu(page);
-	await page.getByRole('button', { name: 'Inspect the desk' }).click();
+	await page.getByRole('link', { name: 'Work & build', exact: true }).click();
 	await expect(page.getByRole('dialog')).toBeVisible();
 	await expect(
 		page.getByRole('heading', { name: 'Developer Relations Lead at Appwrite' })
@@ -281,6 +286,36 @@ test('the gramophone plays the playlist, with Spotify’s player over the hint c
 	await expect(page.getByRole('heading', { name: 'Pinned to the corkboard' })).toBeVisible();
 });
 
+test('mobile music controls stay compact and return after reading a panel', async ({ browser }) => {
+	const context = await browser.newContext({
+		viewport: { width: 320, height: 844 },
+		isMobile: true,
+		hasTouch: true
+	});
+	const page = await context.newPage();
+	await stubSpotify(page);
+	await openRoom(page);
+	await page.getByRole('button', { name: 'In the room', exact: true }).tap();
+	await page.getByText('Little things in the room', { exact: true }).click();
+	await page.getByRole('button', { name: 'Put the record on', exact: true }).tap();
+	const dock = page.getByRole('region', { name: 'Gramophone' });
+	await expect(dock.getByRole('button', { name: 'Open player', exact: true })).toBeVisible();
+	await expect(dock.locator('iframe')).not.toBeVisible();
+	await dock.getByRole('button', { name: 'Open player', exact: true }).tap();
+	await expect(dock.locator('iframe')).toBeVisible();
+	await page
+		.getByRole('navigation', { name: 'Explore the room', exact: true })
+		.getByRole('button', { name: 'Writing', exact: true })
+		.tap();
+	await expect(page.getByRole('dialog')).toBeVisible();
+	await page.getByRole('button', { name: 'Close and return to the room' }).tap();
+	await expect(dock.getByRole('button', { name: 'Stop', exact: true })).toBeInViewport();
+	expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
+	await dock.getByRole('button', { name: 'Stop', exact: true }).tap();
+	await expect(dock).not.toBeVisible();
+	await context.close();
+});
+
 test('closing the menu gives the keyboard back to the room', async ({ page }) => {
 	await openRoom(page);
 	await settle(page);
@@ -360,6 +395,7 @@ test('portrait touch input, reduced motion, and low-power DPR', async ({ browser
 	const canvas = page.locator('canvas');
 	// Settings live in the menu; the OS preference is reflected there.
 	await page.getByRole('button', { name: 'In the room', exact: true }).tap();
+	await page.getByText('Room settings', { exact: true }).click();
 	await expect(page.getByRole('checkbox', { name: 'Less motion' })).toBeChecked();
 	await page.keyboard.press('Escape');
 	const start = await canvas.getAttribute('data-x');
@@ -380,7 +416,7 @@ test('portrait touch input, reduced motion, and low-power DPR', async ({ browser
 	expect(size.scroll).toBeLessThanOrEqual(size.width);
 	// The room is the page: nothing scrolls vertically either.
 	expect(await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)).toBe(0);
-	await page.getByRole('button', { name: 'Inspect the shelf' }).tap();
+	await page.getByRole('link', { name: 'Collection', exact: true }).tap();
 	await expect(page.getByRole('navigation', { name: 'In the room' })).not.toBeVisible();
 	await expect(page.getByRole('dialog')).toBeVisible();
 	await page.getByRole('button', { name: 'Back to the room' }).tap();
@@ -408,10 +444,10 @@ test('WebGL failure and disabled JavaScript preserve the content and Index escap
 	await expect(page.getByRole('heading', { name: 'The room couldn’t open here.' })).toBeVisible();
 	// The room's contents still open without WebGL, from the menu.
 	await openMenu(page);
-	await page.getByRole('button', { name: 'Inspect the camera' }).click();
+	await page.getByRole('link', { name: 'Photography', exact: true }).click();
 	await expect(page.getByRole('heading', { name: 'Fujifilm X-T30 II' })).toBeVisible();
 	await page.keyboard.press('Escape');
-	await page.getByRole('status').getByRole('link', { name: 'Explore the Index' }).click();
+	await page.getByRole('status').getByRole('link', { name: 'See it on paper' }).click();
 	await expect(page).toHaveURL(/\/index\/?$/);
 	await context.close();
 
@@ -433,7 +469,7 @@ test('WebGL failure and disabled JavaScript preserve the content and Index escap
 		staticPage.getByRole('navigation', { name: 'In the room' }).getByRole('link')
 	).toHaveCount(8);
 	await staticPage.keyboard.press('Escape');
-	await staticPage.getByRole('status').getByRole('link', { name: 'Explore the Index' }).click();
+	await staticPage.getByRole('status').getByRole('link', { name: 'See it on paper' }).click();
 	await expect(staticPage.getByRole('heading', { level: 1 })).toContainText(
 		'bring people together'
 	);
@@ -448,8 +484,8 @@ test('context loss exposes the fallback without losing the Index switch', async 
 	});
 	await expect(page.getByRole('heading', { name: 'The room couldn’t open here.' })).toBeVisible();
 	await page
-		.getByRole('navigation', { name: 'Website mode' })
-		.getByRole('link', { name: 'Index' })
+		.getByRole('navigation', { name: 'Explore another way' })
+		.getByRole('link', { name: 'See it on paper' })
 		.click();
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('bring people together');
 });
@@ -469,7 +505,24 @@ test('every station in the room opens from the guide', async ({ browser }) => {
 		['door', 'Elsewhere']
 	]) {
 		await openMenu(page);
-		await page.getByRole('button', { name: `Inspect the ${name}`, exact: true }).click();
+		await page
+			.getByRole('navigation', { name: 'In the room', exact: true })
+			.getByRole('link', {
+				name: (
+					{
+						desk: 'Work & build',
+						notebook: 'Writing',
+						camera: 'Photography',
+						shelf: 'Collection',
+						corkboard: 'Community & speaking',
+						mirror: 'About',
+						window: 'Now',
+						door: 'Elsewhere & contact'
+					} as Record<string, string>
+				)[name],
+				exact: true
+			})
+			.click();
 		await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
 		await page.keyboard.press('Escape');
 		await expect(page.getByRole('dialog')).not.toBeVisible();
@@ -514,9 +567,9 @@ test('arriving focuses the room, so the keyboard works without a click', async (
 	await expect(canvas).toBeFocused();
 	await expect(canvas).not.toHaveAttribute('data-x', next!);
 	// Focused controls keep focus; Tab still leaves the room.
-	await page.getByRole('link', { name: 'Index', exact: true }).focus();
+	await page.getByRole('link', { name: 'See it on paper', exact: false }).focus();
 	await page.keyboard.press('d');
-	await expect(page.getByRole('link', { name: 'Index', exact: true })).toBeFocused();
+	await expect(page.getByRole('link', { name: 'See it on paper', exact: false })).toBeFocused();
 });
 
 test('arrival never steals focus from a deep-linked station or other pages', async ({

@@ -46,10 +46,10 @@
 	.meta {
 		padding-top: 5px;
 		font:
-			12px/1.5 system-ui,
+			var(--type-meta) / 1.5 var(--font-ui),
 			sans-serif;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
+		letter-spacing: normal;
+		text-transform: none;
 		color: var(--color-secondary);
 	}
 	.text {
@@ -61,7 +61,8 @@
 		grid-column: auto;
 	}
 	.title {
-		font-size: 21px;
+		font-size: var(--type-item);
+		font-weight: 500;
 		line-height: 1.3;
 	}
 	.arrow {
@@ -70,12 +71,13 @@
 	}
 	.subtitle {
 		font:
-			13px/1.5 system-ui,
+			var(--type-caption) / 1.5 var(--font-ui),
 			sans-serif;
 		color: var(--color-ink-soft);
 	}
 	.description {
-		font-size: 16px;
+		font-size: var(--type-body);
+		max-width: 66ch;
 		line-height: 1.55;
 		color: var(--color-secondary);
 	}

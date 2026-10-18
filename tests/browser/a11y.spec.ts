@@ -58,7 +58,24 @@ test('the room, its guide, and every station meet WCAG 2.2 AA (automated checks)
 		'door'
 	]) {
 		await menuButton.click();
-		await page.getByRole('button', { name: `Inspect the ${name}`, exact: true }).click();
+		await page
+			.getByRole('navigation', { name: 'In the room', exact: true })
+			.getByRole('link', {
+				name: (
+					{
+						desk: 'Work & build',
+						notebook: 'Writing',
+						camera: 'Photography',
+						shelf: 'Collection',
+						corkboard: 'Community & speaking',
+						mirror: 'About',
+						window: 'Now',
+						door: 'Elsewhere & contact'
+					} as Record<string, string>
+				)[name],
+				exact: true
+			})
+			.click();
 		await expect(page.getByRole('dialog')).toBeVisible();
 		// Measure contrast after the sheet's fade-in, not halfway through it.
 		await page

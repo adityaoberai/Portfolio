@@ -8,7 +8,18 @@
 - Source brief: user attachment, adityaoberai.com V3 (2026-09-30).
 - Full requirements and execution decisions live in root `v3.md`.
 
-## Current state (verified 2026-10-02)
+## Current state (2026-10-18 UX pass)
+
+- User approved implementing the UX and typography audit on `v3-world`, based on `c420ec5`. Accepted names: **My room / On paper**. The branch preview is **https://world.oberai.dev**. Production launch and merging to `main` are outside this pass.
+- Replaced the segmented mode switch with contextual invitations, a room preview on On paper, and a reduced-motion-aware view transition. Session storage restores the character position, station, open panel, expanded reading state, and reading position. Returning from a panel lands on the relevant On paper section.
+- Mobile exploration has labeled destinations with large touch targets and immediate selection feedback. The camera frames the selected subject in the measured area above the preview sheet; reading expands to 92dvh. Panel headers and dismissal stay available while scrolling, with safe-area spacing and landscape support.
+- Station URLs support sharing/reload, Back dismisses an internally opened panel, and Forward restores it. The object menu has one primary destination per item, with curiosities and settings separated. Keyboard, reduced motion, demand rendering, and fallback routes remain supported.
+- Kept Newsreader for reading and headings; unified type roles, relaxed heading tracking, raised metadata to 13px, and used system sans for controls. Removed redundant eyebrows, aligned Collection/Now navigation, retained the mobile portrait, and removed the duplicate On paper footer. Enlarged-text and text-spacing checks exposed and fixed a grid overflow.
+- Photography now has an in-site reader, previous/next controls, arrow keys, native dialog focus, its own Back entry, and a Pexels link. The mobile music player collapses after playback starts and can be reopened or stopped.
+- Google Analytics retains the existing tag but starts after three seconds and is skipped on local test hosts. No new runtime dependency or font family was added.
+- Validation: see the 2026-10-18 change-log entry below. Physical iPhone/Android, screen-reader, Safari playback, and sustained GPU/thermal testing still need real devices; Chromium emulation is not a substitute.
+
+## Previous verified state (2026-10-02)
 
 - Branch: `v3-world`, based on `12cbe80`. One commit per phase: Phase 0 `f85cdaf`, Phase 1 `2e6ceee`, Phase 2 `298269e`, Phase 3 `e71d7cc`, Phase 4 `9b8afb4`, Phase 5 `4b772bd`, full-page World `1b0e26b`, focus/size/E `2db0f96` + `9797ce7`, configurable room content `b8ed4c3`, solid furniture and the open doorway `99f5277`, rename to `WORKLOG.md` `6e97548`, favourite cards, Squirtle plush, and new Blastoise `75dfc72`, cowl, DeLorean, flag, and shelf rows `39017a7`, desk/shelf swap and laptop `1418900`, bed/armchair and mirror/cabinet swaps `f3fd237`, plant removed and walls rearranged `c57e6c1`, camera cabinet right of the shelf `d63c09e`, the sofa, the combined board, seats, books, and the window move `0dcd437`, then the mirror reflection `e6209af`, the bed that turns the character away `8675336`, then the poem card, the keyboard back to the room after the menu, scrollable sheets, and the trimmed corkboard `b048990`, the poem moved into the side sheet `5cac571`, then the visual review fixes and the bed in the front-right corner `0707ce4`, then the gramophone, the bed you can reach from anywhere beside it, Squirtle on the pillow, and the trimmed mirror panel `504ec59`, then the gramophone's player moved over the hint card (this state). `main` is untouched. Each change set is pushed to `origin/v3-world`.
 - Stack: SvelteKit 2.70, Svelte 5.57, TypeScript, Tailwind 4, **adapter-node 5.5.7** (replaced adapter-static), Three.js 0.186.1.
@@ -26,9 +37,9 @@
 - The gramophone loads Spotify's iFrame API and player (third-party JavaScript and cookies) only once a visitor puts the record on. Logged-out visitors hear 30-second previews that move on by themselves (checked in Chrome); Safari may block the start, and then the card asks them to press play. Not yet checked on a real iPhone: add it to the phone gate. Also unchecked, as Claude can't log in to Spotify: on a phone the player is ~335 px wide, and for logged-in listeners (who also get a progress bar) Spotify squeezed its play button at ~300 px; at 400 px (desktop) it's full size.
 - `src/lib/data/now.ts`: "Reading" and "Thinking about" are left out because there is no source for them; Aditya should supply them. `now.updated` is a manual date and must change whenever the page changes.
 - `npm audit`: 3 low findings in the SvelteKit/cookie chain; only `--force` resolves them.
-- Google Analytics (existing V2 tag in `src/routes/+layout.svelte`) is 160 KB of third-party JavaScript on every page, more than all first-party JavaScript on Index. Keep, defer, or replace: Aditya's call.
+- Google Analytics retains its existing tag and is now deferred by three seconds. The earlier 160 KB observation is historical; current transfer cost and whether to replace analytics remain a separate review.
 
-## Next steps
+## Earlier production-launch notes (2026-10-02)
 
 1. User: run the real-phone gate in `v3.md` and record results here.
 2. User: check the branch preview while signed in to the Appwrite Console (preview URLs return 401 to anonymous visitors).
@@ -37,6 +48,17 @@
 5. Go live on Appwrite Sites: add `ORIGIN=https://adityaoberai.com` (site Settings → Environment variables), merge `v3-world` into `main` via a PR, add `adityaoberai.com` and `www.adityaoberai.com` as Active-deployment domains (the apex needs NS delegation from GoDaddy; copy its MX/TXT records first), keep oberai.dev on Active deployment until path-preserving redirects exist (Appwrite domain redirects drop paths). Rollback: reactivate V2 deployment `6aa7d3f0dc0c05bdc438`.
 
 ## Change log
+
+### 2026-10-18 — UX audit implementation
+
+- User approved implementing the UX and typography audit on `v3-world`.
+- Accepted names: My room / On paper. Invitations: “See it on paper” / “Step into my room”. Remove unnecessary eyebrows.
+- Implemented room history and visit restoration, mobile destinations, measured panel framing, preview/reading sheets, shared typography, and gallery refinements as described in Current state.
+- Browser checks caught two implementation issues: SvelteKit shallow history updates `page.state` without updating `page.url`, so panel identity now lives explicitly in history state; teardown happens after dialog layout disappears, so live reading state is saved before navigation rather than overwritten at teardown.
+- Added corrupt-storage and viewport-geometry unit coverage, plus ordinary-motion mobile previews at 320/390/430px, rotation, sticky dismissal, shared links, Back/Forward, reading restoration, photo-reader navigation, enlarged text, and compact mobile music coverage.
+- Validation: `npm test` 30/30; `npm run check` 0 errors/0 warnings; `npm run lint` passes; `npm run build` succeeds with adapter-node. All 38 browser cases pass against the built Node server (24 room/UX cases, then 14 page/accessibility/mode/mobile-music cases after the final typography refinements). Automated accessibility scans use the WCAG 2.2 AA tags; they do not establish full conformance.
+- Inspected rendered mobile On paper, mobile preview and expanded reading states, and the desktop panel. Browser QA used Chromium 153 with software WebGL because the environment's normal browser download failed; the optional `PLAYWRIGHT_CHROMIUM_EXECUTABLE` override does not change the default local test setup. Physical-device performance and Safari playback remain unverified.
+- Delivery: repository write access is now confirmed after the user reconfigured GitHub. Terminal Git still has no push credentials, so publish the verified tree through the connected GitHub account with a lease against `c420ec5`. Commit message: “Improve mobile room UX and On paper navigation”. Only `v3-world` may move; `main` remains at `12cbe80`. Verify Appwrite's resulting branch deployment at https://world.oberai.dev after publishing.
 
 ### 2026-09-30 — Branch and work log
 

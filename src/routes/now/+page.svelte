@@ -22,7 +22,6 @@
 	description="What Aditya Oberai is working on, writing, photographing, and collecting right now."
 />
 <article class="now-page">
-	<p class="eyebrow">Now · the view from the window</p>
 	<h1>Right now</h1>
 	<p class="lede">
 		{now.basedIn}{#if time}. It’s {time} here{/if}.
@@ -38,7 +37,10 @@
 		{/each}
 	</dl>
 	<p class="updated">Last updated <time datetime={now.updated}>{updated}</time>.</p>
-	<p class="back"><a href="/world">Back to the room →</a> <a href="/index">The Index →</a></p>
+	<p class="back">
+		<a href="/world#window">Back to the room →</a>
+		<a href="/index#now">See it on paper →</a>
+	</p>
 </article>
 
 <style>
@@ -48,14 +50,14 @@
 		padding: 64px clamp(20px, 5vw, 48px) 56px;
 	}
 	h1 {
-		margin-top: 14px;
-		font-size: clamp(36px, 5vw, 56px);
-		letter-spacing: -0.045em;
-		line-height: 1.05;
+		margin-top: 0;
+		font-size: var(--type-page);
+		letter-spacing: -0.02em;
+		line-height: 1.12;
 	}
 	.lede {
 		margin-top: 16px;
-		font-size: 20px;
+		font-size: var(--type-lead);
 		color: #55574d;
 	}
 	dl {
@@ -72,15 +74,15 @@
 	dt {
 		padding-top: 4px;
 		font:
-			12px/1.5 system-ui,
+			var(--type-meta) / 1.5 var(--font-ui),
 			sans-serif;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
+		letter-spacing: normal;
+		text-transform: none;
 		color: #69705d;
 	}
 	dd {
 		margin: 0;
-		font-size: 19px;
+		font-size: var(--type-body);
 		line-height: 1.5;
 	}
 	dd a,
@@ -92,11 +94,12 @@
 	}
 	.updated {
 		margin-top: 24px;
-		font-size: 15px;
+		font-size: var(--type-body);
 		color: #606456;
 	}
 	.back {
 		display: flex;
+		flex-wrap: wrap;
 		gap: 24px;
 		margin-top: 32px;
 	}

@@ -12,7 +12,7 @@
 />
 
 <div class="v3-page">
-	<PageIntro eyebrow="About · the mirror" title={about.headline} station="mirror">
+	<PageIntro title={about.headline} station="mirror">
 		<p>{about.standfirst}</p>
 	</PageIntro>
 
@@ -85,7 +85,7 @@
 	}
 	.story p,
 	.story li {
-		font-size: 19px;
+		font-size: var(--type-body);
 		line-height: 1.7;
 		color: var(--color-ink-soft);
 	}
@@ -108,7 +108,7 @@
 	h2 .n {
 		margin-right: 12px;
 		font:
-			12px system-ui,
+			var(--type-meta) / 1.5 var(--font-ui),
 			sans-serif;
 		color: var(--color-secondary);
 		vertical-align: middle;

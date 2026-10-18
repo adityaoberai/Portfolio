@@ -17,7 +17,7 @@
 />
 
 <div class="v3-page">
-	<PageIntro eyebrow="Writing · the notebook" title="Writing things down." station="notebook">
+	<PageIntro title="Writing things down." station="notebook">
 		<p>
 			I write about developer relations, developer tools, and whatever I'm currently figuring out:
 			personal essays on oberai.blog, and technical writing for Appwrite.
@@ -60,7 +60,7 @@
 <style>
 	.note {
 		margin-top: 8px;
-		font-size: 16px;
+		font-size: var(--type-body);
 		color: var(--color-secondary);
 	}
 	.list {

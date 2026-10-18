@@ -11,7 +11,7 @@
 />
 
 <div class="v3-page">
-	<PageIntro eyebrow="Projects · things I've built" title="Things I've built." station="desk">
+	<PageIntro title="Things I've built." station="desk">
 		<p>
 			Seven projects, curated. Most were built to teach something, and all of them to scratch an
 			itch.
@@ -75,20 +75,20 @@
 	.n {
 		padding-top: 10px;
 		font:
-			12px system-ui,
+			var(--type-meta) / 1.5 var(--font-ui),
 			sans-serif;
 		color: var(--color-secondary);
 	}
 	h2 {
 		font-size: clamp(26px, 3vw, 32px);
-		letter-spacing: -0.03em;
+		letter-spacing: -0.015em;
 		line-height: 1.15;
 		font-weight: 500;
 	}
 	.overview {
 		max-width: 720px;
 		margin-top: 10px;
-		font-size: 19px;
+		font-size: var(--type-body);
 		line-height: 1.6;
 	}
 	dl {
@@ -105,15 +105,15 @@
 	dt {
 		padding-top: 3px;
 		font:
-			11px/1.5 system-ui,
+			var(--type-meta) / 1.5 var(--font-ui),
 			sans-serif;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
+		letter-spacing: normal;
+		text-transform: none;
 		color: var(--color-secondary);
 	}
 	dd {
 		margin: 0;
-		font-size: 16px;
+		font-size: var(--type-body);
 		line-height: 1.6;
 		color: var(--color-ink-soft);
 	}
@@ -130,7 +130,7 @@
 		border: 1px solid var(--color-hairline-strong);
 		border-radius: 3px;
 		font:
-			12px/1.6 system-ui,
+			var(--type-meta) / 1.6 var(--font-ui),
 			sans-serif;
 	}
 	.links {

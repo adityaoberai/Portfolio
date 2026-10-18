@@ -4,7 +4,7 @@
 </script>
 
 <PageMeta
-	title="Index"
+	title="On paper"
 	path="/index"
 	description="Aditya Oberai: developer relations at Appwrite, projects, writing, speaking, communities, photography, and Pokémon."
 />

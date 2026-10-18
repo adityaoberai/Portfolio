@@ -10,7 +10,7 @@
 			<p class="name">{site.name}</p>
 			<p class="role">{site.role}. Bengaluru, India.</p>
 			<p class="modes">
-				Two ways in: <a href="/world">the room</a> or <a href="/index">the Index</a>.
+				Two ways in: <a href="/world">the room</a> or <a href="/index">On paper</a>.
 			</p>
 		</div>
 		<nav aria-label="Elsewhere">
@@ -48,7 +48,7 @@
 	.role,
 	.modes {
 		margin-top: 4px;
-		font-size: 15px;
+		font-size: var(--type-caption);
 		color: var(--color-secondary);
 	}
 	.modes a,
@@ -71,7 +71,7 @@
 		align-items: center;
 		min-height: 40px;
 		font:
-			13px system-ui,
+			var(--type-ui) / 1.5 var(--font-ui),
 			sans-serif;
 	}
 </style>

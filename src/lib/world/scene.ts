@@ -1,3 +1,5 @@
+import { focusViewport, type PanelBounds } from './viewport';
+import type { RoomPosition } from './journey';
 import {
 	BoxGeometry,
 	CircleGeometry,
@@ -106,6 +108,7 @@ interface Options {
 	/** Stations switched on in world.ts; hidden ones stay as decor only. */
 	stations: StationId[];
 	onInspect: (id: StationId) => void;
+	onSelect?: (id: StationId) => void;
 	onCuriosity: (id: CuriosityId) => void;
 	onHover: (target: HoverTarget | null, clientX: number, clientY: number) => void;
 	onState: (state: RoomState) => void;
@@ -427,6 +430,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	let lowQuality = options.lowQuality;
 	// Screen space covered by overlaid UI (CSS px); the room is framed in what's left.
 	let insets = { top: 0, bottom: 0, units: 9.4 };
+	let panelBounds: PanelBounds | null = null;
 	let paused = false;
 	let disposed = false;
 	let frame = 0;
@@ -528,17 +532,20 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	}
 	function framing(at: typeof framed) {
 		if (!at) return { target: new Vector3(...CAMERA_TARGET), zoom: 1, door: 0 };
-		const zoom = FOCUS_ZOOM;
+		const area = focusViewport(canvas.clientWidth, canvas.clientHeight, insets.top, panelBounds);
+		if (!area.usable) return { target: view.target.clone(), zoom: view.zoom, door: at.door };
+		const zoom = canvas.clientWidth <= 820 ? 2.1 : FOCUS_ZOOM;
 		const width = (camera.right - camera.left) / zoom;
 		const height = (camera.top - camera.bottom) / zoom;
 		camera.updateMatrixWorld();
 		const rightAxis = new Vector3().setFromMatrixColumn(camera.matrixWorld, 0);
 		const upAxis = new Vector3().setFromMatrixColumn(camera.matrixWorld, 1);
-		const focusPoint = new Vector3(...at.focus);
-		// Leave room for the details sheet: right side on wide screens, bottom on narrow.
-		if (canvas.clientWidth >= 820) focusPoint.addScaledVector(rightAxis, width * 0.2);
-		else focusPoint.addScaledVector(upAxis, -height * 0.18);
-		return { target: focusPoint, zoom, door: at.door };
+		const localX = (camera.left + camera.right) / 2 + (area.x / canvas.clientWidth - 0.5) * width;
+		const localY = (camera.top + camera.bottom) / 2 + (0.5 - area.y / canvas.clientHeight) * height;
+		const target = new Vector3(...at.focus)
+			.addScaledVector(rightAxis, -localX)
+			.addScaledVector(upAxis, -localY);
+		return { target, zoom, door: at.door };
 	}
 	function frameTo(at: typeof framed) {
 		framed = at;
@@ -687,6 +694,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	function visit(id: StationId) {
 		const station = active.find((item) => item.id === id);
 		if (!station || paused || disposed) return;
+		options.onSelect?.(id);
 		const here = position();
 		if (Math.hypot(here.x - station.approach.x, here.z - station.approach.z) < 0.35)
 			inspect(station);
@@ -903,6 +911,34 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 
 	return {
 		visit,
+		reveal(id: StationId) {
+			const station = active.find((item) => item.id === id);
+			if (!station || disposed) return;
+			paused = false;
+			stopMovement();
+			standUp();
+			setPosition(station.approach);
+			inspect(station);
+		},
+		cancelVisit() {
+			stopMovement();
+			requestFrame();
+		},
+		snapshot(): RoomPosition {
+			return { ...position(), heading: character.rotation.y };
+		},
+		restore(saved: RoomPosition) {
+			stopMovement();
+			standUp();
+			setPosition(clampPoint(saved));
+			character.rotation.y = saved.heading;
+			requestFrame();
+		},
+		setPanel(value: PanelBounds | null) {
+			if (JSON.stringify(value) === JSON.stringify(panelBounds)) return;
+			panelBounds = value;
+			if (framed) frameTo(framed);
+		},
 		project,
 		anchor(id: StationId | CuriosityId) {
 			const item = [...STATIONS, ...CURIOSITIES].find((entry) => entry.id === id);

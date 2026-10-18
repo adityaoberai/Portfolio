@@ -8,29 +8,34 @@ test('first visit to / opens World and varies on the cookie', async ({ page }) =
 	expect(response?.headers()['vary']).toContain('Cookie');
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('Come spend a minute');
 	await expect(
-		page.getByRole('navigation', { name: 'Website mode' }).getByRole('link', { name: 'World' })
-	).toHaveAttribute('aria-current', 'page');
+		page
+			.getByRole('navigation', { name: 'Explore another way' })
+			.getByRole('link', { name: 'See it on paper' })
+	).toBeVisible();
 });
 
 test('/index and /world set the preference that / then renders', async ({ page, context }) => {
 	const scripts: string[] = [];
 	page.on('response', async (response) => {
-		if (response.request().resourceType() === 'script') scripts.push(await response.text());
+		if (response.request().resourceType() === 'script')
+			scripts.push(await response.text().catch(() => '')); // A later navigation can discard a response body.
 	});
 	await page.goto('/index');
 	expect(await modeCookie(context)).toBe('index');
 	await page.goto('/');
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('bring people together');
 	await expect(
-		page.getByRole('navigation', { name: 'Website mode' }).getByRole('link', { name: 'Index' })
-	).toHaveAttribute('aria-current', 'page');
+		page
+			.getByRole('navigation', { name: 'Explore another way' })
+			.getByRole('link', { name: 'Step into my room' })
+	).toBeVisible();
 	await page.waitForLoadState('networkidle');
 	expect(scripts.some((script) => script.includes('WebGLRenderer'))).toBe(false);
 
 	// Client-side navigation through the switch also updates the preference.
 	await page
-		.getByRole('navigation', { name: 'Website mode' })
-		.getByRole('link', { name: 'World' })
+		.getByRole('navigation', { name: 'Explore another way' })
+		.getByRole('link', { name: 'Step into my room' })
 		.click();
 	await expect(page).toHaveURL(/\/world$/);
 	await expect.poll(() => modeCookie(context)).toBe('world');

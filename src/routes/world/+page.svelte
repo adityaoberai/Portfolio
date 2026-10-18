@@ -4,5 +4,5 @@
 	import { page } from '$lib/data/room';
 </script>
 
-<PageMeta title="My world" path="/world" description={page.description} />
+<PageMeta title="My room" path="/world" description={page.description} />
 <WorldView />

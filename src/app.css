@@ -14,35 +14,42 @@
 
 	/* Type */
 	--font-serif: 'Newsreader Variable', Georgia, 'Times New Roman', serif;
+	--font-ui: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+	--type-hero: clamp(2.125rem, 5vw, 3.5rem);
+	--type-page: clamp(2rem, 4vw, 3.25rem);
+	--type-panel: clamp(1.75rem, 7cqi, 2.125rem);
+	--type-section: clamp(1.5rem, 2.5vw, 2rem);
+	--type-item: 1.3125rem;
+	--type-body: clamp(1.0625rem, 1.04rem + 0.15vw, 1.125rem);
+	--type-lead: clamp(1.125rem, 1.1rem + 0.2vw, 1.25rem);
+	--type-ui: 0.9375rem;
+	--type-caption: 0.875rem;
+	--type-meta: 0.8125rem;
 	--font-mono:
 		ui-monospace, 'SFMono-Regular', 'Cascadia Mono', Menlo, Consolas, 'Liberation Mono', monospace;
 
-	--text-h1: clamp(2.125rem, 1.55rem + 2.4vw, 3rem);
+	--text-h1: var(--type-page);
 	--text-h1--line-height: 1.14;
 	--text-h1--font-weight: 500;
 	--text-h1--letter-spacing: -0.015em;
 
-	--text-h2: clamp(1.5rem, 1.4rem + 0.55vw, 1.75rem);
+	--text-h2: var(--type-section);
 	--text-h2--line-height: 1.25;
 	--text-h2--font-weight: 500;
 	--text-h2--letter-spacing: -0.01em;
 
-	--text-h3: clamp(1.25rem, 1.22rem + 0.15vw, 1.3125rem);
+	--text-h3: var(--type-item);
 	--text-h3--line-height: 1.4;
 	--text-h3--font-weight: 500;
 
 	--text-lede: clamp(1.1875rem, 1.16rem + 0.15vw, 1.25rem);
 	--text-lede--line-height: 1.6;
 
-	--text-body: clamp(1.0625rem, 1.04rem + 0.15vw, 1.125rem);
+	--text-body: var(--type-body);
 	--text-body--line-height: 1.7;
 
 	--text-small: 0.9375rem;
 	--text-small--line-height: 1.6;
-
-	--text-eyebrow: 0.75rem;
-	--text-eyebrow--line-height: 1.5;
-	--text-eyebrow--letter-spacing: 0.08em;
 
 	--text-meta: 0.8125rem;
 	--text-meta--line-height: 1.5;
@@ -81,9 +88,14 @@
 		outline-offset: 2px;
 	}
 
+	h1,
+	h2,
+	h3 {
+		font-weight: 500;
+	}
 	strong,
 	b {
-		font-weight: 500;
+		font-weight: 600;
 	}
 }
 
@@ -95,16 +107,16 @@
 		padding-inline: var(--gutter);
 	}
 
-	/* Section heading on deep pages: numbered, mono, quiet. */
+	/* Shared section heading on deep pages. */
 	.v3-section {
 		padding-top: 40px;
 		margin-top: 8px;
 		border-top: 1px solid var(--color-hairline);
 	}
 	.v3-section > h2 {
-		font-size: clamp(26px, 3vw, 34px);
-		letter-spacing: -0.03em;
-		line-height: 1.15;
+		font-size: var(--type-section);
+		letter-spacing: -0.015em;
+		line-height: 1.2;
 		font-weight: 500;
 	}
 	.v3-section > h2 .n {
@@ -119,23 +131,12 @@
 		margin-top: 48px;
 	}
 
-	/* Mono chapter numeral / kicker: the site's wayfinding system */
-	.eyebrow {
-		font-family: var(--font-mono);
-		font-size: var(--text-eyebrow);
-		line-height: var(--text-eyebrow--line-height);
-		letter-spacing: var(--text-eyebrow--letter-spacing);
-		text-transform: uppercase;
-		color: var(--color-secondary);
-		font-weight: 400;
-	}
-
-	/* Mono metadata: years, domains, tech lists */
+	/* Metadata: years, domains, tech lists. */
 	.meta {
-		font-family: var(--font-mono);
-		font-size: var(--text-meta);
+		font-family: var(--font-ui);
+		font-size: var(--type-meta);
 		line-height: var(--text-meta--line-height);
-		letter-spacing: var(--text-meta--letter-spacing);
+		letter-spacing: normal;
 		color: var(--color-secondary);
 		font-weight: 400;
 	}
@@ -268,5 +269,22 @@
 				transform: translateY(0);
 			}
 		}
+	}
+}
+
+/* Surface changes keep the room connected to its paper portrait. */
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation-duration: 200ms;
+}
+::view-transition-group(room-scene) {
+	animation-duration: 260ms;
+	animation-timing-function: ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+	::view-transition-group(*),
+	::view-transition-old(*),
+	::view-transition-new(*) {
+		animation: none;
 	}
 }

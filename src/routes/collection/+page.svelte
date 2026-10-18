@@ -20,11 +20,7 @@
 />
 
 <div class="v3-page">
-	<PageIntro
-		eyebrow="Collection · the shelf"
-		title="{collection.favourite} gets the top shelf."
-		station="shelf"
-	>
+	<PageIntro title="{collection.favourite} gets the top shelf." station="shelf">
 		<p>
 			I collect {collection.subject}. {collection.favourite} is my favourite Pokémon, so it gets pride
 			of place. The shelf in my room holds a few graded slabs, a couple of binders, and some sealed boxes.
@@ -87,13 +83,13 @@
 	}
 	h2 {
 		font-size: clamp(24px, 3vw, 30px);
-		letter-spacing: -0.03em;
+		letter-spacing: -0.015em;
 		line-height: 1.2;
 		font-weight: 500;
 	}
 	.feature p {
 		margin-top: 12px;
-		font-size: 18px;
+		font-size: var(--type-body);
 		line-height: 1.6;
 		color: var(--color-ink-soft);
 	}
@@ -138,14 +134,14 @@
 	}
 	.printed {
 		margin-left: 8px;
-		font-size: 15px;
+		font-size: var(--type-body);
 		color: var(--color-ink-soft);
 	}
 	.set,
 	.meta,
 	.note {
 		margin-top: 4px;
-		font-size: 15px;
+		font-size: var(--type-body);
 		line-height: 1.5;
 		color: var(--color-ink-soft);
 	}

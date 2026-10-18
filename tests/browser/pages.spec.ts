@@ -17,7 +17,8 @@ test('every deep page is readable, marked in the nav, and never loads the scene'
 }) => {
 	const scripts: string[] = [];
 	page.on('response', async (response) => {
-		if (response.request().resourceType() === 'script') scripts.push(await response.text());
+		if (response.request().resourceType() === 'script')
+			scripts.push(await response.text().catch(() => '')); // A later navigation can discard a response body.
 	});
 	for (const [path, heading, label] of deepPages) {
 		const response = await page.goto(path);
@@ -26,7 +27,7 @@ test('every deep page is readable, marked in the nav, and never loads the scene'
 		await expect(
 			page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: label })
 		).toHaveAttribute('aria-current', 'page');
-		await expect(page.getByRole('navigation', { name: 'Website mode' })).toBeVisible();
+		await expect(page.getByRole('navigation', { name: 'Explore another way' })).toBeVisible();
 	}
 	await page.waitForLoadState('networkidle');
 	expect(scripts.some((script) => script.includes('WebGLRenderer'))).toBe(false);

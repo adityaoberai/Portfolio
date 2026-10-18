@@ -3,6 +3,9 @@
 	import '@fontsource-variable/newsreader/opsz-italic.css';
 	import '../app.css';
 	import { page } from '$app/state';
+	import { onMount } from 'svelte';
+	import { afterNavigate, onNavigate } from '$app/navigation';
+	import { readJourney } from '$lib/world/journey';
 	import V3Header from '$lib/components/V3Header.svelte';
 	import V3Footer from '$lib/components/V3Footer.svelte';
 
@@ -12,20 +15,55 @@
 	const home = $derived(['', '/world', '/index'].includes(path));
 	// World fills the whole page and floats its own header, so the shell steps aside.
 	const immersive = $derived(path === '/world' || (path === '' && page.data.mode !== 'index'));
-</script>
 
-<svelte:head>
-	<!-- Global site tag (gtag.js) - Google Analytics -->
-	<script async src="https://www.googletagmanager.com/gtag/js?id=G-1BXTEHW3F6"></script>
-	<script>
-		window.dataLayer = window.dataLayer || [];
-		function gtag() {
-			dataLayer.push(arguments);
+	onMount(() => {
+		readJourney();
+		// Analytics starts after the first interaction surface has had time to load.
+		if (['localhost', '127.0.0.1', 'terminal.local'].includes(location.hostname)) return;
+		const timer = window.setTimeout(() => {
+			const layer: unknown[] = Reflect.get(window, 'dataLayer') ?? [];
+			// Keep Google's argument-object queue format while deferring the loader.
+			const gtag: (...args: unknown[]) => void = function () {
+				layer.push(arguments);
+			};
+			Reflect.set(window, 'dataLayer', layer);
+			Reflect.set(window, 'gtag', gtag);
+			gtag('js', new Date());
+			gtag('config', 'G-1BXTEHW3F6');
+			const script = document.createElement('script');
+			script.async = true;
+			script.src = 'https://www.googletagmanager.com/gtag/js?id=G-1BXTEHW3F6';
+			document.head.append(script);
+		}, 3000);
+		return () => window.clearTimeout(timer);
+	});
+	onNavigate((navigation) => {
+		const surfaces = new Set(['/', '/world', '/index']);
+		if (
+			!navigation.from ||
+			!navigation.to ||
+			!surfaces.has(navigation.from.url.pathname) ||
+			!surfaces.has(navigation.to.url.pathname) ||
+			navigation.from.url.pathname === navigation.to.url.pathname ||
+			!document.startViewTransition ||
+			matchMedia('(prefers-reduced-motion: reduce)').matches
+		)
+			return;
+		return new Promise<void>((resolve) => {
+			const transition = document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+			void transition.finished.catch(() => {});
+		});
+	});
+	afterNavigate(() => {
+		if ((page.url.pathname === '/index' || page.data.mode === 'index') && page.url.hash) {
+			// Section IDs are plain words; malformed shared fragments need no decoding.
+			document.getElementById(page.url.hash.slice(1))?.focus({ preventScroll: true });
 		}
-		gtag('js', new Date());
-		gtag('config', 'G-1BXTEHW3F6');
-	</script>
-</svelte:head>
+	});
+</script>
 
 <div class="flex min-h-screen flex-col">
 	<a

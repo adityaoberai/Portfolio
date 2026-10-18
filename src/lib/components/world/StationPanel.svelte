@@ -2,17 +2,35 @@
 	// Renders a station's panel from src/lib/data/world.ts: title, lead, then its
 	// blocks in order, then links. No copy lives here.
 	import type { StationId } from '$lib/world/layout';
-	import { panels, stationById } from '$lib/data/room';
-	import { withWidth } from '$lib/data/photography';
+	import { panels, stationById, type ResolvedBlock } from '$lib/data/room';
+	import PhotoGallery from '$lib/components/PhotoGallery.svelte';
 	import { bengaluruTime } from '$lib/data/now';
 	import { CARD_IMAGE_HEIGHT, CARD_IMAGE_WIDTH } from '$lib/data/collection';
 	import type { Artifact } from '$lib/data/artifacts';
 	import Slab from './Slab.svelte';
 	import Portrait from '$lib/components/Portrait.svelte';
 
-	let { id }: { id: StationId } = $props();
+	let { id, preview = false }: { id: StationId; preview?: boolean } = $props();
 	const station = $derived(stationById[id]);
 	const panel = $derived(panels[id]);
+	const allBlocks = $derived(panel?.blocks ?? []);
+	const blocks = $derived(
+		preview
+			? allBlocks
+					.filter((block) => block.type !== 'tags')
+					.slice(0, 1)
+					.map(
+						(block): ResolvedBlock =>
+							block.type === 'items'
+								? {
+										...block,
+										artifacts: block.artifacts.slice(0, block.style === 'photos' ? 1 : 2),
+										show: { ...block.show, description: false }
+									}
+								: block
+					)
+			: allBlocks
+	);
 	const fill = (text: string) => text.replace('{time}', bengaluruTime());
 	const external = (href: string) => /^(https?:|mailto:)/.test(href);
 </script>
@@ -33,13 +51,12 @@
 {/snippet}
 
 {#if station && panel}
-	<p class="eyebrow">
-		{panel.eyebrow ?? `${station.number} / ${station.object} · ${station.area}`}
-	</p>
 	<h2 id="station-title">{panel.title}</h2>
-	{#if panel.lead}<p class="lead">{fill(panel.lead)}</p>{/if}
+	{#if preview || panel.lead}<p class="lead">
+			{fill(preview ? station.summary : panel.lead!)}
+		</p>{/if}
 
-	{#each panel.blocks as block, b (b)}
+	{#each blocks as block, b (b)}
 		{#if block.type === 'items'}
 			{#if block.heading}<h3 class="subhead">{block.heading}</h3>{/if}
 			{#if block.style === 'list'}
@@ -105,23 +122,7 @@
 					{/each}
 				</ul>
 			{:else if block.style === 'photos'}
-				<ul class="contact-sheet" aria-label={block.heading ?? 'Contact sheet'}>
-					{#each block.artifacts as photo, i (photo.id)}
-						<li>
-							<a href={photo.link}>
-								<img
-									src={withWidth(photo.image, 360)}
-									alt={photo.title}
-									loading="lazy"
-									decoding="async"
-									width="360"
-									height="270"
-								/>
-								<span>{String(i + 1).padStart(2, '0')}</span>
-							</a>
-						</li>
-					{/each}
-				</ul>
+				<PhotoGallery photos={block.artifacts} scope={`station-${id}`} panel compact={preview} />
 			{:else if block.style === 'cards'}
 				<ul class="cards">
 					{#each block.artifacts as card (card.id)}
@@ -185,7 +186,11 @@
 					{#each block.items as item (item.title)}
 						<li>
 							<figure>
-								<img src={item.image} alt="Cover of {item.title}" loading="lazy" />
+								<img
+									src={item.image}
+									alt={block.images === 'objects' ? item.title : `Cover of ${item.title}`}
+									loading="lazy"
+								/>
 								<figcaption><strong>{item.title}</strong><span>{item.text}</span></figcaption>
 							</figure>
 						</li>
@@ -232,7 +237,7 @@
 
 	{#if panel.links.length}
 		<div class="links">
-			{#each panel.links as link (link.href + link.label)}
+			{#each preview ? panel.links.slice(0, 1) : panel.links as link (link.href + link.label)}
 				<a href={link.href}>{link.label} {link.external ? '↗' : '→'}</a>
 			{/each}
 		</div>
@@ -240,23 +245,16 @@
 {/if}
 
 <style>
-	.eyebrow {
-		font:
-			11px/1.5 system-ui,
-			sans-serif;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-		color: #5f6755;
-	}
 	h2 {
-		margin-top: 20px;
-		font-size: clamp(28px, 4vw, 38px);
-		letter-spacing: -0.035em;
-		line-height: 1.1;
+		margin-top: 0;
+		font-size: var(--type-panel);
+		font-weight: 500;
+		letter-spacing: -0.015em;
+		line-height: 1.18;
 	}
 	.lead {
 		margin: 16px 0 8px;
-		font-size: 18px;
+		font-size: var(--type-lead);
 		line-height: 1.6;
 		color: #525a48;
 	}
@@ -279,7 +277,7 @@
 	.entries p,
 	.pages p {
 		margin-top: 6px;
-		font-size: 16px;
+		font-size: var(--type-body);
 		line-height: 1.55;
 		color: #5a604f;
 	}
@@ -287,10 +285,10 @@
 	.date {
 		display: block;
 		font:
-			11px/1.5 system-ui,
+			var(--type-meta) / 1.5 var(--font-ui),
 			sans-serif;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
+		letter-spacing: normal;
+		text-transform: none;
 		color: #69705d;
 	}
 	.pages li {
@@ -313,7 +311,7 @@
 	}
 	.aside {
 		margin-top: 18px;
-		font-size: 15px;
+		font-size: var(--type-caption);
 		line-height: 1.55;
 		color: #5a604f;
 	}
@@ -327,44 +325,8 @@
 		padding: 4px 8px;
 		border: 1px solid #cfd2c1;
 		border-radius: 3px;
-		font:
-			11px/1.4 ui-monospace,
-			monospace;
+		font: var(--type-meta) / 1.4 var(--font-ui);
 		color: #4d5645;
-	}
-	.contact-sheet {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 6px;
-		margin: 18px 0 0;
-		padding: 8px;
-		list-style: none;
-		background: #1f2320;
-		border-radius: 4px;
-	}
-	.contact-sheet a {
-		position: relative;
-		display: block;
-	}
-	.contact-sheet img {
-		display: block;
-		width: 100%;
-		height: auto;
-		aspect-ratio: 4 / 3;
-		object-fit: cover;
-		background: #3a3f3a;
-	}
-	.contact-sheet span {
-		position: absolute;
-		left: 4px;
-		bottom: 2px;
-		font:
-			9px ui-monospace,
-			monospace;
-		color: #f1d8a7;
-	}
-	.contact-sheet a:focus-visible {
-		outline-offset: 1px;
 	}
 	.pins {
 		display: grid;
@@ -398,7 +360,7 @@
 	}
 	.pins p {
 		margin-top: 6px;
-		font-size: 15px;
+		font-size: var(--type-caption);
 		line-height: 1.5;
 		color: #5a604f;
 	}
@@ -434,10 +396,10 @@
 		background: #304e42;
 		color: #fffaf0;
 		font:
-			11px/1.4 system-ui,
+			var(--type-meta) / 1.5 var(--font-ui),
 			sans-serif;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
+		letter-spacing: normal;
+		text-transform: none;
 	}
 	.reflection {
 		display: grid;
@@ -455,13 +417,13 @@
 		filter: saturate(0.8);
 	}
 	.reflection p {
-		font-size: 16px;
+		font-size: var(--type-body);
 		line-height: 1.6;
 		color: #4f5746;
 	}
 	.subhead {
 		margin-top: 24px;
-		font-size: 18px;
+		font-size: var(--type-lead);
 	}
 	.now {
 		margin: 18px 0 0;
@@ -477,15 +439,15 @@
 	.now dt {
 		padding-top: 3px;
 		font:
-			11px/1.5 system-ui,
+			var(--type-meta) / 1.5 var(--font-ui),
 			sans-serif;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
+		letter-spacing: normal;
+		text-transform: none;
 		color: #69705d;
 	}
 	.now dd {
 		margin: 0;
-		font-size: 16px;
+		font-size: var(--type-body);
 		line-height: 1.5;
 	}
 	.now a {
@@ -542,13 +504,13 @@
 	}
 	.feature p {
 		margin-top: 6px;
-		font-size: 16px;
+		font-size: var(--type-body);
 		line-height: 1.55;
 		color: #5a604f;
 	}
 	.text {
 		margin-top: 16px;
-		font-size: 16px;
+		font-size: var(--type-body);
 		line-height: 1.6;
 		color: #4f5746;
 	}
@@ -597,13 +559,16 @@
 	}
 	.cards figcaption {
 		margin-top: 8px;
-		font-size: 13px;
+		font-size: var(--type-caption);
 		line-height: 1.4;
 		color: #5a604f;
 	}
+	.cards figcaption {
+		font-family: var(--font-ui);
+	}
 	.cards strong {
 		display: block;
-		font-size: 15px;
+		font-size: var(--type-caption);
 		font-weight: 600;
 		color: #2c3328;
 	}
@@ -636,5 +601,10 @@
 		color: #304e42;
 		text-decoration: underline;
 		text-underline-offset: 5px;
+	}
+	@media (max-width: 520px) {
+		.cards.covers {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
 	}
 </style>

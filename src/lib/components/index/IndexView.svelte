@@ -1,30 +1,29 @@
 <script lang="ts">
+	import { roomJourney } from '$lib/world/journey';
 	import { site } from '$lib/data/site';
 	import Portrait from '$lib/components/Portrait.svelte';
 	import { highlights } from '$lib/data/highlights';
 	import { sections } from '$lib/data/sections';
+	const roomHref = $derived(`/world${$roomJourney?.panel ? `#${$roomJourney.panel}` : ''}`);
 </script>
 
 <div class="index-page">
 	<section class="intro" aria-labelledby="index-title">
+		<Portrait width={180} loading="eager" class="portrait" />
 		<div>
-			<p class="eyebrow">The index · a few ways to know me</p>
 			<h1 id="index-title">I build things.<br />And bring people together.</h1>
 			<p class="lede">
 				I'm Aditya, {site.role}. I help developers find their way from an idea to something they can
 				make. Away from the desk, there's usually a camera, a notebook, or a Pokémon card nearby.
 			</p>
 			<div class="intro-links">
-				<a href="/contact">Get in touch</a><a href="/resume">Résumé (PDF)</a><a href="/world"
-					>Visit my room →</a
-				>
+				<a href="/contact">Get in touch</a><a href="/resume">Résumé (PDF)</a>
 			</div>
 		</div>
-		<Portrait width={180} loading="eager" class="portrait" />
 	</section>
 
 	<section class="glance" aria-labelledby="glance-title">
-		<h2 id="glance-title" class="eyebrow">At a glance</h2>
+		<h2 id="glance-title">A few things about me</h2>
 		<ul>
 			{#each highlights as fact (fact)}
 				<li>{fact}</li>
@@ -33,13 +32,12 @@
 	</section>
 
 	<nav class="directory" aria-labelledby="directory-title">
-		<h2 id="directory-title" class="eyebrow">Find your way</h2>
+		<h2 id="directory-title">Find your way</h2>
 		<ul class="chapters">
-			{#each sections.filter((s) => s.id !== 'now') as section, i (section.id)}
-				<li>
+			{#each sections as section (section.id)}
+				<li id={section.id} tabindex="-1">
 					<a href={section.href} class="chapter"
-						><span class="number">{String(i + 1).padStart(2, '0')}</span>
-						<div>
+						><div>
 							<h3>{section.label}</h3>
 							<p>{section.summary}</p>
 						</div>
@@ -51,11 +49,19 @@
 		</ul>
 	</nav>
 
-	<footer>
-		<span>Made of many interests. <a href="/world">The room</a> tells the same story.</span><a
-			href="mailto:{site.email}">{site.email}</a
-		>
-	</footer>
+	<a class="room-invitation" href={roomHref} data-sveltekit-preload-data="off">
+		<img
+			class="room-preview"
+			src="/room-still.jpg"
+			width="1440"
+			height="1000"
+			alt="Aditya's illustrated room"
+		/>
+		<div>
+			<h2>Step into my room <span aria-hidden="true">↗</span></h2>
+			<p>A little space for the things I make and care about.</p>
+		</div>
+	</a>
 </div>
 
 <style>
@@ -63,23 +69,33 @@
 		max-width: var(--container);
 		margin: auto;
 		padding: 0 var(--gutter);
+		overflow-wrap: anywhere;
 	}
 	.intro {
 		display: grid;
-		grid-template-columns: 1fr 180px;
+		grid-template-columns: minmax(0, 1fr) 180px;
 		align-items: center;
 		gap: 60px;
 		padding: 72px 0 48px;
 	}
+	.intro > div {
+		grid-column: 1;
+		grid-row: 1;
+	}
+	.intro :global(picture) {
+		grid-column: 2;
+		grid-row: 1;
+	}
 	h1 {
-		font-size: clamp(36px, 5vw, 60px);
-		letter-spacing: -0.045em;
-		line-height: 1.06;
-		margin: 18px 0 24px;
+		font-size: var(--type-hero);
+		font-weight: 500;
+		letter-spacing: -0.02em;
+		line-height: 1.12;
+		margin: 0 0 24px;
 	}
 	.lede {
 		max-width: 650px;
-		font-size: 20px;
+		font-size: var(--type-lead);
 		line-height: 1.6;
 		color: #55574d;
 	}
@@ -115,7 +131,7 @@
 		list-style: none;
 	}
 	.glance li {
-		font-size: 20px;
+		font-size: var(--type-lead);
 		line-height: 1.35;
 		letter-spacing: -0.01em;
 	}
@@ -125,7 +141,7 @@
 	}
 	.chapters {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 		column-gap: 40px;
 		margin: 16px 0 0;
 		padding: 0;
@@ -133,25 +149,19 @@
 	}
 	.chapter {
 		display: grid;
-		grid-template-columns: 24px 1fr 16px;
+		grid-template-columns: minmax(0, 1fr) auto;
 		gap: 14px;
 		align-items: baseline;
 		padding: 22px 0;
 		border-bottom: 1px solid #dedbcf;
 	}
-	.number {
-		font:
-			11px system-ui,
-			sans-serif;
-		color: #69705d;
-	}
 	h3 {
-		font-size: 23px;
+		font-size: 1.5rem;
 		line-height: 1.25;
 	}
 	.chapter p {
 		color: #606456;
-		font-size: 16px;
+		font-size: var(--type-body);
 		line-height: 1.5;
 		margin-top: 6px;
 	}
@@ -160,33 +170,75 @@
 		text-underline-offset: 4px;
 		color: #304e42;
 	}
-	footer {
-		display: flex;
-		justify-content: space-between;
-		flex-wrap: wrap;
-		gap: 12px 20px;
-		margin-top: 40px;
-		padding: 32px 0;
-		border-top: 1px solid #d6d5c8;
-		font-size: 16px;
-		color: #606456;
-	}
-	footer a {
-		color: #304e42;
-		text-decoration: underline;
-		text-underline-offset: 4px;
-	}
 	@media (max-width: 650px) {
 		.intro {
-			grid-template-columns: 1fr;
-			gap: 28px;
+			display: flow-root;
 			padding-top: 44px;
 		}
-		.intro :global(.portrait) {
-			display: none;
+		.intro :global(picture) {
+			float: right;
+			margin: 0 0 12px 20px;
 		}
+		.intro :global(.portrait) {
+			display: block;
+			width: 72px;
+		}
+
 		.chapters {
-			grid-template-columns: 1fr;
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+	h2 {
+		font-size: 1.5rem;
+		font-weight: 500;
+		line-height: 1.25;
+	}
+	.chapters li {
+		scroll-margin-top: 24px;
+	}
+	.chapter p {
+		max-width: 58ch;
+	}
+	.room-invitation {
+		display: grid;
+		grid-template-columns: 220px 1fr;
+		gap: 28px;
+		align-items: center;
+		margin-top: 12px;
+		padding: 24px;
+		border: 1px solid var(--color-hairline);
+		border-radius: 12px;
+		background: var(--color-surface);
+	}
+	.room-preview {
+		display: block;
+		width: 100%;
+		height: auto;
+		aspect-ratio: 1.44;
+		object-fit: contain;
+		view-transition-name: room-scene;
+	}
+	.room-invitation p {
+		margin-top: 8px;
+		max-width: 48ch;
+		font-size: var(--type-body);
+		color: var(--color-secondary);
+	}
+	.room-invitation:hover h2 {
+		text-decoration: underline;
+		text-underline-offset: 5px;
+	}
+	@media (max-width: 650px) {
+		.room-invitation {
+			grid-template-columns: 88px 1fr;
+			gap: 16px;
+			padding: 16px;
+		}
+		.room-invitation h2 {
+			font-size: 1.25rem;
+		}
+		.room-invitation p {
+			font-size: 1rem;
 		}
 	}
 </style>

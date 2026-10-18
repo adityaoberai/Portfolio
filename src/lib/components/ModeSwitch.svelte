@@ -1,46 +1,49 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { roomJourney } from '$lib/world/journey';
+	import { stationById } from '$lib/data/room';
 	const path = $derived(page.url.pathname.replace(/\/$/, ''));
-	// At `/`, the server picked the mode from the visitor's cookie.
-	const current = $derived(
-		path === '/world' || path === '/index' ? path.slice(1) : path === '' ? page.data.mode : null
-	);
+	const inRoom = $derived(path === '/world' || (path === '' && page.data.mode !== 'index'));
+	const station = $derived($roomJourney?.station);
+	const section = $derived(station ? stationById[station]?.section : null);
+	const roomHref = $derived(`/world${$roomJourney?.panel ? `#${$roomJourney.panel}` : ''}`);
+	const paperHref = $derived(`/index${section ? `#${section}` : ''}`);
 </script>
 
-<nav class="mode-switch" aria-label="Website mode">
-	<a href="/world" aria-current={current === 'world' ? 'page' : undefined}>World</a>
-	<a href="/index" aria-current={current === 'index' ? 'page' : undefined}>Index</a>
+<nav class="surface-link" aria-label="Explore another way">
+	<a href={inRoom ? paperHref : roomHref} data-sveltekit-preload-data="off">
+		{inRoom ? 'See it on paper' : 'Step into my room'}<span aria-hidden="true">↗</span>
+	</a>
 </nav>
 
 <style>
-	.mode-switch {
-		display: inline-flex;
+	.surface-link {
 		flex-shrink: 0;
-		padding: 4px;
-		gap: 3px;
-		background: #f8f5ed;
-		border: 1px solid #c9c4b6;
-		border-radius: 999px;
-		font:
-			600 12px/1 system-ui,
-			sans-serif;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
+		font: 500 var(--type-ui) / 1.4 var(--font-ui);
 	}
 	a {
-		display: grid;
-		place-items: center;
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
 		min-height: 44px;
-		min-width: 78px;
-		padding: 0 16px;
-		border-radius: 999px;
-		color: #55574d;
+		padding: 8px 0;
+		color: var(--color-accent);
+		text-decoration: underline;
+		text-underline-offset: 5px;
+		text-decoration-color: #b7bda5;
 	}
 	a:hover {
-		background: #e7e8dd;
+		text-decoration-color: currentColor;
 	}
-	a[aria-current='page'] {
-		background: #304e42;
-		color: #fffdf6;
+	span {
+		font-size: 1.1em;
+	}
+	@media (max-width: 380px) {
+		.surface-link {
+			font-size: 0.875rem;
+		}
+		a {
+			gap: 5px;
+		}
 	}
 </style>

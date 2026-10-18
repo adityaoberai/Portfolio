@@ -39,7 +39,7 @@
 />
 
 <div class="v3-page">
-	<PageIntro eyebrow="Contact · the door" title="Say hello." station="door">
+	<PageIntro title="Say hello." station="door">
 		<p>
 			Whether it's a speaking invitation, a consulting question, or a community collaboration, my
 			inbox is open. And I actually read it.

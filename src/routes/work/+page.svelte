@@ -2,7 +2,6 @@
 	import PageMeta from '$lib/components/PageMeta.svelte';
 	import PageIntro from '$lib/components/PageIntro.svelte';
 	import { workThemes } from '$lib/data/work';
-	import { site } from '$lib/data/site';
 </script>
 
 <PageMeta
@@ -12,7 +11,7 @@
 />
 
 <div class="v3-page">
-	<PageIntro eyebrow="Work · {site.role}" title="The work, by theme." station="desk">
+	<PageIntro title="The work, by theme." station="desk">
 		<p>
 			Job titles say less than the work does, so here it is, organized by what it was for rather
 			than where it happened.
@@ -67,14 +66,14 @@
 		align-items: center;
 		gap: 6px;
 		min-height: 40px;
-		font-size: 17px;
+		font-size: var(--type-body);
 		color: var(--color-accent);
 		text-decoration: underline;
 		text-underline-offset: 4px;
 	}
 	.toc span {
 		font:
-			11px system-ui,
+			var(--type-meta) / 1.5 var(--font-ui),
 			sans-serif;
 		color: var(--color-secondary);
 	}
@@ -84,7 +83,7 @@
 	.summary {
 		max-width: 680px;
 		margin-top: 12px;
-		font-size: 18px;
+		font-size: var(--type-body);
 		line-height: 1.6;
 		color: var(--color-secondary);
 	}
@@ -103,9 +102,9 @@
 	.tag {
 		padding-top: 6px;
 		font:
-			11px/1.5 system-ui,
+			var(--type-meta) / 1.5 var(--font-ui),
 			sans-serif;
-		letter-spacing: 0.1em;
+		letter-spacing: normal;
 		color: var(--color-secondary);
 	}
 	h3 {
@@ -116,7 +115,7 @@
 	.items p {
 		max-width: 720px;
 		margin-top: 6px;
-		font-size: 17px;
+		font-size: var(--type-body);
 		line-height: 1.6;
 		color: var(--color-ink-soft);
 	}

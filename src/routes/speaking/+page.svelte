@@ -27,11 +27,7 @@
 />
 
 <div class="v3-page">
-	<PageIntro
-		eyebrow="Speaking · the conference wall"
-		title="Talks, stages, and the occasional microphone."
-		station="corkboard"
-	>
+	<PageIntro title="Talks, stages, and the occasional microphone." station="corkboard">
 		<p>
 			I speak about developer relations, communities, and building with AI, and I've organized a
 			conference or two myself. If you're putting an event together, I'd love to hear about it.
@@ -128,10 +124,10 @@
 		background: var(--color-accent);
 		color: #fffaf0;
 		font:
-			11px/1.4 system-ui,
+			var(--type-meta) / 1.5 var(--font-ui),
 			sans-serif;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
+		letter-spacing: normal;
+		text-transform: none;
 	}
 	.badges h3 {
 		font-size: 20px;
@@ -140,7 +136,7 @@
 	}
 	.badges p {
 		margin-top: 8px;
-		font-size: 15px;
+		font-size: var(--type-body);
 		line-height: 1.55;
 		color: var(--color-secondary);
 	}
@@ -164,16 +160,16 @@
 	}
 	.bio p {
 		margin-top: 10px;
-		font-size: 16px;
+		font-size: var(--type-body);
 		line-height: 1.6;
 	}
 	.bio .bio-label {
 		margin-top: 0;
 		font:
-			11px/1.5 system-ui,
+			var(--type-meta) / 1.5 var(--font-ui),
 			sans-serif;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
+		letter-spacing: normal;
+		text-transform: none;
 		color: var(--color-secondary);
 	}
 	.bio-actions {
@@ -195,7 +191,7 @@
 	.note {
 		max-width: 720px;
 		margin-top: 18px;
-		font-size: 16px;
+		font-size: var(--type-body);
 		line-height: 1.6;
 		color: var(--color-secondary);
 	}

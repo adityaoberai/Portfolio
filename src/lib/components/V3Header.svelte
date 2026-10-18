@@ -6,7 +6,7 @@
 	// Deep pages get a section nav; World and Index have their own wayfinding.
 	// `overlay` floats the header over the full-page room.
 	let { nav = false, overlay = false }: { nav?: boolean; overlay?: boolean } = $props();
-	const links = sections.filter((s) => !['resume', 'now'].includes(s.id));
+	const links = sections.filter((s) => s.id !== 'resume');
 	const path = $derived(page.url.pathname.replace(/\/$/, ''));
 </script>
 
@@ -55,22 +55,23 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		gap: 14px;
+		gap: 8px 16px;
+		flex-wrap: wrap;
 		padding-block: 22px;
 	}
 	.identity {
 		font-size: 24px;
 		line-height: 1.15;
-		letter-spacing: -0.04em;
+		letter-spacing: -0.015em;
 	}
 	.identity span {
 		display: block;
 		margin-top: 5px;
 		font:
-			10px/1.4 system-ui,
+			var(--type-meta) / 1.4 var(--font-ui),
 			sans-serif;
-		letter-spacing: 0.13em;
-		text-transform: uppercase;
+		letter-spacing: normal;
+		text-transform: none;
 		color: var(--color-secondary);
 	}
 	nav {
@@ -87,9 +88,9 @@
 	nav a {
 		display: inline-flex;
 		align-items: center;
-		min-height: 36px;
+		min-height: 44px;
 		font:
-			13px system-ui,
+			var(--type-ui) / 1.5 var(--font-ui),
 			sans-serif;
 		color: var(--color-secondary);
 	}
@@ -114,6 +115,18 @@
 		}
 		ul {
 			gap: 0 16px;
+		}
+	}
+	@media (max-width: 650px) {
+		ul {
+			flex-wrap: nowrap;
+			overflow-x: auto;
+		}
+		li {
+			flex-shrink: 0;
+		}
+		.bar {
+			padding-block: 14px;
 		}
 	}
 </style>

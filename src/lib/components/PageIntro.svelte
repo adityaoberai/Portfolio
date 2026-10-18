@@ -4,17 +4,12 @@
 	import { stationById } from '$lib/data/room';
 
 	// Opening of every deep page. `station` links back to the matching object in the room.
-	let {
-		eyebrow,
-		title,
-		station,
-		children
-	}: { eyebrow: string; title: string; station?: StationId; children?: Snippet } = $props();
+	let { title, station, children }: { title: string; station?: StationId; children?: Snippet } =
+		$props();
 	const object = $derived(station ? stationById[station] : undefined);
 </script>
 
 <header class="page-intro">
-	<p class="eyebrow">{eyebrow}</p>
 	<h1>{title}</h1>
 	{#if children}<div class="lede">{@render children()}</div>{/if}
 	{#if object}
@@ -30,15 +25,15 @@
 		padding: 64px 0 40px;
 	}
 	h1 {
-		margin-top: 14px;
-		font-size: clamp(36px, 5vw, 58px);
-		letter-spacing: -0.045em;
-		line-height: 1.05;
+		margin-top: 0;
+		font-size: var(--type-page);
+		letter-spacing: -0.02em;
+		line-height: 1.12;
 		font-weight: 500;
 	}
 	.lede {
 		margin-top: 20px;
-		font-size: 20px;
+		font-size: var(--type-lead);
 		line-height: 1.6;
 		color: #55574d;
 	}
@@ -63,7 +58,7 @@
 			padding: 40px 0 28px;
 		}
 		.lede {
-			font-size: 18px;
+			font-size: var(--type-lead);
 		}
 	}
 </style>

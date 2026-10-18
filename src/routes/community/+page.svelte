@@ -21,11 +21,7 @@
 />
 
 <div class="v3-page">
-	<PageIntro
-		eyebrow="Community · the corkboard"
-		title="Bringing people together."
-		station="corkboard"
-	>
+	<PageIntro title="Bringing people together." station="corkboard">
 		<p>
 			Developer tools are only half the story. These are the programs and gatherings I've started or
 			grown, each one built around people first.
@@ -93,7 +89,7 @@
 		display: inline-flex;
 		align-items: center;
 		min-height: 40px;
-		font-size: 17px;
+		font-size: var(--type-body);
 		color: var(--color-accent);
 		text-decoration: underline;
 		text-underline-offset: 4px;
@@ -117,15 +113,15 @@
 	dt {
 		padding-top: 3px;
 		font:
-			11px/1.5 system-ui,
+			var(--type-meta) / 1.5 var(--font-ui),
 			sans-serif;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
+		letter-spacing: normal;
+		text-transform: none;
 		color: var(--color-secondary);
 	}
 	dd {
 		margin: 0;
-		font-size: 17px;
+		font-size: var(--type-body);
 		line-height: 1.6;
 		color: var(--color-ink-soft);
 	}
@@ -158,7 +154,7 @@
 	}
 	.programs p {
 		margin-top: 6px;
-		font-size: 16px;
+		font-size: var(--type-body);
 		line-height: 1.55;
 		color: var(--color-secondary);
 	}
