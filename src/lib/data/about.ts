@@ -17,6 +17,10 @@ export const about = {
 		{
 			title: 'Communities',
 			text: "not audiences but communities, places where people know each other's names, answer each other's questions, and stay long after the swag runs out."
+		},
+		{
+			title: 'Curiosity',
+			text: 'learning for the pleasure of it, building things to understand them, and paying closer attention to the world around me.'
 		}
 	],
 	beyond: [

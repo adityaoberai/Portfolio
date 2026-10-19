@@ -49,6 +49,11 @@
 
 ## Change log
 
+### 2026-10-19 — Curiosity in What I care about
+
+- Added Curiosity as the third value after Education and Communities, using the wording approved by the user: “learning for the pleasure of it, building things to understand them, and paying closer attention to the world around me.”
+- Validation: formatting passes; type checks report 0 errors/0 warnings; the production build succeeds. The built About page returns HTTP 200 and renders Education, Communities, and Curiosity in order with the exact approved wording. Publish only to `v3-world`.
+
 ### 2026-10-19 — Music, navigation, portrait, and About copy refinements
 
 - User requested removing the play/paused icons. Removed the header's loading, playing, and paused indicators and their labels, styles, and loading animation. The card keeps its Gramophone label, record decoration, expand/collapse button, and Stop button.
