@@ -169,7 +169,7 @@
 				/>
 			</div>
 		{:else if block.type === 'profile'}
-			<div class="reflection" class:no-portrait={block.portrait === false}>
+			<div class="reflection">
 				{#if block.portrait !== false}<Portrait width={120} />{/if}
 				<p>{fill(block.text)}</p>
 			</div>
@@ -403,8 +403,8 @@
 	}
 	.reflection {
 		display: grid;
-		grid-template-columns: 120px 1fr;
-		gap: 18px;
+		grid-template-columns: minmax(0, 1fr);
+		gap: 16px;
 		align-items: start;
 		margin-top: 20px;
 	}
@@ -490,22 +490,28 @@
 		color: #606456;
 	}
 	@media (max-width: 420px) {
-		.reflection,
 		.now div {
 			grid-template-columns: 1fr;
 			gap: 4px;
 		}
 	}
 	.feature {
-		margin-top: 16px;
-		padding: 16px 0;
+		margin-top: 24px;
+		padding: 20px 0;
 		border-top: 1px solid #dedbcf;
 		border-bottom: 1px solid #dedbcf;
 	}
+	.entries + .feature {
+		margin-top: 0;
+		border-top: 0;
+	}
+	.feature h3 {
+		font-size: var(--type-item);
+	}
 	.feature p {
-		margin-top: 6px;
+		margin-top: 10px;
 		font-size: var(--type-body);
-		line-height: 1.55;
+		line-height: 1.6;
 		color: #5a604f;
 	}
 	.text {
@@ -520,9 +526,6 @@
 		color: #304e42;
 		text-decoration: underline;
 		text-underline-offset: 4px;
-	}
-	.reflection.no-portrait {
-		grid-template-columns: 1fr;
 	}
 	.links.inline {
 		flex-direction: row;

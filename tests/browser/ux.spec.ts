@@ -109,7 +109,8 @@ test('On paper and the room preserve a panel and its reading position', async ({
 		return element.scrollTop;
 	});
 	expect(scroll).toBeGreaterThan(100);
-	await sheet.getByRole('link', { name: 'See it on paper' }).click();
+	// Browser navigation can leave a panel open; its reading position still restores.
+	await page.goto('/index#work');
 	await expect(page).toHaveURL(/\/index#work$/);
 	await expect(page.locator('#work')).toBeFocused();
 	await page.getByRole('navigation', { name: 'Explore another way' }).getByRole('link').click();

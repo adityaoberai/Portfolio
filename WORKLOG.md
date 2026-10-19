@@ -49,6 +49,13 @@
 
 ## Change log
 
+### 2026-10-19 — Quieter panel footers and clearer content layout
+
+- Removed “See it on paper” from each station panel's footer, leaving the shared page navigation and the panel's Back action. Section links such as “The longer story” remain available.
+- Removed the unnecessary “Recently built” eyebrow from the work panel. The project keeps its proper name, “Relief ATL”; its title and description now have more breathing room and use the shared item-heading type size. The project and preceding work list share a single divider.
+- Stacked the About portrait above its introduction at every viewport width, keeping the paragraph at the full content width.
+- Updated the existing reading-position regression to use browser navigation now that the duplicate panel link is gone. All 12 relevant browser checks pass, including mobile layouts at 320/390/430px, reading-position restoration, page-mode navigation, and automated WCAG 2.2 AA scans of every station. All 30 unit tests, type checks, lint, and the production build pass. Inspected desktop and 320/390px panels: the portrait precedes a full-width paragraph, the work feature has a 10px title-to-description gap, and no panel repeats the page's On paper invitation. Publish only to `v3-world`.
+
 ### 2026-10-18 — Icon controls for the music card
 
 - Replaced the music card's visible Open/Hide player and Stop captions with chevrons and a stop square. The buttons keep accessible names, hover descriptions, expansion state, keyboard operation, and at least 44 × 44px touch targets.

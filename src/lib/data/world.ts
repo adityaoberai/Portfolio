@@ -248,7 +248,7 @@ export const world: WorldConfig = {
 							'work-documentation-and-website-ownership'
 						]
 					},
-					{ type: 'feature', kicker: 'Recently built', item: 'project-relief-atl' }
+					{ type: 'feature', item: 'project-relief-atl' }
 				],
 				links: [
 					{ label: 'More about my work', href: '/work#developer-relations' },

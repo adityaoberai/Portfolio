@@ -709,10 +709,8 @@
 			</div>
 		</div>
 		<div class="sheet-content">
-			<StationPanel id={open} preview={narrow && !expanded} /><a
-				class="paper-link"
-				href={`/index#${stationById[open]?.section}`}>See it on paper →</a
-			><button class="back-button" onclick={dismissStation}>← Back to the room</button>
+			<StationPanel id={open} preview={narrow && !expanded} />
+			<button class="back-button" onclick={dismissStation}>← Back to the room</button>
 		</div>{/if}
 </dialog>
 <dialog
@@ -1139,16 +1137,6 @@
 	.sheet-content {
 		container-type: inline-size;
 		padding: 28px clamp(24px, 3vw, 40px) max(32px, env(safe-area-inset-bottom));
-	}
-	.paper-link {
-		display: inline-flex;
-		align-items: center;
-		min-height: 44px;
-		margin: 20px 16px 0 0;
-		font: var(--type-ui) / 1.5 var(--font-ui);
-		color: var(--color-accent);
-		text-decoration: underline;
-		text-underline-offset: 4px;
 	}
 	.back-button {
 		display: inline-flex;
