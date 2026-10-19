@@ -64,6 +64,7 @@ import {
 	GRAMOPHONE,
 	LAPTOP,
 	MIRROR,
+	PORTRAIT_CAMERA_OFFSET,
 	ROOM,
 	SIDE_TABLE,
 	START,
@@ -340,40 +341,43 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	scene.add(mirror);
 	mirror.updateMatrixWorld(true);
 	const normal = new Vector3(1, 0, 0).transformDirection(mirror.matrixWorld);
-	const looking = new Vector3(...CAMERA_OFFSET).negate().normalize();
-	looking.addScaledVector(normal, -2 * looking.dot(normal));
 	const glassCentre = reflection.getWorldPosition(new Vector3());
 	const mirrorCamera = new OrthographicCamera();
 	mirrorCamera.layers.set(REFLECTED);
 	mirrorCamera.up.set(0, 1, 0).transformDirection(mirror.matrixWorld);
-	mirrorCamera.position.copy(glassCentre).addScaledVector(looking, -4);
-	mirrorCamera.lookAt(glassCentre);
-	mirrorCamera.updateMatrixWorld();
 	// Frame the glass exactly: its corners as the mirror camera sees them give the
 	// frustum, and where each corner falls in it is that corner's texture coordinate.
 	const corners = pane.getAttribute('position');
-	const seen = Array.from({ length: corners.count }, (_, i) =>
-		new Vector3()
-			.fromBufferAttribute(corners, i)
-			.applyMatrix4(reflection.matrixWorld)
-			.applyMatrix4(mirrorCamera.matrixWorldInverse)
-	);
-	mirrorCamera.left = Math.min(...seen.map((v) => v.x));
-	mirrorCamera.right = Math.max(...seen.map((v) => v.x));
-	mirrorCamera.bottom = Math.min(...seen.map((v) => v.y));
-	mirrorCamera.top = Math.max(...seen.map((v) => v.y));
-	mirrorCamera.near = 0.1;
-	mirrorCamera.far = 10;
-	mirrorCamera.updateProjectionMatrix();
-	const across = mirrorCamera.right - mirrorCamera.left;
-	const tall = mirrorCamera.top - mirrorCamera.bottom;
 	const uv = pane.getAttribute('uv');
-	seen.forEach((v, i) =>
-		uv.setXY(i, (v.x - mirrorCamera.left) / across, (v.y - mirrorCamera.bottom) / tall)
-	);
-	uv.needsUpdate = true;
 	const REFLECTION_HEIGHT = 512;
-	reflectionTarget.setSize(Math.round((REFLECTION_HEIGHT * across) / tall), REFLECTION_HEIGHT);
+	function frameMirror(offset: Vec3) {
+		const looking = new Vector3(...offset).negate().normalize();
+		looking.addScaledVector(normal, -2 * looking.dot(normal));
+		mirrorCamera.position.copy(glassCentre).addScaledVector(looking, -4);
+		mirrorCamera.lookAt(glassCentre);
+		mirrorCamera.updateMatrixWorld();
+		const seen = Array.from({ length: corners.count }, (_, i) =>
+			new Vector3()
+				.fromBufferAttribute(corners, i)
+				.applyMatrix4(reflection.matrixWorld)
+				.applyMatrix4(mirrorCamera.matrixWorldInverse)
+		);
+		mirrorCamera.left = Math.min(...seen.map((v) => v.x));
+		mirrorCamera.right = Math.max(...seen.map((v) => v.x));
+		mirrorCamera.bottom = Math.min(...seen.map((v) => v.y));
+		mirrorCamera.top = Math.max(...seen.map((v) => v.y));
+		mirrorCamera.near = 0.1;
+		mirrorCamera.far = 10;
+		mirrorCamera.updateProjectionMatrix();
+		const across = mirrorCamera.right - mirrorCamera.left;
+		const tall = mirrorCamera.top - mirrorCamera.bottom;
+		seen.forEach((v, i) =>
+			uv.setXY(i, (v.x - mirrorCamera.left) / across, (v.y - mirrorCamera.bottom) / tall)
+		);
+		uv.needsUpdate = true;
+		reflectionTarget.setSize(Math.round((REFLECTION_HEIGHT * across) / tall), REFLECTION_HEIGHT);
+	}
+	frameMirror(CAMERA_OFFSET);
 	// Skip the extra pass unless some of the character could show in the glass.
 	const probe = new Vector3();
 	function inMirror() {
@@ -431,7 +435,9 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	// Screen space covered by overlaid UI (CSS px); the room is framed in what's left.
 	let insets = { top: 0, bottom: 0, units: 9.4 };
 	let panelBounds: PanelBounds | null = null;
+	let cameraOffset = CAMERA_OFFSET;
 	let paused = false;
+	let preview = false;
 	let disposed = false;
 	let frame = 0;
 	let lastTime = 0;
@@ -521,9 +527,9 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	}
 	function applyView() {
 		camera.position.set(
-			view.target.x + CAMERA_OFFSET[0],
-			view.target.y + CAMERA_OFFSET[1],
-			view.target.z + CAMERA_OFFSET[2]
+			view.target.x + cameraOffset[0],
+			view.target.y + cameraOffset[1],
+			view.target.z + cameraOffset[2]
 		);
 		camera.lookAt(view.target);
 		camera.zoom = view.zoom;
@@ -531,7 +537,8 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		door.rotation.y = view.door;
 	}
 	function framing(at: typeof framed) {
-		if (!at) return { target: new Vector3(...CAMERA_TARGET), zoom: 1, door: 0 };
+		if (!at || preview)
+			return { target: new Vector3(...CAMERA_TARGET), zoom: 1, door: at?.door ?? 0 };
 		const area = focusViewport(canvas.clientWidth, canvas.clientHeight, insets.top, panelBounds);
 		if (!area.usable) return { target: view.target.clone(), zoom: view.zoom, door: at.door };
 		const zoom = canvas.clientWidth <= 820 ? 2.1 : FOCUS_ZOOM;
@@ -588,7 +595,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		}
 		const delta = lastTime ? Math.min((time - lastTime) / 1000, 0.05) : 1 / 60;
 		lastTime = time;
-		const direction = keyboardDirection(keys);
+		const direction = keyboardDirection(keys, cameraOffset);
 		const keyboardMoving = !paused && (direction.x !== 0 || direction.z !== 0);
 		if (keyboardMoving) {
 			setPosition(
@@ -856,9 +863,16 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		if (disposed) return;
 		const { width, height } = canvas.getBoundingClientRect();
 		if (!width || !height) return;
+		const portrait = width <= 820 && height > width;
+		const offset = portrait ? PORTRAIT_CAMERA_OFFSET : CAMERA_OFFSET;
+		if (cameraOffset !== offset) {
+			cameraOffset = offset;
+			applyView();
+			frameMirror(offset);
+		}
 		const free = Math.max(height * 0.4, height - insets.top - insets.bottom);
-		// The room is ~9.5 × 8 units on screen; `units` sets how snugly it fills the free height.
-		const freeHeight = Math.max(insets.units, 11.4 / (width / free));
+		// A closer, taller portrait composition; `units` also leaves room above and below.
+		const freeHeight = Math.max(insets.units, (portrait ? 10.2 : 11.4) / (width / free));
 		const unitsPerPx = freeHeight / free;
 		const viewHeight = unitsPerPx * height;
 		const aspect = width / height;
@@ -969,6 +983,11 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			if (value) stopMovement();
 			paused = value;
 			requestFrame();
+		},
+		setPreview(value: boolean) {
+			if (preview === value) return;
+			preview = value;
+			if (framed) frameTo(framed);
 		},
 		// The gramophone follows the music: arm down and the record turning while it plays.
 		setRecord(value: boolean) {

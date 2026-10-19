@@ -31,7 +31,7 @@ test('a cold shared link closes within the room', async ({ page }) => {
 });
 
 for (const width of [320, 390, 430]) {
-	test(`mobile menu and measured previews at ${width}px`, async ({ browser }) => {
+	test(`mobile object cards and reading sheets at ${width}px`, async ({ browser }) => {
 		const context = await browser.newContext({
 			viewport: { width, height: 844 },
 			isMobile: true,
@@ -43,6 +43,8 @@ for (const width of [320, 390, 430]) {
 		await page.goto('/world?diagnostics=1');
 		await expect(page.locator('canvas')).toHaveClass(/loaded/);
 		await expect(page.locator('.destinations')).toHaveCount(0);
+		await expect(page.locator('.welcome p')).toBeHidden();
+		expect((await page.locator('.welcome').boundingBox())!.height).toBeLessThan(60);
 		const menuButton = page.getByRole('button', { name: 'Room menu', exact: true });
 		const buttonBox = (await menuButton.boundingBox())!;
 		expect(buttonBox.y).toBeLessThan(100);
@@ -62,21 +64,34 @@ for (const width of [320, 390, 430]) {
 		const sheet = page.locator('dialog.sheet:not(.poem)');
 		await expect(sheet).toBeVisible();
 		await expect(page).toHaveURL(/#camera$/);
-		await expect(sheet.getByRole('button', { name: 'Keep reading' })).toBeVisible();
-		expect((await sheet.boundingBox())!.height).toBeLessThan(844 * 0.5);
+		await expect(sheet.getByRole('heading', { name: 'Photography', exact: true })).toBeVisible();
+		await expect(sheet.locator('.object-summary')).toContainText('Street, travel');
+		expect(await sheet.evaluate((e) => e.matches(':modal'))).toBe(false);
+		expect((await sheet.boundingBox())!.height).toBeLessThan(844 * 0.3);
+		await expect(menuButton).toBeVisible();
 		await expect
 			.poll(async () => {
-				const anchor = await page.evaluate(() =>
-					(
-						window as unknown as { __room: { anchor(id: string): { x: number; y: number } } }
-					).__room.anchor('camera')
-				);
+				const anchors = await page.evaluate(() => {
+					const room = (
+						window as unknown as {
+							__room: { anchor(id: string): { x: number; y: number } };
+						}
+					).__room;
+					return ['desk', 'camera', 'shelf', 'mirror', 'door'].map((id) => room.anchor(id));
+				});
 				const box = (await sheet.boundingBox())!;
-				return anchor.y > 80 && anchor.y < box.y && anchor.x > 0 && anchor.x < width;
+				return anchors.every(
+					(anchor) => anchor.y > 110 && anchor.y < box.y && anchor.x > 0 && anchor.x < width
+				);
 			})
 			.toBe(true);
-		await sheet.getByRole('button', { name: 'Keep reading' }).tap();
-		await expect.poll(async () => (await sheet.boundingBox())!.height).toBeGreaterThan(844 * 0.85);
+		await sheet.getByRole('button', { name: 'Open Photography', exact: true }).tap();
+		expect(await sheet.evaluate((e) => e.matches(':modal'))).toBe(true);
+		await expect.poll(async () => (await sheet.boundingBox())!.height).toBeCloseTo(844 * 0.75, 0);
+		await expect(
+			sheet.getByRole('heading', { name: 'Fujifilm X-T30 II', exact: true })
+		).toBeVisible();
+		await expect(sheet.getByRole('link', { name: /^View photo:/ })).toHaveCount(6);
 		await sheet.evaluate((e) => e.scrollTo({ top: e.scrollHeight, behavior: 'instant' }));
 		await expect(
 			sheet.getByRole('button', { name: 'Close and return to the room' })
@@ -86,7 +101,64 @@ for (const width of [320, 390, 430]) {
 			sheet.getByRole('button', { name: 'Close and return to the room' })
 		).toBeInViewport();
 		await page.setViewportSize({ width, height: 844 });
+		await sheet.getByRole('button', { name: 'See room' }).tap();
+		await expect(
+			sheet.getByRole('button', { name: 'Open Photography', exact: true })
+		).toBeVisible();
+		// A card leaves the room interactive; another object replaces it without stacking sheets.
+		let previousFrames = '';
+		await expect
+			.poll(
+				async () => {
+					const frames = (await page.locator('canvas').getAttribute('data-frames')) ?? '';
+					const settled = frames === previousFrames;
+					previousFrames = frames;
+					return settled;
+				},
+				{ intervals: [150] }
+			)
+			.toBe(true);
+		const desk = await page.evaluate(() =>
+			(
+				window as unknown as {
+					__room: { project(point: number[]): { x: number; y: number } };
+				}
+			).__room.project([-3.0, 1.35, -2.2])
+		);
+		await page.touchscreen.tap(desk.x, desk.y);
+		await expect(
+			sheet.getByRole('button', { name: 'Open Work & build', exact: true })
+		).toBeEnabled();
+		await expect(page).toHaveURL(/#desk$/);
+		await sheet.getByRole('button', { name: 'Open Work & build', exact: true }).tap();
+		await expect.poll(async () => (await sheet.boundingBox())!.height).toBeCloseTo(844 * 0.75, 0);
+		const launchDescription = sheet.locator('.entries li').first().locator('p');
+		await expect(launchDescription).toContainText(
+			"Leading Appwrite's public-facing product releases end to end"
+		);
+		await expect(launchDescription).toBeInViewport({ ratio: 0.25 });
+		await expect(
+			sheet.getByRole('heading', { name: 'Documentation and website ownership', exact: true })
+		).toBeVisible();
+		const project = sheet.getByRole('heading', { name: 'Relief ATL', exact: true });
+		await project.scrollIntoViewIfNeeded();
+		const scroll = await sheet.evaluate((e) => e.scrollTop);
+		expect(scroll).toBeGreaterThan(100);
+		await sheet.getByRole('button', { name: 'See room' }).tap();
+		await expect(
+			sheet.getByRole('button', { name: 'Open Work & build', exact: true })
+		).toBeVisible();
+		expect(await sheet.evaluate((e) => e.matches(':modal'))).toBe(false);
+		await sheet.getByRole('button', { name: 'Open Work & build', exact: true }).tap();
+		await expect.poll(() => sheet.evaluate((e) => e.scrollTop)).toBeCloseTo(scroll, 0);
+		await expect(project).toBeInViewport();
 		await sheet.getByRole('button', { name: 'Close and return to the room' }).tap();
+		await expect(sheet).not.toBeVisible();
+		await page.goForward();
+		await expect(
+			sheet.getByRole('button', { name: 'Open Work & build', exact: true })
+		).toBeVisible();
+		await page.keyboard.press('Escape');
 		await expect(sheet).not.toBeVisible();
 		await menuButton.tap();
 		await page.keyboard.press('Escape');

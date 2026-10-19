@@ -63,9 +63,13 @@
 		rememberJourney({
 			position: room?.snapshot() ?? saved?.position,
 			station: lastStation,
-			panel: open ?? pending,
+			panel: pending ?? open,
 			expanded,
-			scroll: open ? (dialog?.scrollTop ?? 0) : 0
+			scroll: open
+				? !narrow || expanded
+					? (dialog?.scrollTop ?? 0)
+					: (scrollPositions.get(open) ?? 0)
+				: 0
 		});
 	}
 	beforeNavigate(() => remember());
@@ -98,16 +102,41 @@
 		expanded = restore ? saved!.expanded : false;
 		open = id;
 		pending = null;
-		room?.setPaused(true);
 		hover = null;
-		await tick();
-		if (!dialog?.isConnected || open !== id) return;
-		if (!dialog.open) dialog.showModal();
-		dialog.scrollTop = restore ? saved!.scroll : (scrollPositions.get(id) ?? 0);
-		dialog.focus(quietFocus);
+		await presentStation();
+		if (open !== id) return;
+		if (restore) scrollPositions.set(id, saved!.scroll);
+		dialog.scrollTop = narrow && !expanded ? 0 : (scrollPositions.get(id) ?? 0);
 		restoring = false;
-		measureLayout();
 		remember();
+	}
+	async function presentStation() {
+		await tick();
+		if (!dialog?.isConnected || !open) return;
+		const reading = !narrow || expanded;
+		if (dialog.open && dialog.matches(':modal') !== reading) dialog.close();
+		if (!dialog.open) {
+			if (reading) dialog.showModal();
+			else dialog.show();
+		}
+		room?.setPreview(!reading);
+		room?.setPaused(reading);
+		dialog.focus(quietFocus);
+		measureLayout();
+	}
+	async function readStation(value: boolean) {
+		if (!open) return;
+		if (expanded) scrollPositions.set(open, dialog.scrollTop);
+		expanded = value;
+		await presentStation();
+		if (!open) return;
+		dialog.scrollTop = value ? (scrollPositions.get(open) ?? 0) : 0;
+		if (!value) dialog.querySelector<HTMLButtonElement>('.object-open')?.focus(quietFocus);
+		remember();
+	}
+	function stationClosed() {
+		// Changing a non-modal object card into a modal queues a close event.
+		if (!dialog.open) closeStation();
 	}
 	function dismissStation() {
 		if (route.state.roomPanelEntry) history.back();
@@ -115,11 +144,13 @@
 	}
 	function closeStation() {
 		if (disposed) return;
-		if (open) scrollPositions.set(open, dialog.scrollTop);
+		if (open && (!narrow || expanded)) scrollPositions.set(open, dialog.scrollTop);
 		open = null;
 		pending = null;
 		room?.setPanel(null);
+		room?.cancelVisit();
 		room?.release();
+		room?.setPreview(false);
 		room?.setPaused(false);
 		if (returnFocus?.isConnected && !menu.contains(returnFocus))
 			returnFocus.focus({ preventScroll: true });
@@ -230,6 +261,18 @@
 		'arrowright'
 	]);
 	function forwardRoomKeys(event: KeyboardEvent) {
+		if (
+			event.key === 'Escape' &&
+			!event.defaultPrevented &&
+			narrow &&
+			open &&
+			!expanded &&
+			!menu.matches(':popover-open')
+		) {
+			event.preventDefault();
+			dismissStation();
+			return;
+		}
 		if (
 			status !== 'ready' ||
 			document.activeElement !== document.body ||
@@ -343,21 +386,25 @@
 		if (disposed || !room || !frameEl) return;
 		const height = frameEl.clientHeight;
 		const small = frameEl.clientWidth <= 820;
-		const inspecting = Boolean(open || poemOf);
+		const inspecting = Boolean((open && (!small || expanded)) || poemOf);
 		const cornerTop = cornerEl.getBoundingClientRect().top;
-		frameEl.style.setProperty('--corner', `${Math.max(0, height - cornerTop)}px`);
+		const cardTop =
+			small && open && !expanded && dialog.open ? dialog.getBoundingClientRect().top : height;
+		const cornerInset = `${Math.max(0, height - cornerTop)}px`;
+		frameEl.style.setProperty('--corner', cornerInset);
+		dialog.style.setProperty('--corner', cornerInset);
 		frameEl.style.setProperty('--menu-top', `${menuButton.getBoundingClientRect().bottom + 12}px`);
 		const titleBottom = topEl.getBoundingClientRect().bottom;
 		room.setInsets(
 			small
 				? {
 						top: titleBottom + 8,
-						bottom: inspecting ? 16 : Math.max(24, height - cornerTop + 12),
+						bottom: inspecting ? 16 : Math.max(24, height - Math.min(cornerTop, cardTop) + 12),
 						units: 9.4
 					}
 				: { top: inspecting ? 80 : titleBottom * 0.5, bottom: 24, units: 8.6 }
 		);
-		const sheet = dialog.open ? dialog : poemDialog.open ? poemDialog : null;
+		const sheet = dialog.open && inspecting ? dialog : poemDialog.open ? poemDialog : null;
 		const box = sheet?.getBoundingClientRect();
 		room.setPanel(
 			box ? { left: box.left, top: box.top, width: box.width, height: box.height } : null
@@ -389,9 +436,11 @@
 			room?.setReducedMotion(reducedMotion);
 		};
 		const updateSize = () => {
+			const changed = narrow !== size.matches;
 			narrow = size.matches;
 			coarse = pointer.matches;
-			measureLayout();
+			if (changed && open) void presentStation();
+			else measureLayout();
 		};
 		diagnostics = new URLSearchParams(location.search).has('diagnostics');
 		motion.addEventListener('change', updateMotion);
@@ -478,7 +527,7 @@
 
 <section
 	class="world"
-	class:inspecting={Boolean(open || poemOf)}
+	class:inspecting={Boolean((open && (!narrow || expanded)) || poemOf)}
 	aria-labelledby="world-title"
 	bind:this={frameEl}
 >
@@ -572,7 +621,8 @@
 				class="room-hint"
 				class:idle={!selected && !near && !(nearThing && nearHint)}
 				id="room-instructions"
-				hidden={(narrow || coarse) && musicOn && Boolean(nearThing?.music) && !selected}
+				hidden={Boolean(narrow && open && !expanded) ||
+					((narrow || coarse) && musicOn && Boolean(nearThing?.music) && !selected)}
 			>
 				{#if selected}<p role="status">Heading to <strong>{selected.area}</strong>…</p>
 				{:else if near}<button onclick={() => visit(near.id)}
@@ -663,7 +713,8 @@
 	bind:this={dialog}
 	class="sheet"
 	class:expanded
-	onclose={closeStation}
+	class:object-card={narrow && !expanded}
+	onclose={stationClosed}
 	oncancel={(event) => {
 		event.preventDefault();
 		dismissStation();
@@ -671,20 +722,31 @@
 	onkeydown={sheetKeys}
 	onanimationend={measureLayout}
 	aria-labelledby="station-title"
+	aria-modal={!narrow || expanded}
 	tabindex="-1"
 >
-	{#if open}<div class="sheet-top">
+	{#if open && narrow && !expanded && (selected ?? stationById[open])}
+		{@const station = selected ?? stationById[open]}
+		<div class="object-head">
+			<h2 id="station-title">{station?.area}</h2>
+			<button class="close" onclick={dismissStation} aria-label="Close and return to the room"
+				>×</button
+			>
+		</div>
+		<p class="object-summary">{station?.summary}</p>
+		<button
+			class="object-open"
+			disabled={Boolean(pending)}
+			aria-label={`Open ${station?.area}`}
+			onclick={() => readStation(true)}
+		>
+			{pending ? 'Walking over…' : 'Open'}<span aria-hidden="true">↗</span>
+		</button>
+	{:else if open}<div class="sheet-top">
 			<span class="sheet-context">{stationById[open]?.area ?? 'In the room'}</span>
 			<div>
-				{#if narrow}<button
-						aria-expanded={expanded}
-						onclick={() => {
-							expanded = !expanded;
-							remember();
-						}}
-						>{expanded ? 'Show preview' : 'Keep reading'}<span aria-hidden="true">
-							{expanded ? '↙' : '↗'}</span
-						></button
+				{#if narrow}<button aria-expanded={expanded} onclick={() => readStation(false)}
+						>See room<span aria-hidden="true">↙</span></button
 					>{/if}<button
 					class="close"
 					onclick={dismissStation}
@@ -693,7 +755,7 @@
 			</div>
 		</div>
 		<div class="sheet-content">
-			<StationPanel id={open} preview={narrow && !expanded} />
+			<StationPanel id={open} />
 			<button class="back-button" onclick={dismissStation}>← Back to the room</button>
 		</div>{/if}
 </dialog>
@@ -1069,6 +1131,7 @@
 	}
 	.sheet {
 		position: fixed;
+		z-index: 5;
 		inset: 0 0 0 auto;
 		margin: 0;
 		width: min(520px, 44vw);
@@ -1089,6 +1152,46 @@
 	}
 	.sheet:focus {
 		outline: none;
+	}
+	.object-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+	}
+	.object-head h2 {
+		font: 500 1.25rem/1.25 var(--font-serif);
+	}
+	.object-head button {
+		flex: none;
+		width: 44px;
+		height: 44px;
+		font: 1.5rem/1 var(--font-ui);
+		color: var(--color-accent);
+		cursor: pointer;
+	}
+	.object-summary {
+		margin: 4px 0 12px;
+		font: 1rem/1.5 var(--font-serif);
+		color: var(--color-secondary);
+	}
+	.object-open {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 20px;
+		width: 100%;
+		min-height: 44px;
+		padding: 10px 14px;
+		border-radius: 7px;
+		background: var(--color-accent);
+		color: var(--color-paper);
+		font: 500 0.9375rem/1.4 var(--font-ui);
+		cursor: pointer;
+	}
+	.object-open:disabled {
+		opacity: 0.65;
+		cursor: wait;
 	}
 	.sheet-top {
 		position: sticky;
@@ -1231,10 +1334,13 @@
 		.welcome {
 			max-width: 100%;
 		}
+		.welcome h1 {
+			max-width: none;
+			font-size: 1.25rem;
+			line-height: 1.25;
+		}
 		.welcome p {
-			font-size: 0.9375rem;
-			max-width: 42ch;
-			margin-top: 8px;
+			display: none;
 		}
 		.corner {
 			left: 16px;
@@ -1285,16 +1391,27 @@
 		.sheet {
 			inset: auto 0 0;
 			width: 100%;
-			height: 44dvh;
-			max-height: 44dvh;
+			height: 75dvh;
+			max-height: 75dvh;
 			border-left: 0;
 			border-top: 1px solid #b7bda5;
 			border-radius: 18px 18px 0 0;
 			box-shadow: 0 -16px 48px #25352926;
 		}
 		.sheet.expanded {
-			height: 92dvh;
-			max-height: 92dvh;
+			height: 75dvh;
+			max-height: 75dvh;
+		}
+		.sheet.object-card {
+			inset: auto 16px calc(var(--corner, 20px) + 12px) auto;
+			width: calc(100% - 32px);
+			max-width: 420px;
+			height: auto;
+			max-height: min(320px, 45dvh);
+			padding: 8px 16px 16px;
+			border: 1px solid var(--color-hairline-strong);
+			border-radius: 14px;
+			box-shadow: 0 12px 40px #25352926;
 		}
 		.sheet-top {
 			min-height: 64px;

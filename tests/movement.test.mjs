@@ -13,6 +13,7 @@ import {
 } from '../src/lib/world/movement.ts';
 import {
 	CAMERA_OFFSET,
+	PORTRAIT_CAMERA_OFFSET,
 	CHARACTER_RADIUS,
 	CURIOSITIES,
 	FOOTPRINTS,
@@ -108,10 +109,12 @@ test('arrow and letter controls map to the same screen-relative direction', () =
 });
 
 test('"up" walks directly away from the camera', () => {
-	const up = keyboardDirection(new Set(['w']));
-	const length = Math.hypot(CAMERA_OFFSET[0], CAMERA_OFFSET[2]);
-	assert.ok(Math.abs(up.x + CAMERA_OFFSET[0] / length) < 1e-12);
-	assert.ok(Math.abs(up.z + CAMERA_OFFSET[2] / length) < 1e-12);
+	for (const camera of [CAMERA_OFFSET, PORTRAIT_CAMERA_OFFSET]) {
+		const up = keyboardDirection(new Set(['w']), camera);
+		const length = Math.hypot(camera[0], camera[2]);
+		assert.ok(Math.abs(up.x + camera[0] / length) < 1e-12);
+		assert.ok(Math.abs(up.z + camera[2] / length) < 1e-12);
+	}
 });
 
 test('a long frame does not teleport across the room', () => {

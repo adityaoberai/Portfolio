@@ -98,6 +98,27 @@ test('the room, its guide, and every station meet WCAG 2.2 AA (automated checks)
 	await expect(page.getByRole('dialog')).not.toBeVisible();
 });
 
+test('mobile object cards and readers meet WCAG 2.2 AA (automated checks)', async ({ browser }) => {
+	const context = await browser.newContext({
+		viewport: { width: 390, height: 844 },
+		isMobile: true,
+		hasTouch: true,
+		reducedMotion: 'reduce'
+	});
+	const page = await context.newPage();
+	await page.goto('/world#desk');
+	await expect(page.getByRole('button', { name: 'Open Work & build', exact: true })).toBeVisible();
+	await audit(page, '/world (mobile object card)');
+	await page.getByRole('button', { name: 'Open Work & build', exact: true }).tap();
+	await expect(
+		page.getByRole('heading', { name: 'Developer Relations Lead at Appwrite' })
+	).toBeVisible();
+	await audit(page, '/world (mobile reading sheet)');
+	await page.getByRole('button', { name: 'See room' }).tap();
+	await expect(page.getByRole('button', { name: 'Open Work & build', exact: true })).toBeFocused();
+	await context.close();
+});
+
 test('the gramophone’s player card meets WCAG 2.2 AA (automated checks)', async ({ page }) => {
 	// Spotify's player is stubbed out: its contents aren't this site's to audit.
 	await page.route('https://open.spotify.com/**', (route) =>

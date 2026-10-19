@@ -180,11 +180,10 @@ export function stepToward(from: Point, to: Point, delta: number): Point {
 }
 
 // Screen-relative controls: "up" walks away from the camera, "right" walks screen-right.
-const length = Math.hypot(CAMERA_OFFSET[0], CAMERA_OFFSET[2]);
-const forward = { x: -CAMERA_OFFSET[0] / length, z: -CAMERA_OFFSET[2] / length };
-const right = { x: -forward.z, z: forward.x };
-
-export function keyboardDirection(keys: Set<string>): Point {
+export function keyboardDirection(keys: Set<string>, camera = CAMERA_OFFSET): Point {
+	const length = Math.hypot(camera[0], camera[2]);
+	const forward = { x: -camera[0] / length, z: -camera[2] / length };
+	const right = { x: -forward.z, z: forward.x };
 	const horizontal =
 		Number(keys.has('d') || keys.has('arrowright')) -
 		Number(keys.has('a') || keys.has('arrowleft'));

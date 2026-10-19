@@ -49,6 +49,14 @@
 
 ## Change log
 
+### 2026-10-19 — Mobile object cards, reading sheets, and portrait framing
+
+- Replaced the cramped mobile content preview with a compact object card: destination, short description, Open, and Close. It leaves the room and menu interactive, so another object can replace it. Open presents a 75%-height modal with a sticky header; See room returns to the card and reopening preserves the reading position. Desktop keeps its side panel.
+- Removed content pruning from station panels. Work now includes its full introduction, all three descriptions, Relief ATL, and both section links; every mobile reader presents the same content as desktop.
+- Added a higher, slightly more frontal camera for portrait screens, with closer framing. The furniture, character, floor, and hit targets retain their proportions. The mirror reflection and keyboard directions follow the active camera; landscape and desktop keep their existing view.
+- Reduced the mobile welcome heading to 20px and removed its subtitle from mobile. The heading can use the full available width.
+- Extended mobile interaction coverage at 320/390/430px for cards, object switching, 75% readers, full Work content, scroll restoration, orientation, history, and dismissal. Added automated mobile card/reader accessibility audits and checked movement against both camera directions. All 39 browser checks pass across the full run and the focused mobile rerun; all 30 unit tests, type checks (0 errors/0 warnings), lint, and the production build pass. Visually inspected the room, object cards, and readers at 320/390/430px, including a 568px-tall phone and 200% reader text. Publish only to `v3-world`.
+
 ### 2026-10-19 — Curiosity in What I care about
 
 - Added Curiosity as the third value after Education and Communities, using the wording approved by the user: “learning for the pleasure of it, building things to understand them, and paying closer attention to the world around me.”

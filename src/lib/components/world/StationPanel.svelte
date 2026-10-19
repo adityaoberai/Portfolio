@@ -2,7 +2,7 @@
 	// Renders a station's panel from src/lib/data/world.ts: title, lead, then its
 	// blocks in order, then links. No copy lives here.
 	import type { StationId } from '$lib/world/layout';
-	import { panels, stationById, type ResolvedBlock } from '$lib/data/room';
+	import { panels, stationById } from '$lib/data/room';
 	import PhotoGallery from '$lib/components/PhotoGallery.svelte';
 	import { bengaluruTime } from '$lib/data/now';
 	import { CARD_IMAGE_HEIGHT, CARD_IMAGE_WIDTH } from '$lib/data/collection';
@@ -10,27 +10,10 @@
 	import Slab from './Slab.svelte';
 	import Portrait from '$lib/components/Portrait.svelte';
 
-	let { id, preview = false }: { id: StationId; preview?: boolean } = $props();
+	let { id }: { id: StationId } = $props();
 	const station = $derived(stationById[id]);
 	const panel = $derived(panels[id]);
-	const allBlocks = $derived(panel?.blocks ?? []);
-	const blocks = $derived(
-		preview
-			? allBlocks
-					.filter((block) => block.type !== 'tags')
-					.slice(0, 1)
-					.map(
-						(block): ResolvedBlock =>
-							block.type === 'items'
-								? {
-										...block,
-										artifacts: block.artifacts.slice(0, block.style === 'photos' ? 1 : 2),
-										show: { ...block.show, description: false }
-									}
-								: block
-					)
-			: allBlocks
-	);
+	const blocks = $derived(panel?.blocks ?? []);
 	const fill = (text: string) => text.replace('{time}', bengaluruTime());
 	const external = (href: string) => /^(https?:|mailto:)/.test(href);
 </script>
@@ -52,8 +35,8 @@
 
 {#if station && panel}
 	<h2 id="station-title">{panel.title}</h2>
-	{#if preview || panel.lead}<p class="lead">
-			{fill(preview ? station.summary : panel.lead!)}
+	{#if panel.lead}<p class="lead">
+			{fill(panel.lead)}
 		</p>{/if}
 
 	{#each blocks as block, b (b)}
@@ -122,7 +105,7 @@
 					{/each}
 				</ul>
 			{:else if block.style === 'photos'}
-				<PhotoGallery photos={block.artifacts} scope={`station-${id}`} panel compact={preview} />
+				<PhotoGallery photos={block.artifacts} scope={`station-${id}`} panel />
 			{:else if block.style === 'cards'}
 				<ul class="cards">
 					{#each block.artifacts as card (card.id)}
@@ -237,7 +220,7 @@
 
 	{#if panel.links.length}
 		<div class="links">
-			{#each preview ? panel.links.slice(0, 1) : panel.links as link (link.href + link.label)}
+			{#each panel.links as link (link.href + link.label)}
 				<a href={link.href}>{link.label} {link.external ? '↗' : '→'}</a>
 			{/each}
 		</div>

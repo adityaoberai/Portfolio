@@ -24,6 +24,8 @@ export const START: Point = { x: 0.6, z: 1.4 };
 
 // The orthographic camera sits at +x/+z looking at the back-left corner.
 export const CAMERA_OFFSET: Vec3 = [9, 10, 12];
+// Portrait screens get a higher, more frontal view, without changing the room.
+export const PORTRAIT_CAMERA_OFFSET: Vec3 = [6, 15, 14];
 export const CAMERA_TARGET: Vec3 = [0, 1.05, 0.1];
 
 // Everything standing on the floor has a footprint: a rectangle centred on (x, z),

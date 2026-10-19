@@ -456,7 +456,7 @@ test('portrait touch input, reduced motion, and low-power DPR', async ({ browser
 	const desk = await anchor(page, 'desk');
 	await page.touchscreen.tap(desk.x, desk.y);
 	await expect(page.getByRole('dialog')).toBeVisible();
-	await page.getByRole('button', { name: 'Back to the room' }).tap();
+	await page.getByRole('button', { name: 'Close and return to the room' }).tap();
 	await page.getByRole('button', { name: 'Room menu', exact: true }).tap();
 	await page.getByRole('checkbox', { name: 'Low power' }).check();
 	await expect(page.locator('output')).toContainText('DPR 1 ·');
@@ -470,7 +470,7 @@ test('portrait touch input, reduced motion, and low-power DPR', async ({ browser
 	await page.getByRole('link', { name: 'Collection', exact: true }).tap();
 	await expect(page.getByRole('navigation', { name: 'In the room' })).not.toBeVisible();
 	await expect(page.getByRole('dialog')).toBeVisible();
-	await page.getByRole('button', { name: 'Back to the room' }).tap();
+	await page.getByRole('button', { name: 'Close and return to the room' }).tap();
 	await expect(page.getByRole('dialog')).not.toBeVisible();
 	await page.screenshot({ path: 'test-results/world-mobile.png', fullPage: true });
 	await context.close();
