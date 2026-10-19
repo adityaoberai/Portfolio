@@ -29,7 +29,6 @@
 
 		<section aria-labelledby="care-title">
 			<h2 id="care-title"><span class="n">02</span>What I care about</h2>
-			<p>Three things, mostly.</p>
 			<ul>
 				{#each about.careAbout as item (item.title)}
 					<li><em>{item.title}</em>: {item.text}</li>
@@ -80,8 +79,6 @@
 		height: auto;
 		aspect-ratio: 4 / 5;
 		object-fit: cover;
-		border-radius: 110px 110px 6px 6px;
-		border: 6px solid #8f6a4c;
 	}
 	.story p,
 	.story li {

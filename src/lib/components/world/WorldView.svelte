@@ -41,9 +41,6 @@
 	let musicOn = $state(false);
 	let playerExpanded = $state(true);
 	let recordPlaying = $state<boolean | null>(null);
-	const playbackLabel = $derived(
-		recordPlaying === null ? 'Loading music' : recordPlaying ? 'Playing' : 'Paused'
-	);
 	let musicNews = $state('');
 	let firstPlayback = true;
 	let returnFocus: HTMLElement | null = null;
@@ -547,20 +544,7 @@
 				<div class="dock-top">
 					<span class="disc" class:turning={recordPlaying && !reducedMotion} aria-hidden="true"
 					></span>
-					<span class="dock-label">
-						Gramophone
-						<span class="playback" role="img" aria-label={playbackLabel} title={playbackLabel}>
-							<svg viewBox="0 0 24 24" aria-hidden="true" class:loading={recordPlaying === null}>
-								{#if recordPlaying === null}
-									<path d="M20 12a8 8 0 1 1-8-8" />
-								{:else if recordPlaying}
-									<path d="m8 5 11 7-11 7Z" fill="currentColor" stroke="none" />
-								{:else}
-									<path d="M6 5h4v14H6zM14 5h4v14h-4z" fill="currentColor" stroke="none" />
-								{/if}
-							</svg>
-						</span>
-					</span>
+					<span class="dock-label">Gramophone</span>
 					<div class="dock-actions">
 						<button
 							aria-label={playerExpanded ? 'Hide player' : 'Open player'}
@@ -1182,15 +1166,7 @@
 		font: 0.8125rem/1.5 var(--font-ui);
 	}
 	.dock-label {
-		display: flex;
-		align-items: center;
 		flex: 1;
-		gap: 8px;
-	}
-	.playback {
-		display: inline-flex;
-		flex: none;
-		color: var(--color-accent);
 	}
 	.dock-actions {
 		display: flex;
@@ -1219,10 +1195,6 @@
 		stroke-linecap: round;
 		stroke-linejoin: round;
 	}
-	.playback svg {
-		width: 16px;
-		height: 16px;
-	}
 	#music-player {
 		padding-bottom: 4px;
 	}
@@ -1248,9 +1220,6 @@
 		}
 		.disc.turning {
 			animation: turn 1.8s linear infinite;
-		}
-		.playback .loading {
-			animation: turn 1.2s linear infinite;
 		}
 		@keyframes turn {
 			to {

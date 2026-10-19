@@ -258,7 +258,6 @@ test('the gramophone plays the playlist, with Spotify’s player over the hint c
 	await expect(canvas).toHaveAttribute('data-z', '1.350');
 	await expect(dock.locator('iframe')).toHaveAttribute('title', 'Spotify player');
 	await expect.poll(() => spotifyCalls(page)).toEqual(['play']);
-	await expect(dock.getByRole('img', { name: 'Playing', exact: true })).toBeVisible();
 	const dockBox = (await dock.boundingBox())!;
 	expect(dockBox.y + dockBox.height).toBeLessThanOrEqual((await hint.boundingBox())!.y);
 	await expect(canvas).toBeFocused();
@@ -269,9 +268,8 @@ test('the gramophone plays the playlist, with Spotify’s player over the hint c
 		.toBeGreaterThan(frames + 5);
 	// Spotify's compact player: just the song that's playing.
 	expect((await dock.locator('iframe').boundingBox())!.height).toBe(80);
-	// Spotify reports pause independently of whether its player is visible.
+	// Hiding and reopening a paused player does not change playback.
 	await spotifyPlayback(page, true);
-	await expect(dock.getByRole('img', { name: 'Paused', exact: true })).toBeVisible();
 	await dock.getByRole('button', { name: 'Hide player', exact: true }).focus();
 	await page.keyboard.press('Enter');
 	await expect(dock.locator('iframe')).toBeHidden();
@@ -287,7 +285,6 @@ test('the gramophone plays the playlist, with Spotify’s player over the hint c
 	);
 	await expect.poll(() => spotifyCalls(page)).toEqual(['play']);
 	await spotifyPlayback(page, false);
-	await expect(dock.getByRole('img', { name: 'Playing', exact: true })).toBeVisible();
 	// A click in the player keeps the keyboard there; moving over the room gives it back.
 	await dock.locator('iframe').click();
 	await expect(canvas).not.toBeFocused();
@@ -338,10 +335,6 @@ test('mobile music controls stay compact and return after reading a panel', asyn
 		expect(box.height).toBeGreaterThanOrEqual(44);
 		await expect(button).toHaveText('');
 	}
-	await spotifyPlayback(page, true);
-	await expect(dock.getByRole('img', { name: 'Paused', exact: true })).toBeVisible();
-	await spotifyPlayback(page, false);
-	await expect(dock.getByRole('img', { name: 'Playing', exact: true })).toBeVisible();
 	await expect(hint).toContainText('Lift the needle?');
 	await expect(hint).toBeHidden();
 	await expect(dock.locator('iframe')).not.toBeVisible();

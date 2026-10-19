@@ -17,7 +17,7 @@
 
 <header class="v3-header" class:overlay class:with-menu={Boolean(menu)}>
 	<div class="bar">
-		<a href="/" class="identity">Aditya Oberai<span>Bengaluru, India</span></a>
+		<a href="/" class="identity">Aditya Oberai</a>
 		<div class="header-actions">
 			<div class="surface"><ModeSwitch /></div>
 			{#if menu}{@render menu()}{/if}
@@ -68,6 +68,9 @@
 		padding-block: 22px;
 	}
 	.identity {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
 		font-size: 24px;
 		line-height: 1.15;
 		letter-spacing: -0.015em;
@@ -76,16 +79,6 @@
 		display: flex;
 		align-items: center;
 		gap: 20px;
-	}
-	.identity span {
-		display: block;
-		margin-top: 5px;
-		font:
-			var(--type-meta) / 1.4 var(--font-ui),
-			sans-serif;
-		letter-spacing: normal;
-		text-transform: none;
-		color: var(--color-secondary);
 	}
 	nav {
 		padding-bottom: 10px;

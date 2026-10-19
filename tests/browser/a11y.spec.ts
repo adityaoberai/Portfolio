@@ -119,7 +119,6 @@ test('the gramophone’s player card meets WCAG 2.2 AA (automated checks)', asyn
 	await page.getByRole('button', { name: 'Put the record on' }).click();
 	const dock = page.getByRole('region', { name: 'Gramophone' });
 	await expect(dock).toBeVisible();
-	await expect(dock.getByRole('img', { name: 'Loading music', exact: true })).toBeVisible();
 	await dock.evaluate((card) => Promise.all(card.getAnimations().map((a) => a.finished)));
 	await audit(page, '/world (music on)');
 	await dock.getByRole('button', { name: 'Hide player', exact: true }).click();

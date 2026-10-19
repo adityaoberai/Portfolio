@@ -7,7 +7,7 @@ const deepPages: [string, string, string][] = [
 	['/writing', 'Writing things down.', 'Writing'],
 	['/community', 'Bringing people together.', 'Community'],
 	['/photography', 'Hallways, cities, people mid-laugh.', 'Photography'],
-	['/collection', 'Blastoise gets the top shelf.', 'Collection'],
+	['/collection', 'Blastoise gets the top shelf.', 'Pokemon'],
 	['/about', 'Making complicated things make sense.', 'About'],
 	['/contact', 'Say hello.', 'Contact']
 ];

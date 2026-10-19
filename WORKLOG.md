@@ -49,6 +49,17 @@
 
 ## Change log
 
+### 2026-10-19 — Music, navigation, portrait, and About copy refinements
+
+- User requested removing the play/paused icons. Removed the header's loading, playing, and paused indicators and their labels, styles, and loading animation. The card keeps its Gramophone label, record decoration, expand/collapse button, and Stop button.
+- Renamed the On paper directory entry and its shared section-nav label to “Pokemon”; the description names Collectr and Blastoise. The `/collection` destination remains the same.
+- Removed the location subline beneath Aditya's name in the shared header, retaining a 44px-tall identity link.
+- Removed the portrait's arched outline and thick brown frame in the About panel and page. The plain square portrait stays above the panel's introduction.
+- Updated hackathon participation to 10,000+ developers and community onboarding to 100,000+ members in both About and Work copy, using the user's corrected figures.
+- Moved “Clear communication” from “What I care about” to “How I work” and removed the obsolete “Three things, mostly” line. Beyond work now closes with Pokémon cards and Blastoise, linking to the card collection instead of mentioning hackathon judging.
+- Removed obsolete status-icon expectations from the existing music tests and updated the deep-page navigation expectation for Pokemon. Spotify's own playback controls and the room's playback synchronization remain in place.
+- Validation: type checks report 0 errors/0 warnings; lint, all 30 unit tests, and the production build pass. All 12 relevant browser cases pass, covering music, mobile menus at 320/390/430px, page navigation and phone layouts, reading-position restoration, and automated WCAG 2.2 AA scans of the content pages, all room panels, and both music-card states. Visually checked the updated directory row, plain portrait, and status-free music card; rendered About/Work checks confirm the corrected figures and moved principle, with no page errors. Publish only to `v3-world`.
+
 ### 2026-10-19 — Quieter panel footers and clearer content layout
 
 - Removed “See it on paper” from each station panel's footer, leaving the shared page navigation and the panel's Back action. Section links such as “The longer story” remain available.

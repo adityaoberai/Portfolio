@@ -412,8 +412,6 @@
 		width: 120px;
 		height: 120px;
 		object-fit: cover;
-		border-radius: 60px 60px 6px 6px;
-		border: 6px solid #8f6a4c;
 		filter: saturate(0.8);
 	}
 	.reflection p {
