@@ -130,16 +130,16 @@ interface Options {
 
 const FOCUS_ZOOM = 1.55;
 const TWEEN_MS = 480;
+const MAX_RENDER_PIXELS = 6_000_000;
 // 33⅓ rpm, in radians a second; and how fast the tonearm swings.
 const SPIN = ((100 / 3) * Math.PI * 2) / 60;
 const SWING = 2.4;
 const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 
 export function createRoom(canvas: HTMLCanvasElement, options: Options) {
-	const coarse = window.matchMedia('(pointer: coarse)').matches;
 	const renderer = new WebGLRenderer({
 		canvas,
-		antialias: !coarse,
+		antialias: true,
 		stencil: true,
 		alpha: true,
 		powerPreference: 'low-power'
@@ -996,8 +996,8 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			frameMirror(offset);
 		}
 		const free = Math.max(height * 0.4, height - insets.top - insets.bottom);
-		// A closer, taller portrait composition; `units` also leaves room above and below.
-		const freeHeight = Math.max(insets.units, (portrait ? 10.2 : 11.4) / (width / free));
+		// The stronger corner angle needs the full room width, including both walls.
+		const freeHeight = Math.max(insets.units, 11.4 / (width / free));
 		const unitsPerPx = freeHeight / free;
 		const viewHeight = unitsPerPx * height;
 		const aspect = width / height;
@@ -1019,9 +1019,15 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			view.zoom = 1;
 		}
 		applyView();
-		renderer.setPixelRatio(
-			Math.min(window.devicePixelRatio || 1, lowQuality ? 1 : coarse ? 1.25 : 1.5)
-		);
+		// Use the screen's real density on phones. Only very large drawing buffers
+		// are capped; a touch screen is not a reason to reduce image quality.
+		const pixelRatio = lowQuality
+			? 1
+			: Math.min(
+					window.devicePixelRatio || 1,
+					Math.max(1, Math.sqrt(MAX_RENDER_PIXELS / (width * height)))
+				);
+		renderer.setPixelRatio(pixelRatio);
 		renderer.setSize(width, height, false);
 		requestFrame();
 	}

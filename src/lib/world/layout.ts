@@ -24,8 +24,8 @@ export const START: Point = { x: 0.6, z: 1.4 };
 
 // The orthographic camera sits at +x/+z looking at the back-left corner.
 export const CAMERA_OFFSET: Vec3 = [9, 10, 12];
-// Portrait screens get a higher, more frontal view, without changing the room.
-export const PORTRAIT_CAMERA_OFFSET: Vec3 = [3.5, 18, 17];
+// A lower corner view keeps both walls and furniture depth clear on phones.
+export const PORTRAIT_CAMERA_OFFSET: Vec3 = [9, 11, 14];
 // A longer floor plan on phones. Furniture keeps its size and follows the plan.
 export const PORTRAIT_ROOM_DEPTH = 1.4;
 export const CAMERA_TARGET: Vec3 = [0, 1.05, 0.1];

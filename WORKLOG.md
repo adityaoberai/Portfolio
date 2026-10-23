@@ -49,6 +49,13 @@
 
 ## Change log
 
+### 2026-10-24 — Restore mobile depth and rendering quality
+
+- User feedback: the more frontal, high camera made the room feel less 3D. Lowered the portrait elevation and restored a stronger view into the corner, showing more of both walls and the fronts and sides of the furniture.
+- Expanded horizontal framing to keep the longer floor plan and both walls inside the mobile viewport. The rectangular room, furniture proportions, live Now clock, compact cards, and confined doorway remain intact.
+- The mobile renderer was disabling antialiasing for touch input and capping resolution at 1.25×. Enabled edge smoothing and render at the screen’s actual pixel density, with a six-million-pixel limit for very large drawing buffers. Low power remains an explicit 1× option.
+- Compared three camera angles at 390px, including the open doorway. Extended the portrait browser regression to check the actual 3× drawing buffer, antialiasing, and Low power round trip. Validation: all six focused mobile browser cases and all 32 unit tests pass; type checks report 0 errors/0 warnings; lint and the production build pass. A 390 × 844 viewport at 3× now renders a 1170 × 2532 canvas with antialiasing, compared with the previous 487 × 1055 canvas without it. Visually compared the shelf detail and open doorway at both quality settings. Publish only to `v3-world`.
+
 ### 2026-10-23 — Rectangular portrait room, doorway, and live Now time
 
 - Tightened the mobile header's bottom spacing so the welcome line sits directly below the identity/menu row. Retained the smaller heading and hidden mobile subtitle.

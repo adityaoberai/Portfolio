@@ -433,7 +433,9 @@ test('an open station scrolls with the keys and the wheel, and Space doesn’t c
 	await expect.poll(top).toBeGreaterThan(0);
 });
 
-test('portrait touch input, reduced motion, and low-power DPR', async ({ browser }) => {
+test('portrait touch input, sharp rendering, reduced motion, and low-power DPR', async ({
+	browser
+}) => {
 	const context = await browser.newContext({
 		viewport: { width: 390, height: 844 },
 		isMobile: true,
@@ -444,6 +446,17 @@ test('portrait touch input, reduced motion, and low-power DPR', async ({ browser
 	const page = await context.newPage();
 	await openRoom(page);
 	const canvas = page.locator('canvas');
+	const rendering = () =>
+		canvas.evaluate((element) => {
+			const canvas = element as HTMLCanvasElement;
+			return {
+				width: canvas.width,
+				height: canvas.height,
+				antialias: canvas.getContext('webgl2')?.getContextAttributes()?.antialias
+			};
+		});
+	// A 3× phone gets its real pixel density and smooth edges, even with touch input.
+	await expect.poll(rendering).toEqual({ width: 1170, height: 2532, antialias: true });
 	// Settings live in the menu; the OS preference is reflected there.
 	await page.getByRole('button', { name: 'Room menu', exact: true }).tap();
 	await page.getByText('Room settings', { exact: true }).click();
@@ -460,6 +473,9 @@ test('portrait touch input, reduced motion, and low-power DPR', async ({ browser
 	await page.getByRole('button', { name: 'Room menu', exact: true }).tap();
 	await page.getByRole('checkbox', { name: 'Low power' }).check();
 	await expect(page.locator('output')).toContainText('DPR 1 ·');
+	await expect.poll(rendering).toEqual({ width: 390, height: 844, antialias: true });
+	await page.getByRole('checkbox', { name: 'Low power' }).uncheck();
+	await expect.poll(rendering).toEqual({ width: 1170, height: 2532, antialias: true });
 	const size = await page.evaluate(() => ({
 		scroll: document.documentElement.scrollWidth,
 		width: window.innerWidth
