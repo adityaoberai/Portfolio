@@ -5,7 +5,11 @@ declare global {
 		// interface Error {}
 		// interface Locals {}
 		// interface PageData {}
-		// interface PageState {}
+		interface PageState {
+			roomPanel?: import('$lib/world/layout').StationId | null;
+			roomPanelEntry?: boolean;
+			photo?: { scope: string; id: string };
+		}
 		// interface Platform {}
 	}
 }

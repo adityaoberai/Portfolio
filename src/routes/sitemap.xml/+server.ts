@@ -2,7 +2,21 @@ import { site } from '$lib/data/site';
 
 export const prerender = true;
 
-const pages = ['/', '/about', '/work', '/projects', '/community', '/speaking', '/contact'];
+const pages = [
+	'/',
+	'/world',
+	'/index',
+	'/writing',
+	'/photography',
+	'/collection',
+	'/about',
+	'/now',
+	'/work',
+	'/projects',
+	'/community',
+	'/speaking',
+	'/contact'
+];
 
 export function GET() {
 	const body = `<?xml version="1.0" encoding="UTF-8"?>
