@@ -244,7 +244,7 @@ test('mobile On paper keeps the portrait, labels, and typography usable with lar
 	await expect(page.getByText('The index · a few ways to know me', { exact: true })).toHaveCount(0);
 	await expect(
 		page.getByRole('navigation', { name: 'Find your way' }).getByRole('link', { name: /^Now/ })
-	).toBeVisible();
+	).toHaveCount(0);
 	await page.addStyleTag({
 		content:
 			'html { font-size: 200% !important; } * { line-height: 1.5 !important; letter-spacing: .12em !important; word-spacing: .16em !important; } p { margin-bottom: 2em !important; }'

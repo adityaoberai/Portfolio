@@ -7,7 +7,7 @@
 	const station = $derived($roomJourney?.station);
 	const section = $derived(station ? stationById[station]?.section : null);
 	const roomHref = $derived(`/world${$roomJourney?.panel ? `#${$roomJourney.panel}` : ''}`);
-	const paperHref = $derived(`/index${section ? `#${section}` : ''}`);
+	const paperHref = $derived(`/index${section && section !== 'now' ? `#${section}` : ''}`);
 </script>
 
 <nav class="surface-link" aria-label="Explore another way">

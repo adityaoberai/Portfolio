@@ -39,7 +39,7 @@
 	<p class="updated">Last updated <time datetime={now.updated}>{updated}</time>.</p>
 	<p class="back">
 		<a href="/world#window">Back to the room →</a>
-		<a href="/index#now">See it on paper →</a>
+		<a href="/index">See it on paper →</a>
 	</p>
 </article>
 

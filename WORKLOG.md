@@ -49,6 +49,12 @@
 
 ## Change log
 
+### 2026-10-24 — Hide the zoomed header name and remove Now from the index
+
+- Hide the header's identity link while inspecting an object or reading the poem, so Aditya's name does not overlap the enlarged scene. It returns with the overview; its layout space stays reserved to avoid a framing jump. The page's On paper invitation remains available on desktop.
+- Removed the Now row from the index directory. On paper links from the window and Now page go to `/index` instead of the removed `#now` anchor. The Now page, room destination, clock, and shared section navigation remain available.
+- Validation: type checks report 0 errors/0 warnings; lint and the production build pass. All five focused navigation/index browser checks pass. Manually verified at 390px and 1440px that the identity is hidden during inspection and returns after closing the panel. Publish only to `v3-world`.
+
 ### 2026-10-24 — Restore mobile depth and rendering quality
 
 - User feedback: the more frontal, high camera made the room feel less 3D. Lowered the portrait elevation and restored a stronger view into the corner, showing more of both walls and the fronts and sides of the furniture.

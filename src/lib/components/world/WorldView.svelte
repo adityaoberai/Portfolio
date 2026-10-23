@@ -849,6 +849,9 @@
 	.inspecting .welcome {
 		display: none;
 	}
+	.inspecting .top :global(.identity) {
+		visibility: hidden;
+	}
 	.inspecting .corner,
 	.inspecting .menu-button {
 		visibility: hidden;

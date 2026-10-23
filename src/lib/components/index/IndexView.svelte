@@ -4,6 +4,7 @@
 	import Portrait from '$lib/components/Portrait.svelte';
 	import { highlights } from '$lib/data/highlights';
 	import { sections } from '$lib/data/sections';
+	const directory = sections.filter((section) => section.id !== 'now');
 	const roomHref = $derived(`/world${$roomJourney?.panel ? `#${$roomJourney.panel}` : ''}`);
 </script>
 
@@ -34,7 +35,7 @@
 	<nav class="directory" aria-labelledby="directory-title">
 		<h2 id="directory-title">Find your way</h2>
 		<ul class="chapters">
-			{#each sections as section (section.id)}
+			{#each directory as section (section.id)}
 				<li id={section.id} tabindex="-1">
 					<a href={section.href} class="chapter"
 						><div>
