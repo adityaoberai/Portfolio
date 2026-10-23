@@ -169,8 +169,8 @@ export function route(from: Point, to: Point): Point[] {
 	return path;
 }
 
-export function stepToward(from: Point, to: Point, delta: number): Point {
-	const remaining = distance(from, to);
+export function stepToward(from: Point, to: Point, delta: number, depth = 1): Point {
+	const remaining = Math.hypot(to.x - from.x, (to.z - from.z) * depth);
 	const step = SPEED * Math.max(0, Math.min(delta, 0.05));
 	if (remaining <= step) return { ...to };
 	return {
@@ -180,7 +180,7 @@ export function stepToward(from: Point, to: Point, delta: number): Point {
 }
 
 // Screen-relative controls: "up" walks away from the camera, "right" walks screen-right.
-export function keyboardDirection(keys: Set<string>, camera = CAMERA_OFFSET): Point {
+export function keyboardDirection(keys: Set<string>, camera = CAMERA_OFFSET, depth = 1): Point {
 	const length = Math.hypot(camera[0], camera[2]);
 	const forward = { x: -camera[0] / length, z: -camera[2] / length };
 	const right = { x: -forward.z, z: forward.x };
@@ -193,7 +193,7 @@ export function keyboardDirection(keys: Set<string>, camera = CAMERA_OFFSET): Po
 	const z = right.z * horizontal - forward.z * vertical;
 	const magnitude = Math.hypot(x, z);
 	if (magnitude < 1e-9) return { x: 0, z: 0 };
-	return { x: x / magnitude, z: z / magnitude };
+	return { x: x / magnitude, z: z / magnitude / depth };
 }
 
 export function nearest<T extends { approach: Point }>(

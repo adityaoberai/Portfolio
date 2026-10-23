@@ -1,6 +1,10 @@
 import { focusViewport, type PanelBounds } from './viewport';
 import type { RoomPosition } from './journey';
 import {
+	AlwaysStencilFunc,
+	EqualStencilFunc,
+	KeepStencilOp,
+	ReplaceStencilOp,
 	BoxGeometry,
 	CircleGeometry,
 	CustomBlending,
@@ -42,6 +46,7 @@ import {
 	buildDoorFrame,
 	buildDoorSlab,
 	buildGramophone,
+	buildHallway,
 	buildLanyards,
 	buildLeg,
 	buildMirror,
@@ -56,6 +61,9 @@ import { bengaluruHour, skyAt } from './time';
 import {
 	CAMERA_OFFSET,
 	CAMERA_TARGET,
+	BED,
+	BOARD,
+	CABINET,
 	CURIOSITIES,
 	DESK,
 	DOOR_HINGE,
@@ -65,6 +73,8 @@ import {
 	LAPTOP,
 	MIRROR,
 	PORTRAIT_CAMERA_OFFSET,
+	PORTRAIT_ROOM_DEPTH,
+	SHELF,
 	ROOM,
 	SIDE_TABLE,
 	START,
@@ -130,11 +140,15 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	const renderer = new WebGLRenderer({
 		canvas,
 		antialias: !coarse,
+		stencil: true,
 		alpha: true,
 		powerPreference: 'low-power'
 	});
 	renderer.setClearColor(0x000000, 0);
 	const scene = new Scene();
+	const roomRoot = new Group();
+	scene.add(roomRoot);
+	let depthScale = 1;
 	const camera = new OrthographicCamera(-6, 6, 5, -5, 0.1, 80);
 	const hemisphere = new HemisphereLight('#fff5d8', '#8e9a7e', 2.5);
 	scene.add(hemisphere);
@@ -149,32 +163,58 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	const litMaterial = own(new MeshLambertMaterial({ vertexColors: true, flatShading: true }));
 	const unlitMaterial = own(new MeshBasicMaterial({ vertexColors: true }));
 
-	// Static room: two merged meshes, whatever the furniture count.
-	const lit = new Batch();
-	const unlit = new Batch();
-	buildShell(lit, unlit);
-	buildDesk(lit);
-	buildPhotography(lit);
-	const faces = new Batch();
-	buildCollection(lit, faces, shelfCards.length);
-	buildBedroom(lit);
-	buildWindow(lit);
-	buildLanyards(lit);
-	buildMirror(lit);
-	buildCorkboard(lit);
-	buildDoorFrame(lit);
-	buildGramophone(lit);
-	const flag = new Batch();
-	buildDecor(lit, unlit, flag);
-	scene.add(new Mesh(keep(lit.build()), litMaterial));
-	scene.add(new Mesh(keep(unlit.build()), unlitMaterial));
+	// Cache the two floor plans. Furniture meshes retain their dimensions while
+	// their anchors, the shell, and logical hit volumes follow the room's depth.
+	function roomGeometry(depth: number) {
+		const lit = new Batch();
+		const unlit = new Batch();
+		const faces = new Batch();
+		const flag = new Batch();
+		function furniture(z: number, batches: Batch[], draw: () => void) {
+			function next(index: number) {
+				if (index === batches.length) draw();
+				else batches[index].preserveDepth(depth, z, () => next(index + 1));
+			}
+			next(0);
+		}
+		buildShell(lit, unlit, depth);
+		furniture(DESK.z, [lit], () => buildDesk(lit));
+		furniture(CABINET.z, [lit], () => buildPhotography(lit));
+		furniture(SHELF.z, [lit, faces], () => buildCollection(lit, faces, shelfCards.length));
+		furniture(BED.z, [lit], () => buildBedroom(lit));
+		furniture(-3, [lit], () => buildWindow(lit));
+		furniture(BOARD.z, [lit], () => {
+			buildLanyards(lit);
+			buildCorkboard(lit);
+		});
+		furniture(MIRROR.z, [lit], () => buildMirror(lit));
+		buildDoorFrame(lit);
+		furniture(SIDE_TABLE.z, [lit], () => buildGramophone(lit));
+		buildDecor(lit, unlit, flag, depth);
+		return {
+			lit: keep(lit.build()),
+			unlit: keep(unlit.build()),
+			faces: keep(faces.build()),
+			flag: keep(flag.build())
+		};
+	}
+	const layouts = new Map([
+		[1, roomGeometry(1)],
+		[PORTRAIT_ROOM_DEPTH, roomGeometry(PORTRAIT_ROOM_DEPTH)]
+	]);
+	const desktopGeometry = layouts.get(1)!;
+	const litMesh = new Mesh(desktopGeometry.lit, litMaterial);
+	const unlitMesh = new Mesh(desktopGeometry.unlit, unlitMaterial);
+	roomRoot.add(litMesh, unlitMesh);
 
 	const unit = keep(new BoxGeometry(1, 1, 1));
 	const displayMaterial = own(new MeshLambertMaterial({ color: '#acc4a2', flatShading: true }));
 	// The laptop's screen, in the same frames as build.ts: desk, laptop, then lid.
 	const display = new Mesh(unit, displayMaterial);
 	const desk = new Group();
-	desk.position.set(DESK.x, 0, DESK.z);
+	const deskPlacement = new Group();
+	deskPlacement.position.set(DESK.x, 0, DESK.z);
+	deskPlacement.add(desk);
 	desk.rotation.y = DESK.angle;
 	const lid = new Group();
 	lid.position.set(LAPTOP.x, DESK.height + LAPTOP.base, LAPTOP.z - LAPTOP.depth / 2);
@@ -183,19 +223,19 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	display.scale.set(LAPTOP.width - 0.05, LAPTOP.lid - 0.06, 0.002);
 	lid.add(display);
 	desk.add(lid);
-	scene.add(desk);
+	roomRoot.add(deskPlacement);
 
 	// Bengaluru through the window: sky colour and city lights follow local time there.
 	const skyMaterial = own(new MeshBasicMaterial({ color: '#b9d4c3' }));
 	const skyPane = new Mesh(unit, skyMaterial);
 	skyPane.position.set(WINDOW.x, WINDOW.y, -2.945);
 	skyPane.scale.set(WINDOW.width, WINDOW.height, 0.01);
-	scene.add(skyPane);
+	roomRoot.add(skyPane);
 	const lightsBatch = new Batch();
 	buildCityLights(lightsBatch);
 	const cityLightsMaterial = own(new MeshBasicMaterial({ vertexColors: true }));
 	const cityLights = new Mesh(keep(lightsBatch.build()), cityLightsMaterial);
-	scene.add(cityLights);
+	roomRoot.add(cityLights);
 	function applySky() {
 		const sky = skyAt(bengaluruHour());
 		skyMaterial.color.set(sky.sky);
@@ -210,11 +250,11 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	// room is up. Until it arrives, what sits behind shows instead: plain card faces
 	// on the shelf, a plain red flag.
 	const textures: Texture[] = [];
-	function pictures(batch: Batch, url: string) {
+	function pictures(geometry: BufferGeometry, url: string) {
 		const material = own(new MeshLambertMaterial({ vertexColors: true }));
-		const mesh = new Mesh(keep(batch.build()), material);
+		const mesh = new Mesh(geometry, material);
 		mesh.visible = false;
-		scene.add(mesh);
+		roomRoot.add(mesh);
 		new TextureLoader().load(url, (texture) => {
 			if (disposed) return texture.dispose();
 			texture.colorSpace = SRGBColorSpace;
@@ -225,9 +265,10 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			mesh.visible = true;
 			requestFrame();
 		});
+		return mesh;
 	}
-	pictures(faces, SHELF_ATLAS);
-	pictures(flag, FLAG.texture);
+	const collectionPictures = pictures(desktopGeometry.faces, SHELF_ATLAS);
+	const flagPictures = pictures(desktopGeometry.flag, FLAG.texture);
 
 	// The door swings open while its station is focused.
 	const door = new Group();
@@ -235,13 +276,43 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	const doorBatch = new Batch();
 	buildDoorSlab(doorBatch);
 	door.add(new Mesh(keep(doorBatch.build()), litMaterial));
-	scene.add(door);
+	roomRoot.add(door);
+	// Only pixels visible through the actual doorway may show the hallway.
+	// Closed-door frames skip both extra passes.
+	const apertureMaterial = own(
+		new MeshBasicMaterial({
+			colorWrite: false,
+			depthWrite: false,
+			stencilWrite: true,
+			stencilRef: 1,
+			stencilFunc: AlwaysStencilFunc,
+			stencilFail: KeepStencilOp,
+			stencilZFail: KeepStencilOp,
+			stencilZPass: ReplaceStencilOp
+		})
+	);
+	const aperture = new Mesh(keep(new PlaneGeometry(0.8, 2.1)), apertureMaterial);
+	aperture.position.set(-3.58, 1.05, 2.5);
+	aperture.rotation.y = Math.PI / 2;
+	aperture.renderOrder = 1;
+	const hall = new Batch();
+	buildHallway(hall);
+	const hallwayMaterial = own(litMaterial.clone());
+	hallwayMaterial.stencilWrite = true;
+	hallwayMaterial.stencilRef = 1;
+	hallwayMaterial.stencilFunc = EqualStencilFunc;
+	hallwayMaterial.stencilWriteMask = 0;
+	const hallway = new Mesh(keep(hall.build()), hallwayMaterial);
+	hallway.renderOrder = 2;
+	roomRoot.add(aperture, hallway);
 
 	// The gramophone's record and tonearm, in its frame: while the music plays the
 	// arm swings onto the record and the record turns (it stays still with less
 	// motion); otherwise the arm is on its rest.
 	const gramophone = new Group();
-	gramophone.position.set(SIDE_TABLE.x, SIDE_TABLE.y, SIDE_TABLE.z);
+	const recordPlacement = new Group();
+	recordPlacement.position.set(SIDE_TABLE.x, SIDE_TABLE.y, SIDE_TABLE.z);
+	recordPlacement.add(gramophone);
 	gramophone.rotation.y = GRAMOPHONE.angle;
 	const recordBatch = new Batch();
 	buildRecord(recordBatch);
@@ -253,12 +324,14 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	arm.position.set(GRAMOPHONE.arm.x, GRAMOPHONE.arm.y, GRAMOPHONE.arm.z);
 	arm.rotation.y = GRAMOPHONE.arm.rest;
 	gramophone.add(record, arm);
-	scene.add(gramophone);
+	roomRoot.add(recordPlacement);
 	let playing = false;
 
 	// Character: one merged body, two swinging legs.
 	const character = new Group();
-	scene.add(character);
+	const characterPlacement = new Group();
+	characterPlacement.add(character);
+	roomRoot.add(characterPlacement);
 	const bodyBatch = new Batch();
 	buildCharacterBody(bodyBatch);
 	const body = new Mesh(keep(bodyBatch.build()), litMaterial);
@@ -278,19 +351,19 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	const shadow = new Mesh(disc, own(new MeshBasicMaterial({ color: '#b68462' })));
 	shadow.rotation.x = -Math.PI / 2;
 	shadow.scale.set(0.28, 0.2, 1);
-	scene.add(shadow);
+	roomRoot.add(shadow);
 	const targetMarker = new Mesh(disc, own(new MeshBasicMaterial({ color: '#f1d8a7' })));
 	targetMarker.rotation.x = -Math.PI / 2;
 	targetMarker.scale.set(0.12, 0.12, 1);
 	targetMarker.visible = false;
-	scene.add(targetMarker);
+	roomRoot.add(targetMarker);
 	const nearRing = new Mesh(
 		keep(new RingGeometry(0.34, 0.42, 32)),
 		own(new MeshBasicMaterial({ color: '#f6e2b5' }))
 	);
 	nearRing.rotation.x = -Math.PI / 2;
 	nearRing.visible = false;
-	scene.add(nearRing);
+	roomRoot.add(nearRing);
 
 	// The character's reflection in the mirror. The room camera never turns, so
 	// neither does its view in the mirror: a second camera looks along the
@@ -300,7 +373,9 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	for (const object of [hemisphere, sun, body, ...legs]) object.layers.enable(REFLECTED);
 	const { glass } = MIRROR;
 	const mirror = new Group();
-	mirror.position.set(MIRROR.x, 0, MIRROR.z);
+	const mirrorPlacement = new Group();
+	mirrorPlacement.position.set(MIRROR.x, 0, MIRROR.z);
+	mirrorPlacement.add(mirror);
 	mirror.rotation.set(0, MIRROR.angle, MIRROR.lean);
 	// Sized to the glass below.
 	const reflectionTarget = new WebGLRenderTarget(1, 1, { samples: 4 });
@@ -338,7 +413,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	reflection.rotation.y = Math.PI / 2;
 	reflection.visible = false;
 	mirror.add(reflection);
-	scene.add(mirror);
+	roomRoot.add(mirrorPlacement);
 	mirror.updateMatrixWorld(true);
 	const normal = new Vector3(1, 0, 0).transformDirection(mirror.matrixWorld);
 	const glassCentre = reflection.getWorldPosition(new Vector3());
@@ -351,6 +426,9 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	const uv = pane.getAttribute('uv');
 	const REFLECTION_HEIGHT = 512;
 	function frameMirror(offset: Vec3) {
+		roomRoot.updateMatrixWorld(true);
+		normal.set(1, 0, 0).transformDirection(mirror.matrixWorld);
+		reflection.getWorldPosition(glassCentre);
 		const looking = new Vector3(...offset).negate().normalize();
 		looking.addScaledVector(normal, -2 * looking.dot(normal));
 		mirrorCamera.position.copy(glassCentre).addScaledVector(looking, -4);
@@ -381,7 +459,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	// Skip the extra pass unless some of the character could show in the glass.
 	const probe = new Vector3();
 	function inMirror() {
-		probe.copy(character.position);
+		character.getWorldPosition(probe);
 		probe.y += 0.6;
 		probe.applyMatrix4(mirrorCamera.matrixWorldInverse);
 		const reach = 0.75;
@@ -457,10 +535,17 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	let pointerStart: { x: number; y: number; id: number } | null = null;
 
 	// Camera framing tween: target point and zoom.
-	const view = { target: new Vector3(...CAMERA_TARGET), zoom: 1, door: 0 };
+	const view = {
+		target: new Vector3(CAMERA_TARGET[0], CAMERA_TARGET[1], CAMERA_TARGET[2] * depthScale),
+		zoom: 1,
+		door: 0
+	};
 	let tween: { from: typeof view; to: typeof view; start: number } | null = null;
 
-	const position = (): Point => ({ x: character.position.x, z: character.position.z });
+	const position = (): Point => ({
+		x: characterPlacement.position.x,
+		z: characterPlacement.position.z
+	});
 
 	function report() {
 		options.onState({
@@ -497,7 +582,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		const seat = station.seat;
 		if (!seat) return;
 		seated = station;
-		character.position.set(seat.x, seat.lift, seat.z);
+		characterPlacement.position.set(seat.x, seat.lift, seat.z);
 		character.rotation.y = seat.facing;
 		shadow.visible = false;
 		pose();
@@ -507,22 +592,22 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		if (!seated) return;
 		const { approach } = seated;
 		seated = null;
-		character.position.set(approach.x, 0, approach.z);
+		characterPlacement.position.set(approach.x, 0, approach.z);
 		shadow.position.set(approach.x, 0.064, approach.z);
 		shadow.visible = true;
 		pose();
 	}
 	function setPosition(point: Point) {
-		const dx = point.x - character.position.x;
-		const dz = point.z - character.position.z;
+		const dx = point.x - characterPlacement.position.x;
+		const dz = (point.z - characterPlacement.position.z) * depthScale;
 		if (Math.hypot(dx, dz) > 0.001) character.rotation.y = Math.atan2(dx, dz);
-		character.position.set(point.x, 0, point.z);
+		characterPlacement.position.set(point.x, 0, point.z);
 		shadow.position.set(point.x, 0.064, point.z);
 	}
 	function face(point: Vec3) {
 		character.rotation.y = Math.atan2(
-			point[0] - character.position.x,
-			point[2] - character.position.z
+			point[0] - characterPlacement.position.x,
+			(point[2] - characterPlacement.position.z) * depthScale
 		);
 	}
 	function applyView() {
@@ -535,10 +620,15 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		camera.zoom = view.zoom;
 		camera.updateProjectionMatrix();
 		door.rotation.y = view.door;
+		aperture.visible = hallway.visible = view.door > 0.001;
 	}
 	function framing(at: typeof framed) {
 		if (!at || preview)
-			return { target: new Vector3(...CAMERA_TARGET), zoom: 1, door: at?.door ?? 0 };
+			return {
+				target: new Vector3(CAMERA_TARGET[0], CAMERA_TARGET[1], CAMERA_TARGET[2] * depthScale),
+				zoom: 1,
+				door: at?.door ?? 0
+			};
 		const area = focusViewport(canvas.clientWidth, canvas.clientHeight, insets.top, panelBounds);
 		if (!area.usable) return { target: view.target.clone(), zoom: view.zoom, door: at.door };
 		const zoom = canvas.clientWidth <= 820 ? 2.1 : FOCUS_ZOOM;
@@ -549,7 +639,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		const upAxis = new Vector3().setFromMatrixColumn(camera.matrixWorld, 1);
 		const localX = (camera.left + camera.right) / 2 + (area.x / canvas.clientWidth - 0.5) * width;
 		const localY = (camera.top + camera.bottom) / 2 + (0.5 - area.y / canvas.clientHeight) * height;
-		const target = new Vector3(...at.focus)
+		const target = new Vector3(at.focus[0], at.focus[1], at.focus[2] * depthScale)
 			.addScaledVector(rightAxis, -localX)
 			.addScaledVector(upAxis, -localY);
 		return { target, zoom, door: at.door };
@@ -595,20 +685,26 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		}
 		const delta = lastTime ? Math.min((time - lastTime) / 1000, 0.05) : 1 / 60;
 		lastTime = time;
-		const direction = keyboardDirection(keys, cameraOffset);
+		const direction = keyboardDirection(keys, cameraOffset, depthScale);
 		const keyboardMoving = !paused && (direction.x !== 0 || direction.z !== 0);
 		if (keyboardMoving) {
 			setPosition(
 				clampPoint({
-					x: character.position.x + direction.x * SPEED * delta,
-					z: character.position.z + direction.z * SPEED * delta
+					x: characterPlacement.position.x + direction.x * SPEED * delta,
+					z: characterPlacement.position.z + direction.z * SPEED * delta
 				})
 			);
 		} else if (path.length && !paused) {
 			const next = path[0];
-			const before = Math.hypot(character.position.x - next.x, character.position.z - next.z);
-			setPosition(clampPoint(stepToward(position(), next, delta)));
-			const after = Math.hypot(character.position.x - next.x, character.position.z - next.z);
+			const before = Math.hypot(
+				characterPlacement.position.x - next.x,
+				characterPlacement.position.z - next.z
+			);
+			setPosition(clampPoint(stepToward(position(), next, delta, depthScale)));
+			const after = Math.hypot(
+				characterPlacement.position.x - next.x,
+				characterPlacement.position.z - next.z
+			);
 			// If something still deflects the walk, give up gracefully instead of jittering.
 			stalled = before - after < SPEED * delta * 0.25 ? stalled + 1 : 0;
 			if (after < 0.001 && path.length > 1) {
@@ -784,6 +880,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			return item?.approach ? walkUp(item) : options.onCuriosity(picked.id);
 		}
 		const point = raycaster.ray.intersectPlane(floorPlane, new Vector3());
+		if (point) point.z /= depthScale;
 		if (
 			point &&
 			point.x >= ROOM.minX &&
@@ -864,7 +961,35 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		const { width, height } = canvas.getBoundingClientRect();
 		if (!width || !height) return;
 		const portrait = width <= 820 && height > width;
+		const nextDepth = portrait ? PORTRAIT_ROOM_DEPTH : 1;
 		const offset = portrait ? PORTRAIT_CAMERA_OFFSET : CAMERA_OFFSET;
+		const layoutChanged = nextDepth !== depthScale || cameraOffset !== offset;
+		if (nextDepth !== depthScale) {
+			depthScale = nextDepth;
+			roomRoot.scale.z = depthScale;
+			for (const group of [deskPlacement, recordPlacement, characterPlacement, mirrorPlacement])
+				group.scale.z = 1 / depthScale;
+			// Position remains in logical room coordinates, with inverse model scaling
+			// on separate parents so character/furniture rotations stay undistorted.
+			const geometry = layouts.get(depthScale)!;
+			litMesh.geometry = geometry.lit;
+			unlitMesh.geometry = geometry.unlit;
+			collectionPictures.geometry = geometry.faces;
+			flagPictures.geometry = geometry.flag;
+			shadow.scale.y = 0.2 / depthScale;
+			targetMarker.scale.y = 0.12 / depthScale;
+			nearRing.scale.y = 1 / depthScale;
+			for (const { station, mesh } of stationHits) {
+				mesh.position.z = station.hit.center[2] * depthScale;
+				mesh.scale.z = station.hit.size[2] * depthScale;
+				mesh.updateMatrixWorld();
+			}
+			for (const { item, mesh } of curiosityHits) {
+				mesh.position.z = item.hit.center[2] * depthScale;
+				mesh.scale.z = item.hit.size[2] * depthScale;
+				mesh.updateMatrixWorld();
+			}
+		}
 		if (cameraOffset !== offset) {
 			cameraOffset = offset;
 			applyView();
@@ -882,11 +1007,16 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		camera.right = (viewHeight * aspect) / 2;
 		camera.top = viewHeight / 2 + shift;
 		camera.bottom = -viewHeight / 2 + shift;
+		// An orientation change invalidates the old physical-space camera tween.
+		if (layoutChanged) tween = null;
 		if (framed && !tween) {
 			const to = framing(framed);
 			view.target.copy(to.target);
 			view.zoom = to.zoom;
 			view.door = to.door;
+		} else if (layoutChanged) {
+			view.target.set(CAMERA_TARGET[0], CAMERA_TARGET[1], CAMERA_TARGET[2] * depthScale);
+			view.zoom = 1;
 		}
 		applyView();
 		renderer.setPixelRatio(
@@ -915,7 +1045,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 
 	// Client coordinates of a world point; used by diagnostics and browser tests.
 	function project(point: Vec3) {
-		const v = new Vector3(...point).project(camera);
+		const v = new Vector3(point[0], point[1], point[2] * depthScale).project(camera);
 		const rect = canvas.getBoundingClientRect();
 		return {
 			x: rect.left + ((v.x + 1) / 2) * rect.width,

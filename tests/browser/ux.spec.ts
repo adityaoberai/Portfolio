@@ -172,6 +172,33 @@ for (const width of [320, 390, 430]) {
 	});
 }
 
+test('mobile Now shows Bengaluru time and refreshes it without reopening the card', async ({
+	browser
+}) => {
+	const context = await browser.newContext({
+		viewport: { width: 390, height: 844 },
+		isMobile: true,
+		hasTouch: true,
+		reducedMotion: 'reduce'
+	});
+	const page = await context.newPage();
+	await page.clock.install({ time: new Date('2026-10-23T09:00:00Z') });
+	await page.goto('/world#window');
+	const sheet = page.locator('dialog.object-card');
+	await expect(sheet.getByRole('heading', { name: 'Now', exact: true })).toBeVisible();
+	const time = sheet.locator('time');
+	await expect(time).toHaveText('2:30 pm');
+	await page.clock.fastForward('01:00');
+	await expect(time).toHaveText('2:31 pm');
+	const heading = (await sheet.getByRole('heading').boundingBox())!;
+	expect(Math.abs((await time.boundingBox())!.y - heading.y)).toBeLessThan(16);
+	await page.getByRole('button', { name: 'Room menu', exact: true }).tap();
+	await expect(
+		page.locator('#room-menu').getByRole('link', { name: 'Now', exact: true }).locator('time')
+	).toHaveText('2:31 pm');
+	await context.close();
+});
+
 test('On paper and the room preserve a panel and its reading position', async ({ page }) => {
 	await page.goto('/world#desk');
 	const sheet = page.locator('dialog.sheet:not(.poem)');

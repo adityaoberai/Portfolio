@@ -4,6 +4,7 @@
 	import { page as route } from '$app/state';
 	import V3Header from '$lib/components/V3Header.svelte';
 	import ModeSwitch from '$lib/components/ModeSwitch.svelte';
+	import BengaluruTime from '$lib/components/BengaluruTime.svelte';
 	import RecordPlayer from './RecordPlayer.svelte';
 	import StationPanel from './StationPanel.svelte';
 	import { curiosities, page as copy, stationById, stations } from '$lib/data/room';
@@ -655,9 +656,9 @@
 							href={station.href}
 							onclick={(event) => visit(station.id, event)}
 							aria-label={station.area}
-							><span>{station.area}</span><span class="object"
-								>{station.short} <span aria-hidden="true">→</span></span
-							></a
+							><span class="destination-label"
+								>{station.area}{#if station.id === 'window'}<BengaluruTime />{/if}</span
+							><span class="object">{station.short} <span aria-hidden="true">→</span></span></a
 						>
 					</li>{/each}
 			</ul>
@@ -728,7 +729,10 @@
 	{#if open && narrow && !expanded && (selected ?? stationById[open])}
 		{@const station = selected ?? stationById[open]}
 		<div class="object-head">
-			<h2 id="station-title">{station?.area}</h2>
+			<div class="object-title">
+				<h2 id="station-title">{station?.area}</h2>
+				{#if (pending ?? open) === 'window'}<BengaluruTime />{/if}
+			</div>
 			<button class="close" onclick={dismissStation} aria-label="Close and return to the room"
 				>×</button
 			>
@@ -1162,6 +1166,13 @@
 	.object-head h2 {
 		font: 500 1.25rem/1.25 var(--font-serif);
 	}
+	.object-title,
+	.destination-label {
+		display: flex;
+		align-items: baseline;
+		flex-wrap: wrap;
+		gap: 4px 12px;
+	}
 	.object-head button {
 		flex: none;
 		width: 44px;
@@ -1333,6 +1344,7 @@
 	@media (max-width: 820px) {
 		.welcome {
 			max-width: 100%;
+			margin-top: 4px;
 		}
 		.welcome h1 {
 			max-width: none;

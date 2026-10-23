@@ -8,11 +8,11 @@
 - Source brief: user attachment, adityaoberai.com V3 (2026-09-30).
 - Full requirements and execution decisions live in root `v3.md`.
 
-## Current state (2026-10-18 UX pass)
+## Current state (2026-10-23 mobile room pass)
 
 - User approved implementing the UX and typography audit on `v3-world`, based on `c420ec5`. Accepted names: **My room / On paper**. The branch preview is **https://world.oberai.dev**. Production launch and merging to `main` are outside this pass.
 - Replaced the segmented mode switch with contextual invitations, a room preview on On paper, and a reduced-motion-aware view transition. Session storage restores the character position, station, open panel, expanded reading state, and reading position. Returning from a panel lands on the relevant On paper section.
-- Mobile exploration has labeled destinations with large touch targets and immediate selection feedback. The camera frames the selected subject in the measured area above the preview sheet; reading expands to 92dvh. Panel headers and dismissal stay available while scrolling, with safe-area spacing and landscape support.
+- Mobile exploration uses a header menu and compact object cards that expand to 75dvh reading sheets. Portrait screens use a longer floor plan with furniture at its original size; the camera fits the room above the card. Now has a live Bengaluru clock beside its name. Panel headers and dismissal stay available while scrolling, with safe-area spacing and landscape support.
 - Station URLs support sharing/reload, Back dismisses an internally opened panel, and Forward restores it. The object menu has one primary destination per item, with curiosities and settings separated. Keyboard, reduced motion, demand rendering, and fallback routes remain supported.
 - Kept Newsreader for reading and headings; unified type roles, relaxed heading tracking, raised metadata to 13px, and used system sans for controls. Removed redundant eyebrows, aligned Collection/Now navigation, retained the mobile portrait, and removed the duplicate On paper footer. Enlarged-text and text-spacing checks exposed and fixed a grid overflow.
 - Photography now has an in-site reader, previous/next controls, arrow keys, native dialog focus, its own Back entry, and a Pexels link. The mobile music player collapses after playback starts and can be reopened or stopped.
@@ -48,6 +48,14 @@
 5. Go live on Appwrite Sites: add `ORIGIN=https://adityaoberai.com` (site Settings → Environment variables), merge `v3-world` into `main` via a PR, add `adityaoberai.com` and `www.adityaoberai.com` as Active-deployment domains (the apex needs NS delegation from GoDaddy; copy its MX/TXT records first), keep oberai.dev on Active deployment until path-preserving redirects exist (Appwrite domain redirects drop paths). Rollback: reactivate V2 deployment `6aa7d3f0dc0c05bdc438`.
 
 ## Change log
+
+### 2026-10-23 — Rectangular portrait room, doorway, and live Now time
+
+- Tightened the mobile header's bottom spacing so the welcome line sits directly below the identity/menu row. Retained the smaller heading and hidden mobile subtitle.
+- Added a live Bengaluru clock beside Now in its mobile object card and room-menu entry. It updates each minute and when the page returns to view.
+- Extended the portrait floor plan from 7 × 6.2 to 7 × 8.68 room units and adjusted the camera. Furniture, rugs, and the character retain their proportions while their placements follow the longer room. Logical movement, floor taps, hit volumes, camera focus, mirror reflection, walking speed, and saved positions use the same mapping; orientation changes swap the cached layouts without moving the character to a different logical position.
+- Separated the hallway from the room's static geometry and confined it to a stencil of the doorway. Its passes run only while the door is open; the closed doorway has no visible exterior geometry, and opening it reveals the passage without revealing the back of the set.
+- Added regressions for live clock updates, furniture proportions, and consistent physical movement speed. Validation: all 40 browser checks and all 32 unit tests pass; type checks report 0 errors/0 warnings; lint and the production build pass. The four mobile clock/orientation cases also pass after the orientation-tween correction. Visually inspected closed/open doorways, the live Now card, and the rectangular floor plan at 320px and 390px, plus the desktop doorway. Publish only to `v3-world`.
 
 ### 2026-10-19 — Mobile object cards, reading sheets, and portrait framing
 

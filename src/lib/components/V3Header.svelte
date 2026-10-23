@@ -136,6 +136,9 @@
 		}
 	}
 	@media (max-width: 820px) {
+		.overlay.with-menu .bar {
+			padding-block: max(12px, env(safe-area-inset-top)) 0;
+		}
 		.overlay.with-menu .surface {
 			display: none;
 		}
