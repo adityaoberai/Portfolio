@@ -49,6 +49,12 @@
 
 ## Change log
 
+### 2026-10-27 — Rebalance the mobile gramophone and joystick
+
+- Narrowed the gramophone control from a 160px maximum to 136px while retaining its full 108px height and illustration. Tightened the gaps slightly so the label still fits on 320px screens.
+- Enlarged the joystick from 80px to 96px, with a proportional 38px thumb and 26px travel, giving movement more space without changing its speed or dead zone.
+- Validation: type checks report 0 errors/0 warnings; lint and the production build pass. All four focused movement/music/accessibility browser cases pass. Visually verified the controls at 320/390/430px with no page errors or horizontal overflow, and the expanded player in landscape. Publish only to `v3-world`.
+
 ### 2026-10-27 — A full-height gramophone control
 
 - Gave the mobile gramophone button its own cream and brass styling with an illustration of the horn, record, wooden case, and crank, using the room object's palette. The Gramophone label stays below the illustration.

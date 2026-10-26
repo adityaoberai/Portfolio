@@ -1591,8 +1591,8 @@
 			width: 100%;
 		}
 		.compact-player {
-			grid-template-columns: 80px minmax(0, 1fr) 80px;
-			gap: 8px 12px;
+			grid-template-columns: 96px minmax(0, 1fr) 80px;
+			gap: 8px 10px;
 			align-items: center;
 		}
 		.compact-player .movement,
@@ -1617,7 +1617,7 @@
 			grid-row: 2;
 			justify-self: center;
 			align-self: stretch;
-			max-width: 160px;
+			max-width: 136px;
 			min-width: 0;
 			padding: 0;
 			border: 0;

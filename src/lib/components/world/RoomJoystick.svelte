@@ -9,7 +9,7 @@
 	let pointer: number | null = null;
 	let x = $state(0);
 	let y = $state(0);
-	const travel = 22;
+	const travel = 26;
 	const deadZone = 0.16;
 	const keys = new Set<string>();
 	const movementKeys = new Set([
@@ -133,8 +133,8 @@
 	.joystick {
 		position: relative;
 		flex: none;
-		width: 80px;
-		height: 80px;
+		width: 96px;
+		height: 96px;
 		padding: 0;
 		border: 1px solid var(--color-hairline-strong);
 		border-radius: 50%;
@@ -164,10 +164,10 @@
 	}
 	.thumb {
 		position: absolute;
-		left: calc(50% - 16px);
-		top: calc(50% - 16px);
-		width: 32px;
-		height: 32px;
+		left: calc(50% - 19px);
+		top: calc(50% - 19px);
+		width: 38px;
+		height: 38px;
 		border-radius: 50%;
 		background: var(--color-accent);
 		box-shadow: 0 2px 5px #263b3324;
