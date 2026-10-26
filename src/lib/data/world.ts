@@ -301,7 +301,7 @@ export const world: WorldConfig = {
 			id: 'shelf',
 			object: 'Shelf of favourites',
 			short: 'shelf',
-			area: 'Pokémon',
+			area: 'Collectibles',
 			world: 'collect',
 			summary: `Pokémon cards, Batman, Back to the Future, books, and ${collection.favourite} on top.`,
 			section: 'collection',

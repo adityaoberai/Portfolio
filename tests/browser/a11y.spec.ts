@@ -66,7 +66,7 @@ test('the room, its guide, and every station meet WCAG 2.2 AA (automated checks)
 						desk: 'Work & build',
 						notebook: 'Writing',
 						camera: 'Photography',
-						shelf: 'Pokémon',
+						shelf: 'Collectibles',
 						corkboard: 'Community & speaking',
 						mirror: 'About',
 						window: 'Now',

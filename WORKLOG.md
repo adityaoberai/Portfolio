@@ -49,6 +49,11 @@
 
 ## Change log
 
+### 2026-10-27 — Label the room shelf Collectibles
+
+- Renamed the shelf's room heading, preview action label, nearby-object hint, and room-menu entry to Collectibles, reflecting the cards, Batman cowl, DeLorean, and books. The dedicated card collection page and its site-navigation label remain Pokémon.
+- Updated the existing browser expectations for the room label. Validation: type checks report 0 errors/0 warnings; lint and the production build pass. All five focused browser checks pass, covering mobile previews, room navigation/history, touch controls, and the card page's existing Pokémon navigation label. Publish only to `v3-world`.
+
 ### 2026-10-27 — Preview the bed before opening the poem
 
 - Mobile bed interactions now show a compact, full-width Bed banner in the bottom control row. The poem stays closed until Read poem is chosen, then opens in the existing 75dvh reader. See room returns to the banner and retains the reading position.

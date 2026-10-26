@@ -7,7 +7,7 @@ test('an object is addressable, Back dismisses it, and Forward restores it', asy
 	await page.getByRole('button', { name: 'Room menu', exact: true }).click();
 	await page
 		.getByRole('navigation', { name: 'In the room', exact: true })
-		.getByRole('link', { name: 'Pokémon', exact: true })
+		.getByRole('link', { name: 'Collectibles', exact: true })
 		.click();
 	await expect(page.locator('dialog.sheet:not(.poem)')).toBeVisible();
 	await expect(page).toHaveURL(/\/world#shelf$/);
@@ -199,7 +199,7 @@ test('mobile shelf and mirror previews replace the control row and retain the re
 	const menu = page.getByRole('button', { name: 'Room menu', exact: true });
 	const sheet = page.locator('dialog.sheet:not(.poem)');
 	for (const [name, title] of [
-		['Pokémon', 'Blastoise gets the top shelf.'],
+		['Collectibles', 'Blastoise gets the top shelf.'],
 		['About', 'Making complicated things make sense.']
 	]) {
 		await expect(joystick).toBeVisible();

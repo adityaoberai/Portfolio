@@ -628,7 +628,7 @@ test('portrait touch input, sharp rendering, reduced motion, and low-power DPR',
 	expect(size.scroll).toBeLessThanOrEqual(size.width);
 	// The room is the page: nothing scrolls vertically either.
 	expect(await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)).toBe(0);
-	await page.getByRole('link', { name: 'Pokémon', exact: true }).tap();
+	await page.getByRole('link', { name: 'Collectibles', exact: true }).tap();
 	await expect(page.getByRole('navigation', { name: 'In the room' })).not.toBeVisible();
 	await expect(page.getByRole('dialog')).toBeVisible();
 	await page.getByRole('button', { name: 'Close and return to the room' }).tap();
@@ -815,7 +815,7 @@ test('every station in the room opens from the guide', async ({ browser }) => {
 						desk: 'Work & build',
 						notebook: 'Writing',
 						camera: 'Photography',
-						shelf: 'Pokémon',
+						shelf: 'Collectibles',
 						corkboard: 'Community & speaking',
 						mirror: 'About',
 						window: 'Now',
