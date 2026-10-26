@@ -338,13 +338,12 @@ test('mobile music controls stay compact and return after reading a panel', asyn
 		expect(playerBox.y + playerBox.height).toBeLessThanOrEqual(enterBox.y + 108);
 	};
 	await fitsBetweenControls();
-	for (const name of ['Open player', 'Stop']) {
-		const button = dock.getByRole('button', { name, exact: true });
-		const box = (await button.boundingBox())!;
-		expect(box.width).toBeGreaterThanOrEqual(44);
-		expect(box.height).toBeGreaterThanOrEqual(44);
-		await expect(button).toHaveText('');
-	}
+	const musicButton = dock.getByRole('button', { name: 'Open player', exact: true });
+	await expect(musicButton).toHaveText('Gramophone');
+	const buttonBox = (await musicButton.boundingBox())!;
+	expect(buttonBox.height).toBe(56);
+	expect(buttonBox.y).toBeCloseTo((await page.locator('.enter-button').boundingBox())!.y, 0);
+	await expect(dock.getByRole('button', { name: 'Stop', exact: true })).toHaveCount(0);
 	await expect(hint).toContainText('Lift the needle?');
 	await expect(hint).toBeHidden();
 	await expect(dock.locator('iframe')).not.toBeVisible();
@@ -353,14 +352,37 @@ test('mobile music controls stay compact and return after reading a panel', asyn
 	const expandedBox = (await dock.boundingBox())!;
 	expect(expandedBox.x).toBeGreaterThanOrEqual(16);
 	expect(expandedBox.x + expandedBox.width).toBeLessThanOrEqual(304);
-	const stickBox = (await page.getByRole('button', { name: 'Movement joystick' }).boundingBox())!;
-	expect(expandedBox.y + expandedBox.height).toBeLessThanOrEqual(stickBox.y);
+	expect(expandedBox.width).toBeCloseTo(288, 0);
+	expect(expandedBox.y + expandedBox.height).toBeCloseTo(824, 0);
+	await expect(page.getByRole('button', { name: 'Movement joystick' })).toHaveCount(0);
+	await expect(page.locator('.enter-button')).toHaveCount(0);
+	await expect(page.getByRole('button', { name: 'Room menu', exact: true })).toBeHidden();
+	await expect(hint).toBeHidden();
+	const playerFrame = dock.locator('iframe');
+	await playerFrame.evaluate((element) =>
+		element.setAttribute('data-playback-session', 'retained')
+	);
 	await dock.getByRole('button', { name: 'Hide player', exact: true }).tap();
 	await fitsBetweenControls();
+	await expect(musicButton).toBeFocused();
+	await expect(playerFrame).toHaveAttribute('data-playback-session', 'retained');
 	await expect.poll(() => spotifyCalls(page)).toEqual(['play']);
+	await musicButton.tap();
+	const canvas = page.locator('canvas');
+	const position = await canvas.getAttribute('data-x');
+	await canvas.focus();
+	await page.keyboard.down('ArrowRight');
+	await page.waitForTimeout(150);
+	await page.keyboard.up('ArrowRight');
+	await expect(canvas).toHaveAttribute('data-x', position!);
+	await page.keyboard.press('Escape');
+	await fitsBetweenControls();
+	await expect(musicButton).toBeFocused();
+	await expect(playerFrame).toHaveAttribute('data-playback-session', 'retained');
 	await page.setViewportSize({ width: 844, height: 390 });
 	await expect(hint).toBeHidden();
 	await page.setViewportSize({ width: 320, height: 844 });
+	await musicButton.tap();
 	await dock.getByRole('button', { name: 'Stop', exact: true }).tap();
 	await expect(hint).toBeVisible();
 	await expect(hint).toContainText('Put a record on?');
@@ -374,12 +396,30 @@ test('mobile music controls stay compact and return after reading a panel', asyn
 		.tap();
 	await expect(page.getByRole('dialog')).toBeVisible();
 	await page.getByRole('button', { name: 'Close and return to the room' }).tap();
-	await expect(dock.getByRole('button', { name: 'Stop', exact: true })).toBeInViewport();
+	await expect(musicButton).toBeInViewport();
 	await fitsBetweenControls();
 	await expect(hint).toBeVisible();
 	expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
+	await musicButton.tap();
 	await dock.getByRole('button', { name: 'Stop', exact: true }).tap();
 	await expect(dock).not.toBeVisible();
+	await openMenu(page);
+	await page.getByText('Little things in the room', { exact: true }).click();
+	// Start walking and choose music in the same frame, before the station can arrive.
+	await page.evaluate(() => {
+		(window as unknown as { __room: { visit(id: string): void } }).__room.visit('camera');
+		const action = [...document.querySelectorAll<HTMLButtonElement>('.little-things button')].find(
+			(button) => button.textContent?.trim() === 'Put the record on'
+		);
+		action!.click();
+	});
+	await expect(musicButton).toBeEnabled();
+	await expect(page).toHaveURL(/\/world\?diagnostics=1$/);
+	await expect(hint).not.toContainText('Heading to');
+	await musicButton.tap();
+	await expect(dock.locator('iframe')).toBeVisible();
+	await dock.getByRole('button', { name: 'Hide player', exact: true }).tap();
+	await fitsBetweenControls();
 	await context.close();
 });
 

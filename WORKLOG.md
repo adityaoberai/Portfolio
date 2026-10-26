@@ -49,6 +49,18 @@
 
 ## Change log
 
+### 2026-10-26 — One mobile row for music and object previews
+
+- Replaced the collapsed gramophone mini-card with a button matching Enter. Opening it fills the bottom row with the player; the joystick, Enter, Menu, and hint return when the player is collapsed or stopped. Playback stays mounted across these changes.
+- Moved compact object previews, including the shelf and mirror, into that same full-width bottom row. The movement controls and Menu stay out of the panel's way; closing returns to exploration, and Open retains the larger reading view.
+- Added movement cancellation, player focus restoration, and Escape dismissal. Starting music from the menu cancels an unfinished station visit and clears its URL state, so the controls cannot remain disabled. Updated mobile music, object-layout, and accessibility checks for the shared-row behavior.
+- Validation: type checks report 0 errors/0 warnings; lint and the production build pass. All 42 browser cases pass, followed by three focused music/accessibility checks after the pending-visit fix. Visually verified the button, player, shelf/mirror previews, and reading views at 320/390/430px, plus landscape and the window without the purple line. Publish only to `v3-world`.
+
+### 2026-10-26 — Remove the purple line outside the window
+
+- Removed the purple metro strip and its three support posts from the window illustration.
+- Validation: formatting and lint pass; type checks report 0 errors/0 warnings; all 33 unit tests and the production build pass. Publish only to `v3-world`.
+
 ### 2026-10-26 — Use 100+ for the article count
 
 - Changed the index fact to “100+ technical articles”, as requested, and aligned the repeated article counts in the directory, Work, About, room writing summary, and writing metadata. Updated the internal writing feature reference to match the renamed work item.

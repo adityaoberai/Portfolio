@@ -21,6 +21,8 @@
 	let cornerEl: HTMLDivElement;
 	let menuButton: HTMLButtonElement;
 	let menu: HTMLDivElement;
+	let dockEl = $state<HTMLElement>(null!);
+	let musicButton = $state<HTMLButtonElement>(null!);
 	let menuOpen = $state(false);
 	let dialog: HTMLDialogElement;
 	let poemDialog: HTMLDialogElement;
@@ -60,9 +62,25 @@
 		nearThing && (nearThing.music && musicOn ? nearThing.music.stop : nearThing.use)
 	);
 	const selected = $derived(pending ? stationById[pending] : null);
-	const joystickAvailable = $derived(status === 'ready' && (narrow || coarse) && !open && !poemOf);
 	const touchControls = $derived(narrow || coarse);
+	const playerRowOpen = $derived(touchControls && musicOn && playerExpanded && !open && !poemOf);
+	const objectRowOpen = $derived(narrow && Boolean(open) && !expanded);
+	const joystickAvailable = $derived(
+		status === 'ready' && touchControls && !open && !poemOf && !playerRowOpen
+	);
 	const compactPlayer = $derived(joystickAvailable && musicOn && !playerExpanded);
+	async function togglePlayer(value: boolean) {
+		playerExpanded = value;
+		if (!touchControls) return;
+		room?.cancelVisit();
+		await tick();
+		if (value)
+			dockEl?.querySelector<HTMLButtonElement>('[aria-label="Hide player"]')?.focus(quietFocus);
+		else musicButton?.focus(quietFocus);
+	}
+	$effect(() => {
+		if (status === 'ready' && touchControls && !open && !poemOf) room?.setPaused(playerRowOpen);
+	});
 	function moveWithJoystick(direction: { x: number; y: number }) {
 		room?.setMovement(direction);
 	}
@@ -107,6 +125,7 @@
 		remember();
 	}
 	async function showStation(id: StationId) {
+		if (touchControls) playerExpanded = false;
 		const focused = document.activeElement as HTMLElement | null;
 		returnFocus ??= focused && focused !== document.body ? focused : null;
 		selectStation(id);
@@ -273,6 +292,11 @@
 		'arrowright'
 	]);
 	function forwardRoomKeys(event: KeyboardEvent) {
+		if (playerRowOpen && event.key === 'Escape' && !event.defaultPrevented) {
+			event.preventDefault();
+			void togglePlayer(false);
+			return;
+		}
 		if (
 			event.key === 'Escape' &&
 			!event.defaultPrevented &&
@@ -287,6 +311,7 @@
 		}
 		if (
 			status !== 'ready' ||
+			playerRowOpen ||
 			document.activeElement !== document.body ||
 			sheetOpen() ||
 			menu.matches(':popover-open') ||
@@ -327,6 +352,7 @@
 		noteTimer = window.setTimeout(() => (note = null), 5000);
 	}
 	async function showPoem(id: CuriosityId) {
+		if (touchControls) playerExpanded = false;
 		window.clearTimeout(noteTimer);
 		note = null;
 		poemOf = id;
@@ -373,6 +399,11 @@
 	}
 	function musicFromMenu() {
 		if (menu.matches(':popover-open')) menu.hidePopover();
+		if (!musicOn && touchControls && pending) {
+			pending = null;
+			room?.cancelVisit();
+			replaceState(baseUrl(), { ...route.state, roomPanel: null, roomPanelEntry: false });
+		}
 		setMusic(!musicOn);
 		backToRoom();
 	}
@@ -405,7 +436,7 @@
 		const small = frameEl.clientWidth <= 820;
 		const stacked = small && (height >= frameEl.clientWidth || Boolean(open) || Boolean(poemOf));
 		const inspecting = Boolean((open && (!small || expanded)) || poemOf);
-		const cornerTop = cornerEl.getBoundingClientRect().top;
+		const cornerTop = objectRowOpen ? height : cornerEl.getBoundingClientRect().top;
 		const cardTop =
 			small && open && !expanded && dialog.open ? dialog.getBoundingClientRect().top : height;
 		const cornerInset = `${Math.max(0, height - cornerTop)}px`;
@@ -422,7 +453,7 @@
 					}
 				: {
 						top: inspecting ? 80 : titleBottom * 0.5,
-						bottom: compactPlayer ? Math.max(24, height - cornerTop + 12) : 24,
+						bottom: compactPlayer || playerRowOpen ? Math.max(24, height - cornerTop + 12) : 24,
 						units: 8.6
 					}
 		);
@@ -439,6 +470,8 @@
 			void poemOf;
 			void playerExpanded;
 			void compactPlayer;
+			void playerRowOpen;
+			void objectRowOpen;
 			void pending;
 			void tick().then(measureLayout);
 		}
@@ -550,6 +583,7 @@
 
 <section
 	class="world"
+	class:row-panel={playerRowOpen || objectRowOpen}
 	class:inspecting={Boolean((open && (!narrow || expanded)) || poemOf)}
 	aria-labelledby="world-title"
 	bind:this={frameEl}
@@ -611,9 +645,24 @@
 			aria-hidden="true">{hover.label}</span
 		>{/if}
 	{#if note}<p class="note">{note.line}</p>{/if}
-	<div class="corner" class:compact-player={compactPlayer} bind:this={cornerEl}>
-		{#if music}<section class="dock" aria-label="Gramophone" hidden={!musicOn}>
-				<div class="dock-top">
+	<div
+		class="corner"
+		class:compact-player={compactPlayer}
+		class:object-row={objectRowOpen}
+		bind:this={cornerEl}
+	>
+		{#if music}<section class="dock" aria-label="Gramophone" hidden={!musicOn} bind:this={dockEl}>
+				<button
+					class="music-button"
+					bind:this={musicButton}
+					hidden={!compactPlayer}
+					disabled={menuOpen || Boolean(pending)}
+					aria-label="Open player"
+					aria-expanded="false"
+					aria-controls="music-player"
+					onclick={() => togglePlayer(true)}>Gramophone</button
+				>
+				<div class="dock-top" hidden={compactPlayer}>
 					<span class="disc" class:turning={recordPlaying && !reducedMotion} aria-hidden="true"
 					></span>
 					<span class="dock-label">Gramophone</span>
@@ -623,7 +672,7 @@
 							title={playerExpanded ? 'Hide player' : 'Open player'}
 							aria-expanded={playerExpanded}
 							aria-controls="music-player"
-							onclick={() => (playerExpanded = !playerExpanded)}
+							onclick={() => togglePlayer(!playerExpanded)}
 						>
 							<svg viewBox="0 0 24 24" aria-hidden="true">
 								<path d={playerExpanded ? 'm6 15 6-6 6 6' : 'm6 9 6 6 6-6'} />
@@ -640,7 +689,7 @@
 					<RecordPlayer spotify={music.spotify} on={musicOn} onplayback={musicPlayback} />
 				</div>
 			</section>{/if}
-		{#if status === 'ready'}<div class="movement">
+		{#if status === 'ready'}<div class="movement" hidden={playerRowOpen}>
 				<div
 					class="room-hint"
 					class:touch-hint={touchControls}
@@ -905,6 +954,15 @@
 	.inspecting .menu-button {
 		visibility: hidden;
 	}
+	.row-panel .menu-button,
+	.corner.object-row {
+		visibility: hidden;
+	}
+	.movement[hidden],
+	.dock-top[hidden],
+	.music-button[hidden] {
+		display: none;
+	}
 	.diagnostics {
 		display: block;
 		padding: 8px var(--gutter);
@@ -975,7 +1033,8 @@
 		min-height: 108px;
 		padding-bottom: 52px;
 	}
-	.enter-button {
+	.enter-button,
+	.music-button {
 		display: grid;
 		place-items: center;
 		width: 80px;
@@ -989,7 +1048,12 @@
 		pointer-events: auto;
 		cursor: pointer;
 	}
-	.enter-button:disabled {
+	.music-button {
+		width: 100%;
+		font-size: 0.875rem;
+	}
+	.enter-button:disabled,
+	.music-button:disabled {
 		background: #faf7edda;
 		color: var(--color-secondary);
 		border-color: var(--color-hairline-strong);
@@ -1499,27 +1563,12 @@
 			grid-column: 2;
 			grid-row: 2;
 			justify-self: center;
+			align-self: start;
 			max-width: 160px;
 			min-width: 0;
-			padding: 4px;
-			border-radius: 12px;
-		}
-		.compact-player .dock-top {
-			justify-content: center;
-			gap: 2px 4px;
-		}
-		.compact-player .dock-label {
-			flex: none;
-			font-size: 0.75rem;
-		}
-		.compact-player .disc {
-			width: 14px;
-			height: 14px;
-		}
-		.compact-player .dock-actions {
-			justify-content: center;
-			width: 100%;
-			margin-left: 0;
+			padding: 0;
+			border: 0;
+			background: transparent;
 		}
 		.room-hint {
 			background: #faf7edeb;
@@ -1589,9 +1638,9 @@
 			max-height: 75dvh;
 		}
 		.sheet.object-card {
-			inset: auto 16px calc(var(--corner, 20px) + 12px) auto;
+			inset: auto 16px max(20px, env(safe-area-inset-bottom));
 			width: calc(100% - 32px);
-			max-width: 420px;
+			max-width: none;
 			height: auto;
 			max-height: min(320px, 45dvh);
 			padding: 8px 16px 16px;

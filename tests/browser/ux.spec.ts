@@ -75,7 +75,12 @@ for (const width of [320, 390, 430]) {
 		await expect(sheet.locator('.object-summary')).toContainText('Street, travel');
 		expect(await sheet.evaluate((e) => e.matches(':modal'))).toBe(false);
 		expect((await sheet.boundingBox())!.height).toBeLessThan(844 * 0.3);
-		await expect(menuButton).toBeVisible();
+		await expect(menuButton).toBeHidden();
+		await expect(page.getByRole('button', { name: 'Movement joystick' })).toHaveCount(0);
+		const objectBox = (await sheet.boundingBox())!;
+		expect(objectBox.x).toBeCloseTo(16, 0);
+		expect(objectBox.width).toBeCloseTo(width - 32, 0);
+		expect(objectBox.y + objectBox.height).toBeCloseTo(824, 0);
 		await expect
 			.poll(async () => {
 				const anchors = await page.evaluate(() => {
@@ -179,6 +184,49 @@ for (const width of [320, 390, 430]) {
 	});
 }
 
+test('mobile shelf and mirror previews replace the control row and retain the reading view', async ({
+	browser
+}) => {
+	const context = await browser.newContext({
+		viewport: { width: 390, height: 844 },
+		isMobile: true,
+		hasTouch: true,
+		reducedMotion: 'reduce'
+	});
+	const page = await context.newPage();
+	await page.goto('/world');
+	const joystick = page.getByRole('button', { name: 'Movement joystick' });
+	const menu = page.getByRole('button', { name: 'Room menu', exact: true });
+	const sheet = page.locator('dialog.sheet:not(.poem)');
+	for (const [name, title] of [
+		['Pokémon', 'Blastoise gets the top shelf.'],
+		['About', 'Making complicated things make sense.']
+	]) {
+		await expect(joystick).toBeVisible();
+		await menu.tap();
+		await page
+			.getByRole('navigation', { name: 'In the room', exact: true })
+			.getByRole('link', { name, exact: true })
+			.tap();
+		await expect(sheet.getByRole('heading', { name, exact: true })).toBeVisible();
+		await expect(joystick).toHaveCount(0);
+		await expect(menu).toBeHidden();
+		const box = (await sheet.boundingBox())!;
+		expect(box.x).toBeCloseTo(16, 0);
+		expect(box.width).toBeCloseTo(358, 0);
+		expect(box.y + box.height).toBeCloseTo(824, 0);
+		await sheet.getByRole('button', { name: `Open ${name}`, exact: true }).tap();
+		await expect(sheet.getByRole('heading', { name: title, exact: true })).toBeVisible();
+		expect(await sheet.evaluate((element) => element.matches(':modal'))).toBe(true);
+		await sheet.getByRole('button', { name: 'See room', exact: true }).tap();
+		await expect(menu).toBeHidden();
+		await sheet.getByRole('button', { name: 'Close and return to the room' }).tap();
+		await expect(joystick).toBeVisible();
+		await expect(menu).toBeVisible();
+	}
+	await context.close();
+});
+
 test('mobile Now shows Bengaluru time and refreshes it without reopening the card', async ({
 	browser
 }) => {
@@ -199,6 +247,7 @@ test('mobile Now shows Bengaluru time and refreshes it without reopening the car
 	await expect(time).toHaveText('2:31 pm');
 	const heading = (await sheet.getByRole('heading').boundingBox())!;
 	expect(Math.abs((await time.boundingBox())!.y - heading.y)).toBeLessThan(16);
+	await sheet.getByRole('button', { name: 'Close and return to the room' }).tap();
 	await page.getByRole('button', { name: 'Room menu', exact: true }).tap();
 	await expect(
 		page.locator('#room-menu').getByRole('link', { name: 'Now', exact: true }).locator('time')

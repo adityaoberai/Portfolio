@@ -784,7 +784,7 @@ export function buildLeg(b: Batch) {
 }
 
 // Window onto Bengaluru on the back wall, between the desk and the shelf: frame,
-// skyline, gulmohar trees, and the purple metro line. The sky pane and the
+// skyline and gulmohar trees. The sky pane and the
 // building lights are separate meshes (see scene.ts). The art is drawn centred on
 // x = DRAWN_AT and moved to WINDOW.x as one piece.
 export const WINDOW = { x: -1.25, y: 1.95, width: 1.26, height: 1.16 };
@@ -822,8 +822,6 @@ function windowArt(lit: Batch) {
 		])
 			lit.add('sphere', '#d0573a', [x + dx, y + dy, -2.93], [0.025, 0.02, 0.004]);
 	}
-	lit.box('#7b5aa6', [DRAWN_AT, 1.57, -2.931], [WINDOW.width, 0.035, 0.006]);
-	for (const x of [-2.6, -2.2, -1.8]) lit.box('#8c8f86', [x, 1.47, -2.932], [0.025, 0.19, 0.005]);
 	lit.box('#e9dbbb', [DRAWN_AT, WINDOW.y, -2.925], [0.05, 1.18, 0.03]);
 	lit.box('#e9dbbb', [DRAWN_AT, WINDOW.y, -2.925], [1.28, 0.05, 0.03]);
 	lit.box('#b48a61', [DRAWN_AT, 1.3, -2.86], [1.6, 0.08, 0.32]);
