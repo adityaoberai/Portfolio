@@ -49,6 +49,19 @@
 
 ## Change log
 
+### 2026-10-26 — Square index portrait below the mobile heading
+
+- Removed the arched mask from the index portrait, keeping a 180px square crop on desktop and mobile.
+- Restructured the introduction so mobile reads heading, portrait, paragraph, then contact/Resume links. Desktop keeps the portrait beside the introduction. Added square-shape and vertical-order checks to the existing mobile typography test.
+- Validation: type checks report 0 errors/0 warnings; lint, the production build, and all 20 page/UX/accessibility browser checks pass. Visually verified the square portrait and heading/photo/paragraph order at 320px and 390px, and the desktop layout at 1440px. Publish only to `v3-world`.
+
+### 2026-10-26 — Compact mobile gramophone between the controls
+
+- Moved the collapsed gramophone card into the space between the left joystick and right Enter/Menu controls. The label, record decoration, and separate open/stop icon buttons fit down to 320px without reducing their 44px touch targets.
+- Expanding the player restores its full-width card above the controls; collapsing it returns to the center. The same player stays mounted, preserving playback. Reading panels keep their existing behavior, and desktop placement is unchanged.
+- Reserved space above the compact card in landscape so it does not cover the room. Added layout and playback assertions to the existing mobile music test and accessibility scans for both mobile player states.
+- Validation: type checks report 0 errors/0 warnings; lint, the production build, and all eight focused browser checks pass, including mobile music accessibility, expansion/collapse without playback calls, joystick behavior, reading panels, and navigation. Visually verified collapsed layouts at 320/390/430px, the expanded phone player, and landscape. Publish only to `v3-world`.
+
 ### 2026-10-26 — Restore the portrait window view and Pokémon spelling
 
 - Fixed the portrait window layering: the static city art preserved its depth from the wall, but the sky and city lights stretched with the room. Grouped the sky and lights around the same wall anchor, preserving the correct front-to-back order in portrait and landscape.

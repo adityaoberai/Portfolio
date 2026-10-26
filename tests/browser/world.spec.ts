@@ -328,6 +328,16 @@ test('mobile music controls stay compact and return after reading a panel', asyn
 	const dock = page.getByRole('region', { name: 'Gramophone' });
 	const hint = page.locator('.room-hint');
 	await expect(dock.getByRole('button', { name: 'Open player', exact: true })).toBeVisible();
+	const fitsBetweenControls = async () => {
+		const playerBox = (await dock.boundingBox())!;
+		const stickBox = (await page.getByRole('button', { name: 'Movement joystick' }).boundingBox())!;
+		const enterBox = (await page.locator('.enter-button').boundingBox())!;
+		expect(playerBox.x).toBeGreaterThanOrEqual(stickBox.x + stickBox.width + 8);
+		expect(playerBox.x + playerBox.width).toBeLessThanOrEqual(enterBox.x - 8);
+		expect(playerBox.y).toBeGreaterThanOrEqual(enterBox.y);
+		expect(playerBox.y + playerBox.height).toBeLessThanOrEqual(enterBox.y + 108);
+	};
+	await fitsBetweenControls();
 	for (const name of ['Open player', 'Stop']) {
 		const button = dock.getByRole('button', { name, exact: true });
 		const box = (await button.boundingBox())!;
@@ -343,6 +353,11 @@ test('mobile music controls stay compact and return after reading a panel', asyn
 	const expandedBox = (await dock.boundingBox())!;
 	expect(expandedBox.x).toBeGreaterThanOrEqual(16);
 	expect(expandedBox.x + expandedBox.width).toBeLessThanOrEqual(304);
+	const stickBox = (await page.getByRole('button', { name: 'Movement joystick' }).boundingBox())!;
+	expect(expandedBox.y + expandedBox.height).toBeLessThanOrEqual(stickBox.y);
+	await dock.getByRole('button', { name: 'Hide player', exact: true }).tap();
+	await fitsBetweenControls();
+	await expect.poll(() => spotifyCalls(page)).toEqual(['play']);
 	await page.setViewportSize({ width: 844, height: 390 });
 	await expect(hint).toBeHidden();
 	await page.setViewportSize({ width: 320, height: 844 });
@@ -360,6 +375,7 @@ test('mobile music controls stay compact and return after reading a panel', asyn
 	await expect(page.getByRole('dialog')).toBeVisible();
 	await page.getByRole('button', { name: 'Close and return to the room' }).tap();
 	await expect(dock.getByRole('button', { name: 'Stop', exact: true })).toBeInViewport();
+	await fitsBetweenControls();
 	await expect(hint).toBeVisible();
 	expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
 	await dock.getByRole('button', { name: 'Stop', exact: true }).tap();

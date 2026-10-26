@@ -10,9 +10,9 @@
 
 <div class="index-page">
 	<section class="intro" aria-labelledby="index-title">
+		<h1 id="index-title">I build things.<br />And bring people together.</h1>
 		<Portrait width={180} loading="eager" class="portrait" />
-		<div>
-			<h1 id="index-title">I build things.<br />And bring people together.</h1>
+		<div class="intro-copy">
 			<p class="lede">
 				I'm Aditya, {site.role}. I help developers find their way from an idea to something they can
 				make. Away from the desk, there's usually a camera, a notebook, or a Pokémon card nearby.
@@ -76,23 +76,27 @@
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) 180px;
 		align-items: center;
-		gap: 60px;
+		gap: 24px 60px;
 		padding: 72px 0 48px;
 	}
-	.intro > div {
+	.intro h1 {
 		grid-column: 1;
 		grid-row: 1;
 	}
+	.intro-copy {
+		grid-column: 1;
+		grid-row: 2;
+	}
 	.intro :global(picture) {
 		grid-column: 2;
-		grid-row: 1;
+		grid-row: 1 / span 2;
 	}
 	h1 {
 		font-size: var(--type-hero);
 		font-weight: 500;
 		letter-spacing: -0.02em;
 		line-height: 1.12;
-		margin: 0 0 24px;
+		margin: 0;
 	}
 	.lede {
 		max-width: 650px;
@@ -101,10 +105,13 @@
 		color: #55574d;
 	}
 	.intro :global(.portrait) {
+		display: block;
 		width: 180px;
+		max-width: 100%;
+		height: auto;
 		aspect-ratio: 1;
 		object-fit: cover;
-		border-radius: 50% 50% 6px 6px;
+		border-radius: 0;
 		filter: saturate(0.7);
 	}
 	.intro-links {
@@ -173,16 +180,14 @@
 	}
 	@media (max-width: 650px) {
 		.intro {
-			display: flow-root;
+			grid-template-columns: minmax(0, 1fr);
 			padding-top: 44px;
 		}
+		.intro h1,
+		.intro-copy,
 		.intro :global(picture) {
-			float: right;
-			margin: 0 0 12px 20px;
-		}
-		.intro :global(.portrait) {
-			display: block;
-			width: 72px;
+			grid-column: 1;
+			grid-row: auto;
 		}
 
 		.chapters {

@@ -247,7 +247,15 @@ test('mobile On paper keeps the portrait, labels, and typography usable with lar
 	const context = await browser.newContext({ viewport: { width: 360, height: 780 } });
 	const page = await context.newPage();
 	await page.goto('/index');
-	await expect(page.getByRole('img', { name: 'Aditya Oberai', exact: true })).toBeVisible();
+	const portrait = page.getByRole('img', { name: 'Aditya Oberai', exact: true });
+	await expect(portrait).toBeVisible();
+	await expect(portrait).toHaveCSS('border-radius', '0px');
+	const imageBox = (await portrait.boundingBox())!;
+	const headingBox = (await page.getByRole('heading', { level: 1 }).boundingBox())!;
+	const ledeBox = (await page.locator('.intro .lede').boundingBox())!;
+	expect(imageBox.width).toBeCloseTo(imageBox.height, 0);
+	expect(imageBox.y).toBeGreaterThan(headingBox.y + headingBox.height);
+	expect(ledeBox.y).toBeGreaterThan(imageBox.y + imageBox.height);
 	await expect(page.getByText('The index · a few ways to know me', { exact: true })).toHaveCount(0);
 	await expect(
 		page.getByRole('navigation', { name: 'Find your way' }).getByRole('link', { name: /^Now/ })

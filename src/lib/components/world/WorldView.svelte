@@ -62,6 +62,7 @@
 	const selected = $derived(pending ? stationById[pending] : null);
 	const joystickAvailable = $derived(status === 'ready' && (narrow || coarse) && !open && !poemOf);
 	const touchControls = $derived(narrow || coarse);
+	const compactPlayer = $derived(joystickAvailable && musicOn && !playerExpanded);
 	function moveWithJoystick(direction: { x: number; y: number }) {
 		room?.setMovement(direction);
 	}
@@ -419,7 +420,11 @@
 						bottom: inspecting ? 16 : Math.max(24, height - Math.min(cornerTop, cardTop) + 12),
 						units: 9.4
 					}
-				: { top: inspecting ? 80 : titleBottom * 0.5, bottom: 24, units: 8.6 }
+				: {
+						top: inspecting ? 80 : titleBottom * 0.5,
+						bottom: compactPlayer ? Math.max(24, height - cornerTop + 12) : 24,
+						units: 8.6
+					}
 		);
 		const sheet = dialog.open && inspecting ? dialog : poemDialog.open ? poemDialog : null;
 		const box = sheet?.getBoundingClientRect();
@@ -433,6 +438,7 @@
 			void open;
 			void poemOf;
 			void playerExpanded;
+			void compactPlayer;
 			void pending;
 			void tick().then(measureLayout);
 		}
@@ -605,7 +611,7 @@
 			aria-hidden="true">{hover.label}</span
 		>{/if}
 	{#if note}<p class="note">{note.line}</p>{/if}
-	<div class="corner" bind:this={cornerEl}>
+	<div class="corner" class:compact-player={compactPlayer} bind:this={cornerEl}>
 		{#if music}<section class="dock" aria-label="Gramophone" hidden={!musicOn}>
 				<div class="dock-top">
 					<span class="disc" class:turning={recordPlaying && !reducedMotion} aria-hidden="true"
@@ -1467,6 +1473,53 @@
 		}
 		.dock {
 			width: 100%;
+		}
+		.compact-player {
+			grid-template-columns: 80px minmax(0, 1fr) 80px;
+			gap: 8px 12px;
+			align-items: center;
+		}
+		.compact-player .movement,
+		.compact-player .touch-controls {
+			display: contents;
+		}
+		.compact-player .room-hint {
+			grid-column: 1 / -1;
+			grid-row: 1;
+		}
+		.compact-player :global(.joystick) {
+			grid-column: 1;
+			grid-row: 2;
+		}
+		.compact-player .touch-actions {
+			grid-column: 3;
+			grid-row: 2;
+		}
+		.compact-player .dock {
+			grid-column: 2;
+			grid-row: 2;
+			justify-self: center;
+			max-width: 160px;
+			min-width: 0;
+			padding: 4px;
+			border-radius: 12px;
+		}
+		.compact-player .dock-top {
+			justify-content: center;
+			gap: 2px 4px;
+		}
+		.compact-player .dock-label {
+			flex: none;
+			font-size: 0.75rem;
+		}
+		.compact-player .disc {
+			width: 14px;
+			height: 14px;
+		}
+		.compact-player .dock-actions {
+			justify-content: center;
+			width: 100%;
+			margin-left: 0;
 		}
 		.room-hint {
 			background: #faf7edeb;

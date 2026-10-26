@@ -148,6 +148,12 @@ test('the gramophone’s player card meets WCAG 2.2 AA (automated checks)', asyn
 	await dock.getByRole('button', { name: 'Hide player', exact: true }).click();
 	await expect(dock.getByRole('button', { name: 'Open player', exact: true })).toBeVisible();
 	await audit(page, '/world (music player collapsed)');
+	await page.setViewportSize({ width: 320, height: 844 });
+	await expect(page.locator('.corner')).toHaveClass(/compact-player/);
+	await audit(page, '/world (mobile music between movement controls)');
+	await dock.getByRole('button', { name: 'Open player', exact: true }).click();
+	await expect(dock.locator('iframe')).toBeVisible();
+	await audit(page, '/world (mobile music expanded)');
 });
 
 test('the room fallback meets WCAG 2.2 AA without WebGL', async ({ browser }) => {
