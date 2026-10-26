@@ -49,6 +49,11 @@
 
 ## Change log
 
+### 2026-10-26 — Move the room invitation below the index facts
+
+- Moved the “Step into my room” card from the bottom of the index to directly after the “A few things about me” facts, before “Find your way”, on every screen size. Added space beneath the card before the directory divider.
+- Validation: formatting and lint pass; type checks report 0 errors/0 warnings; the production build passes. A rendered index check confirms exactly one room invitation between the facts and directory, retaining its `/world` destination. Publish only to `v3-world`.
+
 ### 2026-10-26 — Square index portrait below the mobile heading
 
 - Removed the arched mask from the index portrait, keeping a 180px square crop on desktop and mobile.

@@ -32,6 +32,20 @@
 		</ul>
 	</section>
 
+	<a class="room-invitation" href={roomHref} data-sveltekit-preload-data="off">
+		<img
+			class="room-preview"
+			src="/room-still.jpg"
+			width="1440"
+			height="1000"
+			alt="Aditya's illustrated room"
+		/>
+		<div>
+			<h2>Step into my room <span aria-hidden="true">↗</span></h2>
+			<p>A little space for the things I make and care about.</p>
+		</div>
+	</a>
+
 	<nav class="directory" aria-labelledby="directory-title">
 		<h2 id="directory-title">Find your way</h2>
 		<ul class="chapters">
@@ -49,20 +63,6 @@
 			{/each}
 		</ul>
 	</nav>
-
-	<a class="room-invitation" href={roomHref} data-sveltekit-preload-data="off">
-		<img
-			class="room-preview"
-			src="/room-still.jpg"
-			width="1440"
-			height="1000"
-			alt="Aditya's illustrated room"
-		/>
-		<div>
-			<h2>Step into my room <span aria-hidden="true">↗</span></h2>
-			<p>A little space for the things I make and care about.</p>
-		</div>
-	</a>
 </div>
 
 <style>
@@ -210,7 +210,7 @@
 		grid-template-columns: 220px 1fr;
 		gap: 28px;
 		align-items: center;
-		margin-top: 12px;
+		margin: 0 0 36px;
 		padding: 24px;
 		border: 1px solid var(--color-hairline);
 		border-radius: 12px;
