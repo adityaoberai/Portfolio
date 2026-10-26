@@ -349,7 +349,7 @@ test('mobile music controls stay compact and return after reading a panel', asyn
 	await dock.getByRole('button', { name: 'Stop', exact: true }).tap();
 	await expect(hint).toBeVisible();
 	await expect(hint).toContainText('Put a record on?');
-	await hint.getByRole('button').tap();
+	await page.locator('.enter-button').tap();
 	await expect(dock.getByRole('button', { name: 'Open player', exact: true })).toBeVisible();
 	await expect(hint).toBeHidden();
 	await page.getByRole('button', { name: 'Room menu', exact: true }).tap();
@@ -489,6 +489,96 @@ test('portrait touch input, sharp rendering, reduced motion, and low-power DPR',
 	await page.getByRole('button', { name: 'Close and return to the room' }).tap();
 	await expect(page.getByRole('dialog')).not.toBeVisible();
 	await page.screenshot({ path: 'test-results/world-mobile.png', fullPage: true });
+	await context.close();
+});
+
+test('mobile joystick stops on release, cancellation, blur and menus; Enter opens a nearby object', async ({
+	browser
+}) => {
+	const context = await browser.newContext({
+		viewport: { width: 390, height: 844 },
+		isMobile: true,
+		hasTouch: true,
+		reducedMotion: 'reduce'
+	});
+	const page = await context.newPage();
+	await openRoom(page);
+	const canvas = page.locator('canvas');
+	const stick = page.getByRole('button', { name: 'Movement joystick' });
+	const input = await context.newCDPSession(page);
+	const snapshot = () =>
+		page.evaluate(() =>
+			(window as unknown as { __room: { snapshot(): { x: number; z: number } } }).__room.snapshot()
+		);
+	const drag = async (dx: number, dy: number) => {
+		const box = (await stick.boundingBox())!;
+		const x = box.x + box.width / 2;
+		const y = box.y + box.height / 2;
+		await input.send('Input.dispatchTouchEvent', {
+			type: 'touchStart',
+			touchPoints: [{ x, y, id: 1 }]
+		});
+		await input.send('Input.dispatchTouchEvent', {
+			type: 'touchMove',
+			touchPoints: [{ x: x + dx, y: y + dy, id: 1 }]
+		});
+	};
+	const stopped = async () => {
+		await expect(stick).not.toHaveClass(/active/);
+		await settle(page);
+		const at = await snapshot();
+		await page.waitForTimeout(150);
+		expect(await snapshot()).toEqual(at);
+		return at;
+	};
+	await expect(stick).toBeVisible();
+	const start = await snapshot();
+	await drag(60, 0);
+	await expect.poll(async () => (await snapshot()).x).toBeGreaterThan(start.x + 0.1);
+	await input.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+	const released = await stopped();
+	await drag(-60, 0);
+	await expect.poll(async () => (await snapshot()).x).toBeLessThan(released.x - 0.1);
+	await input.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
+	await stopped();
+	await drag(22, 0);
+	await expect(stick).toHaveClass(/active/);
+	await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+	await input.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+	await stopped();
+	await drag(22, 0);
+	await page.getByRole('button', { name: 'Room menu', exact: true }).click();
+	await expect(page.locator('#room-menu')).toBeVisible();
+	await expect(stick).toBeDisabled();
+	await input.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+	await stopped();
+	await page.keyboard.press('Escape');
+	await expect(stick).toBeEnabled();
+	await stick.focus();
+	const beforeKeys = await snapshot();
+	await page.keyboard.down('ArrowRight');
+	await expect.poll(async () => (await snapshot()).x).toBeGreaterThan(beforeKeys.x + 0.05);
+	await page.keyboard.up('ArrowRight');
+	await stopped();
+	await page.getByRole('button', { name: 'Room menu', exact: true }).tap();
+	await page
+		.getByRole('navigation', { name: 'In the room', exact: true })
+		.getByRole('link', { name: 'Work & build', exact: true })
+		.tap();
+	await expect(page.getByRole('dialog')).toBeVisible();
+	await expect(stick).toHaveCount(0);
+	await page.getByRole('button', { name: 'Close and return to the room' }).tap();
+	await expect(
+		page.getByRole('button', { name: 'Explore Work & build', exact: true })
+	).toBeEnabled();
+	await page.getByRole('button', { name: 'Explore Work & build', exact: true }).tap();
+	await page.getByRole('button', { name: 'Open Work & build', exact: true }).tap();
+	await expect(stick).toHaveCount(0);
+	await expect(page.locator('.menu-button')).toBeHidden();
+	await page.getByRole('button', { name: 'Close and return to the room' }).tap();
+	await expect(stick).toBeVisible();
+	expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
+	await expect(canvas).toHaveClass(/loaded/);
 	await context.close();
 });
 

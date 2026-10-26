@@ -135,7 +135,7 @@
 			padding-block: 14px;
 		}
 	}
-	@media (max-width: 820px) {
+	@media (max-width: 820px), (pointer: coarse) {
 		.overlay.with-menu .bar {
 			padding-block: max(12px, env(safe-area-inset-top)) 0;
 		}

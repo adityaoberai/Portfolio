@@ -106,6 +106,9 @@ test('mobile object cards and readers meet WCAG 2.2 AA (automated checks)', asyn
 		reducedMotion: 'reduce'
 	});
 	const page = await context.newPage();
+	await page.goto('/world');
+	await expect(page.getByRole('button', { name: 'Movement joystick' })).toBeVisible();
+	await audit(page, '/world (mobile joystick and action controls)');
 	await page.goto('/world#desk');
 	await expect(page.getByRole('button', { name: 'Open Work & build', exact: true })).toBeVisible();
 	await audit(page, '/world (mobile object card)');

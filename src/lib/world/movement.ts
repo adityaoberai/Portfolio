@@ -180,20 +180,29 @@ export function stepToward(from: Point, to: Point, delta: number, depth = 1): Po
 }
 
 // Screen-relative controls: "up" walks away from the camera, "right" walks screen-right.
-export function keyboardDirection(keys: Set<string>, camera = CAMERA_OFFSET, depth = 1): Point {
+export function screenDirection(
+	horizontal: number,
+	vertical: number,
+	camera = CAMERA_OFFSET,
+	depth = 1
+): Point {
 	const length = Math.hypot(camera[0], camera[2]);
 	const forward = { x: -camera[0] / length, z: -camera[2] / length };
 	const right = { x: -forward.z, z: forward.x };
+	const magnitude = Math.max(1, Math.hypot(horizontal, vertical));
+	return {
+		x: (right.x * horizontal - forward.x * vertical) / magnitude,
+		z: (right.z * horizontal - forward.z * vertical) / magnitude / depth
+	};
+}
+
+export function keyboardDirection(keys: Set<string>, camera = CAMERA_OFFSET, depth = 1): Point {
 	const horizontal =
 		Number(keys.has('d') || keys.has('arrowright')) -
 		Number(keys.has('a') || keys.has('arrowleft'));
 	const vertical =
 		Number(keys.has('s') || keys.has('arrowdown')) - Number(keys.has('w') || keys.has('arrowup'));
-	const x = right.x * horizontal - forward.x * vertical;
-	const z = right.z * horizontal - forward.z * vertical;
-	const magnitude = Math.hypot(x, z);
-	if (magnitude < 1e-9) return { x: 0, z: 0 };
-	return { x: x / magnitude, z: z / magnitude / depth };
+	return screenDirection(horizontal, vertical, camera, depth);
 }
 
 export function nearest<T extends { approach: Point }>(

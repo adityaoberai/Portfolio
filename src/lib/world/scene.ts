@@ -89,6 +89,7 @@ import {
 import {
 	clampPoint,
 	keyboardDirection,
+	screenDirection,
 	reach,
 	route,
 	SPEED,
@@ -492,6 +493,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	const raycaster = new Raycaster();
 	const floorPlane = new Plane(new Vector3(0, 1, 0), 0);
 	const keys = new Set<string>();
+	let stick = { x: 0, y: 0 };
 	const movementKeys = new Set([
 		'w',
 		'a',
@@ -550,7 +552,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	function report() {
 		options.onState({
 			...position(),
-			moving: Boolean(path.length || keys.size),
+			moving: Boolean(path.length || keys.size || stick.x || stick.y),
 			near: near?.id ?? null,
 			nearCuriosity: nearCuriosity?.id ?? null,
 			focused: focused?.id ?? null,
@@ -567,6 +569,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	function stopMovement() {
 		window.clearTimeout(turning);
 		keys.clear();
+		stick = { x: 0, y: 0 };
 		path = [];
 		onArrival = null;
 		stalled = 0;
@@ -678,16 +681,24 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		const spinning = playing && !reducedMotion;
 		// While nothing moves but the record, half the frame rate is plenty.
 		const onlySpinning =
-			spinning && !keys.size && !path.length && !tween && arm.rotation.y === armTo;
+			spinning &&
+			!keys.size &&
+			!stick.x &&
+			!stick.y &&
+			!path.length &&
+			!tween &&
+			arm.rotation.y === armTo;
 		if (onlySpinning && lastTime && time - lastTime < 30) {
 			requestFrame();
 			return;
 		}
 		const delta = lastTime ? Math.min((time - lastTime) / 1000, 0.05) : 1 / 60;
 		lastTime = time;
-		const direction = keyboardDirection(keys, cameraOffset, depthScale);
-		const keyboardMoving = !paused && (direction.x !== 0 || direction.z !== 0);
-		if (keyboardMoving) {
+		const direction = keys.size
+			? keyboardDirection(keys, cameraOffset, depthScale)
+			: screenDirection(stick.x, stick.y, cameraOffset, depthScale);
+		const directMoving = !paused && (direction.x !== 0 || direction.z !== 0);
+		if (directMoving) {
 			setPosition(
 				clampPoint({
 					x: characterPlacement.position.x + direction.x * SPEED * delta,
@@ -716,7 +727,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 				arrive?.();
 			}
 		}
-		const moving = keyboardMoving || path.length > 0;
+		const moving = directMoving || path.length > 0;
 		body.position.y = moving && !reducedMotion ? Math.abs(Math.sin(time * 0.014)) * 0.035 : 0;
 		if (seated) pose();
 		else
@@ -781,6 +792,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		standUp();
 		window.clearTimeout(turning);
 		keys.clear();
+		stick = { x: 0, y: 0 };
 		const target = clampPoint(point);
 		path = route(position(), target);
 		onArrival = arrive;
@@ -910,6 +922,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		if (movementKeys.has(key)) {
 			event.preventDefault();
 			standUp();
+			stick = { x: 0, y: 0 };
 			window.clearTimeout(turning);
 			path = [];
 			onArrival = null;
@@ -1061,6 +1074,31 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 
 	return {
 		visit,
+		interact() {
+			if (paused || disposed) return;
+			if (near) visit(near.id);
+			else if (nearCuriosity) walkUp(nearCuriosity);
+		},
+		setMovement(direction: { x: number; y: number }) {
+			if (disposed) return;
+			const x = paused || document.hidden || !Number.isFinite(direction.x) ? 0 : direction.x;
+			const y = paused || document.hidden || !Number.isFinite(direction.y) ? 0 : direction.y;
+			if (x === stick.x && y === stick.y) return;
+			if (x || y) {
+				standUp();
+				window.clearTimeout(turning);
+				keys.clear();
+				path = [];
+				onArrival = null;
+				targetMarker.visible = false;
+				if (focused) {
+					focused = null;
+					frameTo(null);
+				}
+			}
+			stick = { x, y };
+			requestFrame();
+		},
 		reveal(id: StationId) {
 			const station = active.find((item) => item.id === id);
 			if (!station || disposed) return;

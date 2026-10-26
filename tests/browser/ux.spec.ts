@@ -47,8 +47,15 @@ for (const width of [320, 390, 430]) {
 		await expect(page.locator('.welcome')).toBeHidden();
 		const menuButton = page.getByRole('button', { name: 'Room menu', exact: true });
 		const buttonBox = (await menuButton.boundingBox())!;
-		expect(buttonBox.y).toBeLessThan(100);
+		expect(buttonBox.y).toBeGreaterThan(844 * 0.75);
+		expect(buttonBox.x).toBeGreaterThan(width / 2);
 		expect(buttonBox.height).toBeGreaterThanOrEqual(44);
+		const stickBox = (await page.getByRole('button', { name: 'Movement joystick' }).boundingBox())!;
+		expect(stickBox.x).toBeLessThan(width / 2);
+		expect(stickBox.y).toBeGreaterThan(844 * 0.75);
+		const enterBox = (await page.locator('.enter-button').boundingBox())!;
+		expect(enterBox.x).toBeCloseTo(buttonBox.x, 0);
+		expect(enterBox.y + enterBox.height).toBeLessThan(buttonBox.y);
 		await menuButton.tap();
 		const menu = page.locator('#room-menu');
 		await expect(menu).toBeVisible();

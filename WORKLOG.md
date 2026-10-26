@@ -8,11 +8,11 @@
 - Source brief: user attachment, adityaoberai.com V3 (2026-09-30).
 - Full requirements and execution decisions live in root `v3.md`.
 
-## Current state (2026-10-23 mobile room pass)
+## Current state (2026-10-26 mobile room pass)
 
 - User approved implementing the UX and typography audit on `v3-world`, based on `c420ec5`. Accepted names: **My room / On paper**. The branch preview is **https://world.oberai.dev**. Production launch and merging to `main` are outside this pass.
 - Replaced the segmented mode switch with contextual invitations, a room preview on On paper, and a reduced-motion-aware view transition. Session storage restores the character position, station, open panel, expanded reading state, and reading position. Returning from a panel lands on the relevant On paper section.
-- Mobile exploration uses a header menu and compact object cards that expand to 75dvh reading sheets. Portrait screens use a longer floor plan with furniture at its original size; the camera fits the room above the card. Now has a live Bengaluru clock beside its name. Panel headers and dismissal stay available while scrolling, with safe-area spacing and landscape support.
+- Mobile exploration uses a joystick on the left, Enter and Menu on the right, and compact object cards that expand to 75dvh reading sheets. Portrait screens use a longer floor plan with furniture at its original size; the camera fits the room above the card. Now has a live Bengaluru clock beside its name. Panel headers and dismissal stay available while scrolling, with safe-area spacing and landscape support.
 - Station URLs support sharing/reload, Back dismisses an internally opened panel, and Forward restores it. The object menu has one primary destination per item, with curiosities and settings separated. Keyboard, reduced motion, demand rendering, and fallback routes remain supported.
 - Kept Newsreader for reading and headings; unified type roles, relaxed heading tracking, raised metadata to 13px, and used system sans for controls. Removed redundant eyebrows, aligned Collection/Now navigation, retained the mobile portrait, and removed the duplicate On paper footer. Enlarged-text and text-spacing checks exposed and fixed a grid overflow.
 - Photography now has an in-site reader, previous/next controls, arrow keys, native dialog focus, its own Back entry, and a Pexels link. The mobile music player collapses after playback starts and can be reopened or stopped.
@@ -48,6 +48,13 @@
 5. Go live on Appwrite Sites: add `ORIGIN=https://adityaoberai.com` (site Settings → Environment variables), merge `v3-world` into `main` via a PR, add `adityaoberai.com` and `www.adityaoberai.com` as Active-deployment domains (the apex needs NS delegation from GoDaddy; copy its MX/TXT records first), keep oberai.dev on Active deployment until path-preserving redirects exist (Appwrite domain redirects drop paths). Rollback: reactivate V2 deployment `6aa7d3f0dc0c05bdc438`.
 
 ## Change log
+
+### 2026-10-26 — Mobile joystick, thumb controls, and header hierarchy
+
+- Added an analog, screen-relative joystick at the bottom left on touch and narrow screens, retaining tap-to-walk. Movement stops on release, cancellation, lost capture, blur, resize, hidden tabs, menus, and reading panels. The joystick also accepts arrow keys and WASD while focused.
+- Grouped Enter above Menu at the bottom right. Enter uses the same nearby-object interaction as the keyboard, including the gramophone and bed. Controls disappear during inspection and reading; opening the menu disables movement. Landscape hints stay in the left margin, and the room uses the space between the controls instead of shrinking above them.
+- Made Aditya's name the primary desktop text at 30px, reduced the invitation to 20–24px with normal weight, and set the role line to a quieter 16px. The mobile invitation remains hidden.
+- Validation: all 41 browser checks and all 33 unit tests pass, including joystick release/cancellation/blur/menu behavior, nearby Enter actions, phone layouts, and accessibility scans. Type checks report 0 errors/0 warnings; lint and the production build pass. Visually inspected desktop, small desktop, portrait phones down to 320×568, and phone landscape. Publish only to `v3-world`.
 
 ### 2026-10-26 — Mobile movement invitation and navigation cleanup
 

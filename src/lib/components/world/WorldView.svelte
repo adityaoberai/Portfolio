@@ -7,6 +7,7 @@
 	import BengaluruTime from '$lib/components/BengaluruTime.svelte';
 	import RecordPlayer from './RecordPlayer.svelte';
 	import StationPanel from './StationPanel.svelte';
+	import RoomJoystick from './RoomJoystick.svelte';
 	import { curiosities, page as copy, stationById, stations } from '$lib/data/room';
 	import { site } from '$lib/data/site';
 	import type { Curiosity } from '$lib/data/world';
@@ -20,6 +21,7 @@
 	let cornerEl: HTMLDivElement;
 	let menuButton: HTMLButtonElement;
 	let menu: HTMLDivElement;
+	let menuOpen = $state(false);
 	let dialog: HTMLDialogElement;
 	let poemDialog: HTMLDialogElement;
 	let room: RoomController | undefined;
@@ -58,6 +60,14 @@
 		nearThing && (nearThing.music && musicOn ? nearThing.music.stop : nearThing.use)
 	);
 	const selected = $derived(pending ? stationById[pending] : null);
+	const joystickAvailable = $derived(status === 'ready' && (narrow || coarse) && !open && !poemOf);
+	const touchControls = $derived(narrow || coarse);
+	function moveWithJoystick(direction: { x: number; y: number }) {
+		room?.setMovement(direction);
+	}
+	function enterNearby() {
+		room?.interact();
+	}
 
 	function remember() {
 		if (disposed) return;
@@ -292,6 +302,11 @@
 		);
 	}
 	function menuToggled(event: ToggleEvent) {
+		menuOpen = event.newState === 'open';
+		if (menuOpen) {
+			if (pending) room?.setMovement({ x: 0, y: 0 });
+			else room?.cancelVisit();
+		}
 		if (
 			event.newState === 'closed' &&
 			status === 'ready' &&
@@ -387,6 +402,7 @@
 		if (disposed || !room || !frameEl) return;
 		const height = frameEl.clientHeight;
 		const small = frameEl.clientWidth <= 820;
+		const stacked = small && (height >= frameEl.clientWidth || Boolean(open) || Boolean(poemOf));
 		const inspecting = Boolean((open && (!small || expanded)) || poemOf);
 		const cornerTop = cornerEl.getBoundingClientRect().top;
 		const cardTop =
@@ -397,7 +413,7 @@
 		frameEl.style.setProperty('--menu-top', `${menuButton.getBoundingClientRect().bottom + 12}px`);
 		const titleBottom = topEl.getBoundingClientRect().bottom;
 		room.setInsets(
-			small
+			stacked
 				? {
 						top: titleBottom + 8,
 						bottom: inspecting ? 16 : Math.max(24, height - Math.min(cornerTop, cardTop) + 12),
@@ -618,27 +634,54 @@
 					<RecordPlayer spotify={music.spotify} on={musicOn} onplayback={musicPlayback} />
 				</div>
 			</section>{/if}
-		{#if status === 'ready'}<div
-				class="room-hint"
-				class:idle={!selected && !near && !(nearThing && nearHint)}
-				id="room-instructions"
-				hidden={Boolean(narrow && open && !expanded) ||
-					((narrow || coarse) && musicOn && Boolean(nearThing?.music) && !selected)}
-			>
-				{#if selected}<p role="status">Heading to <strong>{selected.area}</strong>…</p>
-				{:else if near}<button onclick={() => visit(near.id)}
-						>{near.area}<span>{coarse ? 'Tap to explore' : 'E to explore'}</span></button
-					>
-				{:else if nearThing && nearHint}<button
-						onclick={() => showCuriosity(roomState!.nearCuriosity!)}
-						>{nearHint.title}<span>{coarse ? nearHint.touch : `Press E ${nearHint.keys}`}</span
-						></button
-					>
-				{:else}<p>
-						{coarse || narrow
-							? 'Take a wander around my room. Tap the floor to move.'
-							: 'Take a wander. WASD or arrows to move, E to look closer.'}
-					</p>{/if}
+		{#if status === 'ready'}<div class="movement">
+				<div
+					class="room-hint"
+					class:touch-hint={touchControls}
+					class:idle={!selected && !near && !(nearThing && nearHint)}
+					id="room-instructions"
+					hidden={Boolean(narrow && open && !expanded) ||
+						((narrow || coarse) && musicOn && Boolean(nearThing?.music) && !selected)}
+				>
+					{#if selected}<p role="status">Heading to <strong>{selected.area}</strong>…</p>
+					{:else if near && touchControls}<p>
+							<strong>{near.area}</strong><span>Enter to explore</span>
+						</p>
+					{:else if near}<button onclick={() => visit(near.id)}
+							>{near.area}<span>{coarse ? 'Tap to explore' : 'E to explore'}</span></button
+						>
+					{:else if nearThing && nearHint && touchControls}<p>
+							<strong>{nearHint.title}</strong><span>Enter to explore</span>
+						</p>
+					{:else if nearThing && nearHint}<button
+							onclick={() => showCuriosity(roomState!.nearCuriosity!)}
+							>{nearHint.title}<span>{coarse ? nearHint.touch : `Press E ${nearHint.keys}`}</span
+							></button
+						>
+					{:else}<p>
+							{coarse || narrow
+								? 'Take a wander. Drag the stick or tap the floor to move.'
+								: 'Take a wander. WASD or arrows to move, E to look closer.'}
+						</p>{/if}
+				</div>
+				{#if touchControls}<div class="touch-controls">
+						{#if joystickAvailable}<RoomJoystick
+								disabled={menuOpen || Boolean(pending)}
+								onmove={moveWithJoystick}
+							/>{/if}
+						<div class="touch-actions" class:with-enter={joystickAvailable}>
+							{#if joystickAvailable}<button
+									class="enter-button"
+									disabled={menuOpen || Boolean(pending) || (!near && !nearThing)}
+									aria-label={near
+										? `Explore ${near.area}`
+										: nearThing
+											? `Use ${nearThing.label}`
+											: 'Enter (move near an object)'}
+									onclick={enterNearby}>Enter</button
+								>{/if}
+						</div>
+					</div>{/if}
 			</div>{/if}
 	</div>
 	<div id="room-menu" class="menu" popover bind:this={menu} ontoggle={menuToggled}>
@@ -830,18 +873,18 @@
 	}
 	.welcome {
 		padding: 0 var(--gutter);
-		max-width: 470px;
+		max-width: 520px;
 	}
 	h1 {
-		max-width: 18ch;
-		font-size: clamp(1.75rem, 2.8vw, 2.5rem);
-		line-height: 1.12;
-		letter-spacing: -0.02em;
-		font-weight: 500;
+		max-width: 30ch;
+		font-size: clamp(1.25rem, 1.65vw, 1.5rem);
+		line-height: 1.3;
+		letter-spacing: -0.01em;
+		font-weight: 400;
 	}
 	.welcome p {
-		margin-top: 12px;
-		font-size: 1.0625rem;
+		margin-top: 8px;
+		font-size: 1rem;
 		line-height: 1.5;
 		color: var(--color-ink-soft);
 		max-width: 38ch;
@@ -903,6 +946,65 @@
 		border-radius: 10px;
 		font: 0.875rem/1.5 var(--font-ui);
 		pointer-events: auto;
+	}
+	.movement {
+		display: grid;
+		gap: 8px;
+		width: 100%;
+	}
+	.touch-controls {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		width: 100%;
+	}
+	.touch-actions {
+		width: 80px;
+		min-height: 44px;
+		margin-left: auto;
+		pointer-events: none;
+	}
+	.touch-actions.with-enter {
+		min-height: 108px;
+		padding-bottom: 52px;
+	}
+	.enter-button {
+		display: grid;
+		place-items: center;
+		width: 80px;
+		min-height: 56px;
+		padding: 8px;
+		border: 1px solid var(--color-accent);
+		border-radius: 12px;
+		font: 500 0.9375rem/1.4 var(--font-ui);
+		background: var(--color-accent);
+		color: var(--color-paper);
+		pointer-events: auto;
+		cursor: pointer;
+	}
+	.enter-button:disabled {
+		background: #faf7edda;
+		color: var(--color-secondary);
+		border-color: var(--color-hairline-strong);
+		opacity: 0.6;
+		cursor: default;
+	}
+	.room-hint.touch-hint {
+		background: transparent;
+		border: 0;
+		min-height: 42px;
+	}
+	.room-hint.touch-hint p {
+		padding: 0;
+	}
+	.touch-hint strong {
+		font-weight: 500;
+		color: var(--color-ink);
+	}
+	.touch-hint p span {
+		margin-left: 8px;
+		color: var(--color-secondary);
 	}
 	.room-hint p {
 		padding: 12px 16px;
@@ -1344,7 +1446,15 @@
 			}
 		}
 	}
-	@media (max-width: 820px) {
+	@media (min-width: 821px) {
+		.top :global(.identity) {
+			font-size: 1.875rem;
+		}
+		.top :global(.v3-header .bar) {
+			padding-block: 12px 4px;
+		}
+	}
+	@media (max-width: 820px), (pointer: coarse) {
 		.welcome {
 			display: none;
 		}
@@ -1394,6 +1504,23 @@
 			top: 0;
 			padding: max(12px, env(safe-area-inset-top)) 0 8px;
 		}
+		.menu-button {
+			position: fixed;
+			right: 16px;
+			bottom: max(20px, env(safe-area-inset-bottom));
+			width: 80px;
+			justify-content: center;
+		}
+	}
+	@media (max-height: 500px) and (min-aspect-ratio: 3/2) {
+		.room-hint.touch-hint {
+			position: fixed;
+			top: 72px;
+			left: 16px;
+			max-width: calc(20vw - 32px);
+		}
+	}
+	@media (max-width: 820px) {
 		.sheet {
 			inset: auto 0 0;
 			width: 100%;

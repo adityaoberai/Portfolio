@@ -5,6 +5,7 @@ import {
 	isClear,
 	isFree,
 	keyboardDirection,
+	screenDirection,
 	nearest,
 	reach,
 	route,
@@ -107,6 +108,27 @@ test('arrow and letter controls map to the same screen-relative direction', () =
 		['d', 'arrowright']
 	]) {
 		assert.deepEqual(keyboardDirection(new Set([letter])), keyboardDirection(new Set([arrow])));
+	}
+});
+
+test('joystick input follows the screen, supports slow movement, and caps diagonal speed', () => {
+	for (const [camera, depth] of [
+		[CAMERA_OFFSET, 1],
+		[PORTRAIT_CAMERA_OFFSET, PORTRAIT_ROOM_DEPTH]
+	]) {
+		assert.deepEqual(screenDirection(0, 0, camera, depth), { x: 0, z: 0 });
+		assert.deepEqual(
+			screenDirection(0, -1, camera, depth),
+			keyboardDirection(new Set(['w']), camera, depth)
+		);
+		assert.deepEqual(
+			screenDirection(1, 0, camera, depth),
+			keyboardDirection(new Set(['d']), camera, depth)
+		);
+		const slow = screenDirection(0.3, -0.4, camera, depth);
+		assert.ok(Math.abs(Math.hypot(slow.x, slow.z * depth) - 0.5) < 1e-12);
+		const diagonal = screenDirection(1, -1, camera, depth);
+		assert.ok(Math.abs(Math.hypot(diagonal.x, diagonal.z * depth) - 1) < 1e-12);
 	}
 });
 
