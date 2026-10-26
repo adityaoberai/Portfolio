@@ -49,6 +49,12 @@
 
 ## Change log
 
+### 2026-10-27 — Preview the bed before opening the poem
+
+- Mobile bed interactions now show a compact, full-width Bed banner in the bottom control row. The poem stays closed until Read poem is chosen, then opens in the existing 75dvh reader. See room returns to the banner and retains the reading position.
+- Applied the same preview framing, control visibility, Escape dismissal, and orientation behavior as other objects. Switching between the bed and another object closes the previous preview. The menu's explicit Read action still opens the poem directly, and desktop behavior is unchanged.
+- Validation: type checks report 0 errors/0 warnings; lint and the production build pass. All 45 browser cases pass, including the new mobile bed interaction cases at 320/390/430px, reader scroll restoration, orientation, object switching, and banner/reader accessibility. Visually checked the banner and reader at all three widths with no page errors or horizontal overflow. Publish only to `v3-world`.
+
 ### 2026-10-27 — Rebalance the mobile gramophone and joystick
 
 - Narrowed the gramophone control from a 160px maximum to 136px while retaining its full 108px height and illustration. Tightened the gaps slightly so the label still fits on 320px screens.

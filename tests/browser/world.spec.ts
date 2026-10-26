@@ -239,6 +239,92 @@ test('trying to sleep on the bed turns the character away, and Frost’s poem po
 	await expect(canvas).toBeFocused();
 });
 
+for (const width of [320, 390, 430]) {
+	test(`the mobile bed offers a preview before reading the poem at ${width}px`, async ({
+		browser
+	}) => {
+		const context = await browser.newContext({
+			viewport: { width, height: 844 },
+			isMobile: true,
+			hasTouch: true,
+			reducedMotion: 'reduce'
+		});
+		const page = await context.newPage();
+		await openRoom(page);
+		const bed = await page.evaluate(() =>
+			(window as unknown as { __room: { project: (p: number[]) => Anchor } }).__room.project([
+				2.8, 0.7, 1.4
+			])
+		);
+		await page.touchscreen.tap(bed.x, bed.y);
+		const sheet = page.locator('dialog.poem');
+		const read = sheet.getByRole('button', { name: 'Read poem', exact: true });
+		const menu = page.getByRole('button', { name: 'Room menu', exact: true });
+		await expect(sheet.getByRole('heading', { name: 'Bed', exact: true })).toBeVisible();
+		expect(await sheet.evaluate((element) => element.matches(':modal'))).toBe(false);
+		await expect(sheet.locator('.verse')).toHaveCount(0);
+		await expect(read).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Movement joystick' })).toHaveCount(0);
+		await expect(menu).toBeHidden();
+		const box = (await sheet.boundingBox())!;
+		expect(box.x).toBeCloseTo(16, 0);
+		expect(box.width).toBeCloseTo(width - 32, 0);
+		expect(box.y + box.height).toBeCloseTo(824, 0);
+		await read.tap();
+		await expect(
+			sheet.getByRole('heading', { name: 'Stopping by Woods on a Snowy Evening' })
+		).toBeVisible();
+		expect(await sheet.evaluate((element) => element.matches(':modal'))).toBe(true);
+		expect((await sheet.boundingBox())!.height).toBeCloseTo(844 * 0.75, 0);
+		await expect(sheet).toContainText('Whose woods these are I think I know.');
+		const scroll = await sheet.evaluate((element) => {
+			element.scrollTop = 130;
+			return element.scrollTop;
+		});
+		await sheet.getByRole('button', { name: 'See room', exact: true }).tap();
+		await expect(read).toBeFocused();
+		await expect(sheet.locator('.verse')).toHaveCount(0);
+		await read.tap();
+		await expect.poll(() => sheet.evaluate((element) => element.scrollTop)).toBe(scroll);
+		await sheet.getByRole('button', { name: 'See room', exact: true }).tap();
+		await page.setViewportSize({ width: 844, height: 390 });
+		await expect(sheet.locator('.verse')).toBeVisible();
+		await page.setViewportSize({ width, height: 844 });
+		await expect(read).toBeVisible();
+		expect(await sheet.evaluate((element) => element.matches(':modal'))).toBe(false);
+		await page.keyboard.press('Escape');
+		await expect(sheet).not.toBeVisible();
+		await expect(page.getByRole('button', { name: 'Movement joystick' })).toBeVisible();
+		await expect(menu).toBeVisible();
+		await page.locator('.enter-button').tap();
+		await expect(read).toBeVisible();
+		await expect(sheet.locator('.verse')).toHaveCount(0);
+		if (width === 390) {
+			// Switching objects keeps exactly one preview; returning to the bed still waits for Read.
+			await page.evaluate(() =>
+				(window as unknown as { __room: { visit(id: string): void } }).__room.visit('camera')
+			);
+			await expect(
+				page.getByRole('button', { name: 'Open Photography', exact: true })
+			).toBeVisible();
+			await expect(sheet).not.toBeVisible();
+			const bedAgain = await page.evaluate(() =>
+				(window as unknown as { __room: { project: (p: number[]) => Anchor } }).__room.project([
+					2.8, 0.7, 1.4
+				])
+			);
+			await page.touchscreen.tap(bedAgain.x, bedAgain.y);
+			await expect(read).toBeVisible();
+			await expect(page.locator('dialog[open]')).toHaveCount(1);
+			await expect(page).toHaveURL(/\/world\?diagnostics=1$/);
+		}
+		await sheet.getByRole('button', { name: 'Close and return to the room' }).tap();
+		await expect(page.locator('canvas')).toBeFocused();
+		expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
+		await context.close();
+	});
+}
+
 test('the gramophone plays the playlist, with Spotify’s player over the hint card', async ({
 	page
 }) => {

@@ -119,6 +119,16 @@ test('mobile object cards and readers meet WCAG 2.2 AA (automated checks)', asyn
 	await audit(page, '/world (mobile reading sheet)');
 	await page.getByRole('button', { name: 'See room' }).tap();
 	await expect(page.getByRole('button', { name: 'Open Work & build', exact: true })).toBeFocused();
+	await page.getByRole('button', { name: 'Close and return to the room' }).tap();
+	await page.getByRole('button', { name: 'Room menu', exact: true }).tap();
+	await page.getByText('Little things in the room').tap();
+	await page.getByRole('button', { name: /^Read “Stopping by Woods/ }).tap();
+	await expect(page.locator('dialog.poem .verse')).toBeVisible();
+	await page.getByRole('button', { name: 'See room', exact: true }).tap();
+	await expect(page.getByRole('button', { name: 'Read poem', exact: true })).toBeFocused();
+	await audit(page, '/world (mobile bed preview)');
+	await page.getByRole('button', { name: 'Read poem', exact: true }).tap();
+	await audit(page, '/world (mobile poem reader)');
 	await context.close();
 });
 

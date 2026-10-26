@@ -41,7 +41,10 @@
 	let note = $state<Curiosity | null>(null);
 	let noteTimer = 0;
 	let poemOf = $state<CuriosityId | null>(null);
+	let poemExpanded = $state(false);
+	let poemScroll = 0;
 	const poem = $derived((poemOf && curiosities[poemOf].poem) || null);
+	const poemReading = $derived(Boolean(poemOf && (!narrow || poemExpanded)));
 	const music = Object.values(curiosities).find((item) => item.music)?.music;
 	let musicOn = $state(false);
 	let playerExpanded = $state(true);
@@ -64,7 +67,9 @@
 	const selected = $derived(pending ? stationById[pending] : null);
 	const touchControls = $derived(narrow || coarse);
 	const playerRowOpen = $derived(touchControls && musicOn && playerExpanded && !open && !poemOf);
-	const objectRowOpen = $derived(narrow && Boolean(open) && !expanded);
+	const objectRowOpen = $derived(
+		narrow && Boolean((open && !expanded) || (poemOf && !poemExpanded))
+	);
 	const joystickAvailable = $derived(
 		status === 'ready' && touchControls && !open && !poemOf && !playerRowOpen
 	);
@@ -125,6 +130,10 @@
 		remember();
 	}
 	async function showStation(id: StationId) {
+		if (poemOf) {
+			poemOf = null;
+			poemDialog.close();
+		}
 		if (touchControls) playerExpanded = false;
 		const focused = document.activeElement as HTMLElement | null;
 		returnFocus ??= focused && focused !== document.body ? focused : null;
@@ -167,7 +176,7 @@
 	}
 	function stationClosed() {
 		// Changing a non-modal object card into a modal queues a close event.
-		if (!dialog.open) closeStation();
+		if (!dialog.open && open) closeStation();
 	}
 	function dismissStation() {
 		if (route.state.roomPanelEntry) history.back();
@@ -301,12 +310,12 @@
 			event.key === 'Escape' &&
 			!event.defaultPrevented &&
 			narrow &&
-			open &&
-			!expanded &&
+			objectRowOpen &&
 			!menu.matches(':popover-open')
 		) {
 			event.preventDefault();
-			dismissStation();
+			if (poemOf) poemDialog.close();
+			else dismissStation();
 			return;
 		}
 		if (
@@ -351,28 +360,59 @@
 		window.clearTimeout(noteTimer);
 		noteTimer = window.setTimeout(() => (note = null), 5000);
 	}
-	async function showPoem(id: CuriosityId) {
+	async function showPoem(id: CuriosityId, reading = false) {
+		if (open || pending) {
+			dialog.close();
+			closeStation();
+			replaceState(baseUrl(), { ...route.state, roomPanel: null, roomPanelEntry: false });
+		}
 		if (touchControls) playerExpanded = false;
 		window.clearTimeout(noteTimer);
 		note = null;
 		poemOf = id;
-		room?.setPaused(true);
+		poemExpanded = reading;
+		poemScroll = 0;
 		room?.look(id);
 		hover = null;
+		await presentPoem();
+		poemDialog.scrollTop = 0;
+	}
+	async function presentPoem() {
 		await tick();
-		if (!poemDialog?.isConnected || poemOf !== id) return;
-		if (!poemDialog.open) poemDialog.showModal();
+		if (!poemDialog?.isConnected || !poemOf) return;
+		const reading = !narrow || poemExpanded;
+		if (poemDialog.open && poemDialog.matches(':modal') !== reading) poemDialog.close();
+		if (!poemDialog.open) {
+			if (reading) poemDialog.showModal();
+			else poemDialog.show();
+		}
+		room?.setPreview(!reading);
+		room?.setPaused(reading);
 		poemDialog.focus(quietFocus);
 		measureLayout();
 	}
+	async function expandPoem(value: boolean) {
+		if (!poemOf) return;
+		if (poemExpanded) poemScroll = poemDialog.scrollTop;
+		poemExpanded = value;
+		await presentPoem();
+		if (!poemOf) return;
+		poemDialog.scrollTop = value ? poemScroll : 0;
+		if (!value) poemDialog.querySelector<HTMLButtonElement>('.object-open')?.focus(quietFocus);
+	}
 	function readPoem(id: CuriosityId) {
 		if (menu.matches(':popover-open')) menu.hidePopover();
-		void showPoem(id);
+		void showPoem(id, true);
+	}
+	function poemClosed() {
+		if (!poemDialog.open && poemOf) closePoem();
 	}
 	function closePoem() {
 		poemOf = null;
+		poemExpanded = false;
 		room?.setPanel(null);
 		room?.release();
+		room?.setPreview(false);
 		room?.setPaused(false);
 		backToRoom();
 		measureLayout();
@@ -435,10 +475,17 @@
 		const height = frameEl.clientHeight;
 		const small = frameEl.clientWidth <= 820;
 		const stacked = small && (height >= frameEl.clientWidth || Boolean(open) || Boolean(poemOf));
-		const inspecting = Boolean((open && (!small || expanded)) || poemOf);
+		const inspecting = Boolean(
+			(open && (!small || expanded)) || (poemOf && (!small || poemExpanded))
+		);
 		const cornerTop = objectRowOpen ? height : cornerEl.getBoundingClientRect().top;
-		const cardTop =
-			small && open && !expanded && dialog.open ? dialog.getBoundingClientRect().top : height;
+		const card =
+			small && open && !expanded && dialog.open
+				? dialog
+				: small && poemOf && !poemExpanded && poemDialog.open
+					? poemDialog
+					: null;
+		const cardTop = card?.getBoundingClientRect().top ?? height;
 		const cornerInset = `${Math.max(0, height - cornerTop)}px`;
 		frameEl.style.setProperty('--corner', cornerInset);
 		dialog.style.setProperty('--corner', cornerInset);
@@ -457,7 +504,8 @@
 						units: 8.6
 					}
 		);
-		const sheet = dialog.open && inspecting ? dialog : poemDialog.open ? poemDialog : null;
+		const sheet =
+			dialog.open && inspecting ? dialog : poemDialog.open && inspecting ? poemDialog : null;
 		const box = sheet?.getBoundingClientRect();
 		room.setPanel(
 			box ? { left: box.left, top: box.top, width: box.width, height: box.height } : null
@@ -468,6 +516,7 @@
 			void expanded;
 			void open;
 			void poemOf;
+			void poemExpanded;
 			void playerExpanded;
 			void compactPlayer;
 			void playerRowOpen;
@@ -496,6 +545,7 @@
 			narrow = size.matches;
 			coarse = pointer.matches;
 			if (changed && open) void presentStation();
+			else if (changed && poemOf) void presentPoem();
 			else measureLayout();
 		};
 		diagnostics = new URLSearchParams(location.search).has('diagnostics');
@@ -584,7 +634,7 @@
 <section
 	class="world"
 	class:row-panel={playerRowOpen || objectRowOpen}
-	class:inspecting={Boolean((open && (!narrow || expanded)) || poemOf)}
+	class:inspecting={Boolean((open && (!narrow || expanded)) || poemReading)}
 	aria-labelledby="world-title"
 	bind:this={frameEl}
 >
@@ -727,7 +777,7 @@
 					class:touch-hint={touchControls}
 					class:idle={!selected && !near && !(nearThing && nearHint)}
 					id="room-instructions"
-					hidden={Boolean(narrow && open && !expanded) ||
+					hidden={objectRowOpen ||
 						((narrow || coarse) && musicOn && Boolean(nearThing?.music) && !selected)}
 				>
 					{#if selected}<p role="status">Heading to <strong>{selected.area}</strong>…</p>
@@ -895,19 +945,41 @@
 </dialog>
 <dialog
 	bind:this={poemDialog}
-	class="sheet poem expanded"
-	onclose={closePoem}
+	class="sheet poem"
+	class:expanded={poemExpanded}
+	class:object-card={narrow && !poemExpanded}
+	onclose={poemClosed}
 	onkeydown={sheetKeys}
 	onanimationend={measureLayout}
 	aria-labelledby="poem-title"
+	aria-modal={!narrow || poemExpanded}
 	tabindex="-1"
 >
-	{#if poemOf && poem}<div class="sheet-top">
-			<span class="sheet-context">{poem.author}</span><button
+	{#if poemOf && poem && narrow && !poemExpanded}
+		<div class="object-head">
+			<h2 id="poem-title">{curiosities[poemOf].label}</h2>
+			<button
 				class="close"
 				onclick={() => poemDialog.close()}
-				aria-label="Close and return to the room">Close ×</button
+				aria-label="Close and return to the room">×</button
 			>
+		</div>
+		<p class="object-summary">{curiosities[poemOf].line}</p>
+		<button class="object-open" onclick={() => expandPoem(true)}>
+			Read poem<span aria-hidden="true">↗</span>
+		</button>
+	{:else if poemOf && poem}<div class="sheet-top">
+			<span class="sheet-context">{poem.author}</span>
+			<div>
+				{#if narrow}<button aria-expanded={poemExpanded} onclick={() => expandPoem(false)}
+						>See room<span aria-hidden="true">↙</span></button
+					>{/if}
+				<button
+					class="close"
+					onclick={() => poemDialog.close()}
+					aria-label="Close and return to the room">Close ×</button
+				>
+			</div>
 		</div>
 		<div class="sheet-content">
 			<h2 id="poem-title">{poem.title}</h2>
@@ -1475,7 +1547,7 @@
 		font: 0.9375rem/1.4 var(--font-ui);
 		cursor: pointer;
 	}
-	.poem h2 {
+	.poem .sheet-content h2 {
 		font: 500 var(--type-panel) / 1.15 var(--font-serif);
 		letter-spacing: -0.015em;
 	}
