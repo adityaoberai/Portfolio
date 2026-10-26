@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000" role="img" aria-label="Placeholder photograph 1">
-	<rect width="800" height="1000" fill="#F6F0E7"/>
-	<line x1="0" y1="0" x2="800" y2="1000" stroke="#E7DFD3" stroke-width="2"/>
-	<line x1="800" y1="0" x2="0" y2="1000" stroke="#E7DFD3" stroke-width="2"/>
-	<rect x="2" y="2" width="796" height="996" fill="none" stroke="#E7DFD3" stroke-width="4"/>
-	<rect x="240" y="440" width="320" height="120" fill="#F6F0E7"/>
-	<text x="400" y="495" text-anchor="middle" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="30" letter-spacing="6" fill="#6F635A">PHOTO 01</text>
-	<text x="400" y="535" text-anchor="middle" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="17" letter-spacing="3" fill="#A63A2B">SWAP ME</text>
-</svg>

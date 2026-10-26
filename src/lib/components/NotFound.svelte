@@ -1,8 +1,9 @@
 <script lang="ts">
 	let { status = 404 }: { status?: number } = $props();
 
-	const heading =
-		status === 404 ? 'This page seems to be unwritten.' : 'Something went off the page.';
+	const heading = $derived(
+		status === 404 ? 'This page seems to be unwritten.' : 'Something went off the page.'
+	);
 </script>
 
 <div class="mx-auto max-w-2xl px-6 py-24 text-center md:px-8 md:py-32">

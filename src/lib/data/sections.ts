@@ -1,0 +1,111 @@
+import { collection } from './collection';
+import { site } from './site';
+import { writingSamples } from './writing';
+
+// The site's sections. World (room guide, station links) and Index link through
+// this one list, so a destination changes in one place.
+export type SectionId =
+	| 'work'
+	| 'projects'
+	| 'speaking'
+	| 'writing'
+	| 'community'
+	| 'photography'
+	| 'collection'
+	| 'about'
+	| 'now'
+	| 'resume'
+	| 'contact';
+
+export interface Section {
+	id: SectionId;
+	label: string;
+	href: string;
+	external: boolean;
+	summary: string;
+}
+
+export const sections: Section[] = [
+	{
+		id: 'work',
+		label: 'Work',
+		href: '/work',
+		external: false,
+		summary: 'Developer relations at Appwrite: launches, docs, AI tooling, and community programs.'
+	},
+	{
+		id: 'projects',
+		label: 'Projects',
+		href: '/projects',
+		external: false,
+		summary: `Things I've built, most of them to teach something or test an idea.`
+	},
+	{
+		id: 'speaking',
+		label: 'Speaking',
+		href: '/speaking',
+		external: false,
+		summary: `Talks, podcasts and streams, from Tokyo to Atlanta.`
+	},
+	{
+		id: 'writing',
+		label: 'Writing',
+		href: '/writing',
+		external: false,
+		summary: `Personal essays (latest: “${writingSamples[0].title}”) and 100+ technical articles.`
+	},
+	{
+		id: 'community',
+		label: 'Community',
+		href: '/community',
+		external: false,
+		summary: `Spaces for people to write, walk, meet, and build together.`
+	},
+	{
+		id: 'photography',
+		label: 'Photography',
+		href: '/photography',
+		external: false,
+		summary: `Street and travel photographs from Bengaluru, Toronto, Jaipur and beyond.`
+	},
+	{
+		id: 'collection',
+		label: 'Pokémon',
+		href: '/collection',
+		external: false,
+		summary: `My Pokémon card collection on Collectr, with ${collection.favourite} in pride of place.`
+	},
+	{
+		id: 'about',
+		label: 'About',
+		href: '/about',
+		external: false,
+		summary: 'From student hackathons to leading developer relations, and what I care about.'
+	},
+	{
+		id: 'now',
+		label: 'Now',
+		href: '/now',
+		external: false,
+		summary: 'What I’m working on, writing, photographing, and collecting at the moment.'
+	},
+	{
+		id: 'resume',
+		label: 'Resume',
+		href: '/resume',
+		external: false,
+		summary: 'The formal version, as a PDF.'
+	},
+	{
+		id: 'contact',
+		label: 'Contact',
+		href: '/contact',
+		external: false,
+		summary: `Speaking invitations, collaborations, or just hello: ${site.email}.`
+	}
+];
+
+export const sectionById = Object.fromEntries(sections.map((s) => [s.id, s])) as Record<
+	SectionId,
+	Section
+>;

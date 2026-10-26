@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://oberai.dev/sitemap.xml
+Sitemap: https://adityaoberai.com/sitemap.xml

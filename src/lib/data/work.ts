@@ -57,7 +57,7 @@ export const workThemes: WorkTheme[] = [
 		items: [
 			{
 				tag: 'WRITING',
-				title: '140+ published articles',
+				title: '100+ published articles',
 				description:
 					'Technical tutorials, product deep-dives, and announcements written and published on the Appwrite blog.',
 				link: { label: 'Appwrite blog', href: 'https://appwrite.io/blog/author/aditya-oberai' }
@@ -94,13 +94,13 @@ export const workThemes: WorkTheme[] = [
 				tag: 'HACKATHONS',
 				title: "Appwrite's Hackathons",
 				description:
-					'Planned and hosted multiple hackathons end to end, from marketing and submissions to community and judging, engaging 7,000+ developers.'
+					'Planned and hosted multiple hackathons end to end, from marketing and submissions to community and judging, engaging 10,000+ developers.'
 			},
 			{
 				tag: 'OPEN SOURCE',
 				title: 'Hacktoberfest and open-source programs',
 				description:
-					'Represented Appwrite in collaborative initiatives like Hacktoberfest, onboarding 70,000+ new community members.'
+					'Represented Appwrite in collaborative initiatives like Hacktoberfest, onboarding 100,000+ new community members.'
 			}
 		]
 	},
