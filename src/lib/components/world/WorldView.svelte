@@ -660,8 +660,40 @@
 					aria-label="Open player"
 					aria-expanded="false"
 					aria-controls="music-player"
-					onclick={() => togglePlayer(true)}>Gramophone</button
+					onclick={() => togglePlayer(true)}
 				>
+					<svg class="gramophone-icon" viewBox="0 0 64 56" aria-hidden="true">
+						<path d="M14 48h5v4h-5zm28 0h5v4h-5z" fill="#5e3b27" />
+						<rect x="12" y="36" width="38" height="14" rx="2" fill="#7a4e33" />
+						<path d="M11 36h40v4H11z" fill="#a9805c" />
+						<rect x="25" y="43" width="12" height="4" rx="1" fill="#c9a24a" />
+						<path d="M50 42h4v5h3" fill="none" stroke="#a48342" stroke-width="2" />
+						<ellipse cx="27" cy="35" rx="12" ry="4" fill="#263b33" />
+						<ellipse cx="27" cy="35" rx="9" ry="2.5" fill="none" stroke="#647369" />
+						<ellipse cx="27" cy="35" rx="4" ry="1.5" fill="#c23b3b" />
+						<path d="M27 35v-3" stroke="#efe4c8" stroke-width="1.5" />
+						<path
+							d="M42 35V25q0-7-10-7"
+							fill="none"
+							stroke="#c9a24a"
+							stroke-width="5"
+							stroke-linecap="round"
+						/>
+						<path d="M34 15 16 5l-5 21 23-5z" fill="#d4ad55" stroke="#a48342" />
+						<ellipse
+							cx="13.5"
+							cy="15.5"
+							rx="6"
+							ry="11"
+							transform="rotate(13 13.5 15.5)"
+							fill="#5a4220"
+							stroke="#c9a24a"
+							stroke-width="2"
+						/>
+						<path d="M43 32h-6l-3 4" fill="none" stroke="#d4ad55" stroke-width="2" />
+					</svg>
+					<span>Gramophone</span>
+				</button>
 				<div class="dock-top" hidden={compactPlayer}>
 					<span class="disc" class:turning={recordPlaying && !reducedMotion} aria-hidden="true"
 					></span>
@@ -1049,8 +1081,28 @@
 		cursor: pointer;
 	}
 	.music-button {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
 		width: 100%;
-		font-size: 0.875rem;
+		height: 100%;
+		min-height: 108px;
+		padding: 10px 4px;
+		border-color: #c5b58d;
+		background: #faf7ed;
+		color: var(--color-accent);
+		font-size: 0.8125rem;
+	}
+	.music-button:hover {
+		background: #f0ebdc;
+		border-color: #a48342;
+	}
+	.gramophone-icon {
+		width: 64px;
+		height: 56px;
+		flex: none;
 	}
 	.enter-button:disabled,
 	.music-button:disabled {
@@ -1560,10 +1612,11 @@
 			grid-row: 2;
 		}
 		.compact-player .dock {
+			display: grid;
 			grid-column: 2;
 			grid-row: 2;
 			justify-self: center;
-			align-self: start;
+			align-self: stretch;
 			max-width: 160px;
 			min-width: 0;
 			padding: 0;

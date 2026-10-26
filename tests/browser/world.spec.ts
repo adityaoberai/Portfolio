@@ -332,16 +332,19 @@ test('mobile music controls stay compact and return after reading a panel', asyn
 		const playerBox = (await dock.boundingBox())!;
 		const stickBox = (await page.getByRole('button', { name: 'Movement joystick' }).boundingBox())!;
 		const enterBox = (await page.locator('.enter-button').boundingBox())!;
+		const menuBox = (await page
+			.getByRole('button', { name: 'Room menu', exact: true })
+			.boundingBox())!;
 		expect(playerBox.x).toBeGreaterThanOrEqual(stickBox.x + stickBox.width + 8);
 		expect(playerBox.x + playerBox.width).toBeLessThanOrEqual(enterBox.x - 8);
-		expect(playerBox.y).toBeGreaterThanOrEqual(enterBox.y);
-		expect(playerBox.y + playerBox.height).toBeLessThanOrEqual(enterBox.y + 108);
+		expect(playerBox.y).toBeCloseTo(enterBox.y, 0);
+		expect(playerBox.y + playerBox.height).toBeCloseTo(menuBox.y + menuBox.height, 0);
 	};
 	await fitsBetweenControls();
 	const musicButton = dock.getByRole('button', { name: 'Open player', exact: true });
 	await expect(musicButton).toHaveText('Gramophone');
 	const buttonBox = (await musicButton.boundingBox())!;
-	expect(buttonBox.height).toBe(56);
+	expect(buttonBox.height).toBe(108);
 	expect(buttonBox.y).toBeCloseTo((await page.locator('.enter-button').boundingBox())!.y, 0);
 	await expect(dock.getByRole('button', { name: 'Stop', exact: true })).toHaveCount(0);
 	await expect(hint).toContainText('Lift the needle?');

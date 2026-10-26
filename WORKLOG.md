@@ -49,6 +49,12 @@
 
 ## Change log
 
+### 2026-10-27 — A full-height gramophone control
+
+- Gave the mobile gramophone button its own cream and brass styling with an illustration of the horn, record, wooden case, and crank, using the room object's palette. The Gramophone label stays below the illustration.
+- Stretched the button to match the combined height of Enter and Menu, aligning with the top and bottom of that stack. Opening it still replaces the controls with the full-width player, preserving the mounted player and focus restoration.
+- Validation: type checks report 0 errors/0 warnings; lint and the production build pass. All three focused music/accessibility browser cases pass, including full-height alignment, expansion/collapse, playback retention, and focus restoration. Visually checked the controls at 320/390/430px, with no page errors or horizontal overflow, plus the player in landscape. Publish only to `v3-world`.
+
 ### 2026-10-26 — One mobile row for music and object previews
 
 - Replaced the collapsed gramophone mini-card with a button matching Enter. Opening it fills the bottom row with the player; the joystick, Enter, Menu, and hint return when the player is collapsed or stopped. Playback stays mounted across these changes.
