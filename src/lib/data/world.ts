@@ -262,7 +262,7 @@ export const world: WorldConfig = {
 			short: 'notebook',
 			area: 'Writing',
 			world: 'write',
-			summary: 'Essays on home, friendship, and being human. Plus 140+ technical articles.',
+			summary: 'Essays on home, friendship, and being human. Plus 100+ technical articles.',
 			section: 'writing',
 			panel: {
 				title: 'Pages from the notebook',
@@ -272,7 +272,7 @@ export const world: WorldConfig = {
 					{
 						type: 'feature',
 						style: 'aside',
-						item: 'work-140-published-articles',
+						item: 'work-100-published-articles',
 						linkLabel: 'On the Appwrite blog'
 					}
 				],

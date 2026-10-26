@@ -57,7 +57,7 @@ export const workThemes: WorkTheme[] = [
 		items: [
 			{
 				tag: 'WRITING',
-				title: '140+ published articles',
+				title: '100+ published articles',
 				description:
 					'Technical tutorials, product deep-dives, and announcements written and published on the Appwrite blog.',
 				link: { label: 'Appwrite blog', href: 'https://appwrite.io/blog/author/aditya-oberai' }

@@ -52,7 +52,7 @@ export const sections: Section[] = [
 		label: 'Writing',
 		href: '/writing',
 		external: false,
-		summary: `Personal essays (latest: “${writingSamples[0].title}”) and 140+ technical articles.`
+		summary: `Personal essays (latest: “${writingSamples[0].title}”) and 100+ technical articles.`
 	},
 	{
 		id: 'community',

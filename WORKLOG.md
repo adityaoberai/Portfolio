@@ -49,6 +49,11 @@
 
 ## Change log
 
+### 2026-10-26 — Use 100+ for the article count
+
+- Changed the index fact to “100+ technical articles”, as requested, and aligned the repeated article counts in the directory, Work, About, room writing summary, and writing metadata. Updated the internal writing feature reference to match the renamed work item.
+- Validation: formatting and lint pass; type checks report 0 errors/0 warnings; all 33 unit tests and the production build pass. Rendered index, Work, Writing, and About checks confirm the new count without the old article total. Publish only to `v3-world`.
+
 ### 2026-10-26 — Move the room invitation below the index facts
 
 - Moved the “Step into my room” card from the bottom of the index to directly after the “A few things about me” facts, before “Find your way”, on every screen size. Added space beneath the card before the directory divider.

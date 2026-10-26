@@ -12,7 +12,7 @@
 
 <PageMeta
 	title="Writing"
-	description="Personal essays by Aditya Oberai on home, friendship, legacy, and being human, plus 140+ technical articles and customer stories for Appwrite."
+	description="Personal essays by Aditya Oberai on home, friendship, legacy, and being human, plus 100+ technical articles and customer stories for Appwrite."
 	path="/writing"
 />
 
