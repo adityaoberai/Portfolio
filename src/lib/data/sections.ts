@@ -91,10 +91,10 @@ export const sections: Section[] = [
 	},
 	{
 		id: 'resume',
-		label: 'Résumé',
+		label: 'Resume',
 		href: '/resume',
 		external: false,
-		summary: 'The formal version, as a PDF. Also available as a Word document.'
+		summary: 'The formal version, as a PDF.'
 	},
 	{
 		id: 'contact',

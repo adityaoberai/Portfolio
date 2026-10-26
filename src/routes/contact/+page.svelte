@@ -49,7 +49,7 @@
 	<p class="mail"><a href="mailto:{site.email}">{site.email}</a></p>
 	<p class="also">
 		<a href="mailto:{site.email}?subject=Speaking invitation">Speaking invitation ↗</a>
-		<a href="/resume">Résumé (PDF) →</a>
+		<a href="/resume">Resume (PDF) →</a>
 	</p>
 
 	<section class="v3-section" aria-labelledby="elsewhere-title">

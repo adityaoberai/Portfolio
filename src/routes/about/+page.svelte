@@ -56,8 +56,7 @@
 		</section>
 
 		<p class="formal">
-			Prefer the formal version? <a href="/resume">Résumé (PDF)</a> ·
-			<a href="/resume/docx">Word document</a>
+			Prefer the formal version? <a href="/resume">Resume (PDF)</a>.
 		</p>
 	</article>
 </div>

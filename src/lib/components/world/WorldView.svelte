@@ -536,7 +536,7 @@
 		bind:this={canvas}
 		tabindex={status === 'ready' ? 0 : -1}
 		onpointermove={roomAfterPlayer}
-		aria-label="Aditya's room. Tap a destination to explore, or tap the floor to walk. With a keyboard, use WASD or arrows to walk and E to inspect. All objects are also in the menu."
+		aria-label="Aditya's room. Tap the floor to move around, or use WASD and the arrow keys. Tap an object or press E nearby to look closer. All objects are also in the menu."
 		aria-describedby="room-instructions"
 		class:loaded={status === 'ready'}
 		data-x={roomState?.x.toFixed(3)}
@@ -636,8 +636,8 @@
 					>
 				{:else}<p>
 						{coarse || narrow
-							? 'Tap an object to explore, or open Menu.'
-							: 'WASD or arrows to wander. E to look closer.'}
+							? 'Take a wander around my room. Tap the floor to move.'
+							: 'Take a wander. WASD or arrows to move, E to look closer.'}
 					</p>{/if}
 			</div>{/if}
 	</div>
@@ -1346,15 +1346,6 @@
 	}
 	@media (max-width: 820px) {
 		.welcome {
-			max-width: 100%;
-			margin-top: 4px;
-		}
-		.welcome h1 {
-			max-width: none;
-			font-size: 1.25rem;
-			line-height: 1.25;
-		}
-		.welcome p {
 			display: none;
 		}
 		.corner {

@@ -21,7 +21,7 @@
 				{/each}
 				<li><a href="https://oberai.blog">Newsletter</a></li>
 				<li><a href={sectionById.now.href}>Now</a></li>
-				<li><a href={sectionById.resume.href}>Résumé</a></li>
+				<li><a href={sectionById.resume.href}>Resume</a></li>
 			</ul>
 		</nav>
 	</div>

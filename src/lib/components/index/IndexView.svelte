@@ -18,7 +18,7 @@
 				make. Away from the desk, there's usually a camera, a notebook, or a Pokémon card nearby.
 			</p>
 			<div class="intro-links">
-				<a href="/contact">Get in touch</a><a href="/resume">Résumé (PDF)</a>
+				<a href="/contact">Get in touch</a><a href="/resume">Resume (PDF)</a>
 			</div>
 		</div>
 	</section>

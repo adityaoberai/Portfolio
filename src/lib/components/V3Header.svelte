@@ -11,7 +11,7 @@
 		overlay = false,
 		menu
 	}: { nav?: boolean; overlay?: boolean; menu?: Snippet } = $props();
-	const links = sections.filter((s) => s.id !== 'resume');
+	const links = sections.filter((s) => s.id !== 'resume' && s.id !== 'now');
 	const path = $derived(page.url.pathname.replace(/\/$/, ''));
 </script>
 

@@ -49,7 +49,7 @@
 
 	<p class="next">
 		<a href="/projects">Things I’ve built →</a><a href="/speaking">Where I’ve spoken →</a><a
-			href="/resume">Résumé (PDF) →</a
+			href="/resume">Resume (PDF) →</a
 		>
 	</p>
 </div>

@@ -7,7 +7,7 @@ test('an object is addressable, Back dismisses it, and Forward restores it', asy
 	await page.getByRole('button', { name: 'Room menu', exact: true }).click();
 	await page
 		.getByRole('navigation', { name: 'In the room', exact: true })
-		.getByRole('link', { name: 'Collection', exact: true })
+		.getByRole('link', { name: 'Pokemon', exact: true })
 		.click();
 	await expect(page.locator('dialog.sheet:not(.poem)')).toBeVisible();
 	await expect(page).toHaveURL(/\/world#shelf$/);
@@ -44,7 +44,7 @@ for (const width of [320, 390, 430]) {
 		await expect(page.locator('canvas')).toHaveClass(/loaded/);
 		await expect(page.locator('.destinations')).toHaveCount(0);
 		await expect(page.locator('.welcome p')).toBeHidden();
-		expect((await page.locator('.welcome').boundingBox())!.height).toBeLessThan(60);
+		await expect(page.locator('.welcome')).toBeHidden();
 		const menuButton = page.getByRole('button', { name: 'Room menu', exact: true });
 		const buttonBox = (await menuButton.boundingBox())!;
 		expect(buttonBox.y).toBeLessThan(100);

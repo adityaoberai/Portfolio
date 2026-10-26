@@ -49,6 +49,15 @@
 
 ## Change log
 
+### 2026-10-26 — Mobile movement invitation and navigation cleanup
+
+- Hid the welcome line on mobile and changed the opening hint to “Take a wander around my room. Tap the floor to move.” Desktop and canvas guidance also lead with movement.
+- Removed Now from the shared section navigation. The window destination and its live clock remain in the room.
+- Standardized visible resume labels to “Resume” and mention only the PDF in the index, About, Work, Contact, and footer. Existing PDF and DOCX redirects are retained for compatibility.
+- Renamed the room shelf and Collectr contact link to “Pokemon” and used the same name in the collection page metadata. Updated existing browser expectations for these labels and the hidden mobile welcome line.
+- Joystick recommendation: a small mobile control at the bottom left, alongside tap-to-walk, hidden while reading a panel. Implementation remains a follow-up.
+- Validation: all 40 browser checks and all 32 unit tests pass; type checks report 0 errors/0 warnings; lint and the production build pass. Visually inspected the phone layout, movement invitation, Pokemon menu label, and PDF-only Resume entry. The QA browser was restored after workspace maintenance and configured with the available system fonts. Publish only to `v3-world`.
+
 ### 2026-10-24 — Hide the zoomed header name and remove Now from the index
 
 - Hide the header's identity link while inspecting an object or reading the poem, so Aditya's name does not overlap the enlarged scene. It returns with the overview; its layout space stays reserved to avoid a framing jump. The page's On paper invitation remains available on desktop.
