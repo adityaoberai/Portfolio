@@ -7,7 +7,7 @@ test('an object is addressable, Back dismisses it, and Forward restores it', asy
 	await page.getByRole('button', { name: 'Room menu', exact: true }).click();
 	await page
 		.getByRole('navigation', { name: 'In the room', exact: true })
-		.getByRole('link', { name: 'Pokemon', exact: true })
+		.getByRole('link', { name: 'Pokémon', exact: true })
 		.click();
 	await expect(page.locator('dialog.sheet:not(.poem)')).toBeVisible();
 	await expect(page).toHaveURL(/\/world#shelf$/);

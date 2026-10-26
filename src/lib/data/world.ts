@@ -301,7 +301,7 @@ export const world: WorldConfig = {
 			id: 'shelf',
 			object: 'Shelf of favourites',
 			short: 'shelf',
-			area: 'Pokemon',
+			area: 'Pokémon',
 			world: 'collect',
 			summary: `Pokémon cards, Batman, Back to the Future, books, and ${collection.favourite} on top.`,
 			section: 'collection',
@@ -466,7 +466,7 @@ export const world: WorldConfig = {
 							})),
 							{ label: 'Newsletter', detail: 'oberai.blog', href: 'https://oberai.blog' },
 							{ label: 'Photography', detail: 'Pexels', href: pexelsProfile },
-							{ label: 'Pokemon', detail: 'Collectr', href: collection.showcaseUrl },
+							{ label: 'Pokémon', detail: 'Collectr', href: collection.showcaseUrl },
 							{ label: 'Sponsor', detail: 'GitHub Sponsors', href: sponsorLink }
 						]
 					}

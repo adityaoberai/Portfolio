@@ -70,7 +70,7 @@ export const sections: Section[] = [
 	},
 	{
 		id: 'collection',
-		label: 'Pokemon',
+		label: 'Pokémon',
 		href: '/collection',
 		external: false,
 		summary: `My Pokémon card collection on Collectr, with ${collection.favourite} in pride of place.`

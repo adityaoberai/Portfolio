@@ -49,6 +49,12 @@
 
 ## Change log
 
+### 2026-10-26 — Restore the portrait window view and Pokémon spelling
+
+- Fixed the portrait window layering: the static city art preserved its depth from the wall, but the sky and city lights stretched with the room. Grouped the sky and lights around the same wall anchor, preserving the correct front-to-back order in portrait and landscape.
+- Changed the directory, section navigation, room shelf, Collectr link, and collection page title from “Pokemon” to “Pokémon”. Updated the existing navigation expectations.
+- Validation: type checks report 0 errors/0 warnings; lint, all 33 unit tests, the production build, and all 41 browser checks pass. Visually verified the window in daylight, sunset, and night on phone and desktop, including rotating the phone back to portrait; buildings, trees, the metro line, and night lights remain visible. Publish only to `v3-world`.
+
 ### 2026-10-26 — Mobile joystick, thumb controls, and header hierarchy
 
 - Added an analog, screen-relative joystick at the bottom left on touch and narrow screens, retaining tap-to-walk. Movement stops on release, cancellation, lost capture, blur, resize, hidden tabs, menus, and reading panels. The joystick also accepts arrow keys and WASD while focused.

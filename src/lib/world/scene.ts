@@ -227,16 +227,22 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	roomRoot.add(deskPlacement);
 
 	// Bengaluru through the window: sky colour and city lights follow local time there.
+	// Keep every layer at its original depth from the wall in the portrait room,
+	// matching the static window art so the sky cannot cover the skyline.
+	const windowPlacement = new Group();
+	windowPlacement.position.z = -3;
+	roomRoot.add(windowPlacement);
 	const skyMaterial = own(new MeshBasicMaterial({ color: '#b9d4c3' }));
 	const skyPane = new Mesh(unit, skyMaterial);
-	skyPane.position.set(WINDOW.x, WINDOW.y, -2.945);
+	skyPane.position.set(WINDOW.x, WINDOW.y, 0.055);
 	skyPane.scale.set(WINDOW.width, WINDOW.height, 0.01);
-	roomRoot.add(skyPane);
+	windowPlacement.add(skyPane);
 	const lightsBatch = new Batch();
 	buildCityLights(lightsBatch);
 	const cityLightsMaterial = own(new MeshBasicMaterial({ vertexColors: true }));
 	const cityLights = new Mesh(keep(lightsBatch.build()), cityLightsMaterial);
-	roomRoot.add(cityLights);
+	cityLights.position.z = 3;
+	windowPlacement.add(cityLights);
 	function applySky() {
 		const sky = skyAt(bengaluruHour());
 		skyMaterial.color.set(sky.sky);
@@ -980,7 +986,13 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		if (nextDepth !== depthScale) {
 			depthScale = nextDepth;
 			roomRoot.scale.z = depthScale;
-			for (const group of [deskPlacement, recordPlacement, characterPlacement, mirrorPlacement])
+			for (const group of [
+				deskPlacement,
+				recordPlacement,
+				characterPlacement,
+				mirrorPlacement,
+				windowPlacement
+			])
 				group.scale.z = 1 / depthScale;
 			// Position remains in logical room coordinates, with inverse model scaling
 			// on separate parents so character/furniture rotations stay undistorted.

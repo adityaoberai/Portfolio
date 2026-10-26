@@ -14,7 +14,7 @@
 </script>
 
 <PageMeta
-	title="Pokemon"
+	title="Pokémon"
 	description="Aditya Oberai's Pokémon card collection: Blastoise in pride of place, a few favourite cards, and the full collection on Collectr."
 	path="/collection"
 />
