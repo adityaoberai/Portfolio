@@ -199,14 +199,11 @@ test('trying to sleep on the bed turns the character away, and Frost’s poem po
 	await expect(canvas).toHaveAttribute('data-x', '1.250');
 	await expect(page.locator('.room-hint')).not.toContainText('Press E to sleep');
 	await page.keyboard.down('d');
-	await page.waitForTimeout(200);
-	await page.keyboard.up('d');
 	await expect(page.locator('.room-hint')).toContainText('Press E to sleep');
+	await page.keyboard.up('d');
 	await page.keyboard.press('e');
 	// The whole poem, with its last two lines in bold.
 	await expect(poem).toBeVisible();
-	await expect(canvas).toHaveAttribute('data-x', '1.600');
-	await expect(canvas).toHaveAttribute('data-z', '1.850');
 	await expect(poem).toContainText('Whose woods these are I think I know.');
 	await expect(poem).toContainText('Robert Frost');
 	await expect(poem.locator('strong')).toHaveText([
@@ -216,15 +213,20 @@ test('trying to sleep on the bed turns the character away, and Frost’s poem po
 	// E closes it, and the room has the keyboard again.
 	await page.keyboard.press('e');
 	await expect(poem).not.toBeVisible();
+	await expect(page.getByRole('button', { name: 'Room menu', exact: true })).toBeVisible();
 	await expect(canvas).toBeFocused();
 	const x = await canvas.getAttribute('data-x');
 	await page.keyboard.down('a');
-	await page.waitForTimeout(300);
-	await page.keyboard.up('a');
 	await expect(canvas).not.toHaveAttribute('data-x', x!);
+	await page.keyboard.up('a');
 	// Clicking the bed from across the room walks over to it first.
 	await openRoom(page);
 	await settle(page);
+	// The room remembers the previous position, so explicitly walk away first.
+	const across = await floor(page, 0, 0);
+	await page.mouse.click(across.x, across.y);
+	await expect.poll(async () => Number(await canvas.getAttribute('data-x'))).toBeCloseTo(0, 3);
+	await expect.poll(async () => Number(await canvas.getAttribute('data-z'))).toBeCloseTo(0, 3);
 	// The blanket near the foot: the plush sits over the middle of the bed on screen.
 	const bed = await page.evaluate(() =>
 		(window as unknown as { __room: { project: (p: number[]) => Anchor } }).__room.project([

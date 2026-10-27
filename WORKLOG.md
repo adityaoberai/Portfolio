@@ -49,6 +49,18 @@
 
 ## Change log
 
+### 2026-10-27 — A new share image for the room
+
+- Replaced the old OG composition with a 1200x630 image led by the current 3D room, Aditya's name, the personal invitation, and the domain. Used the existing room palette and Newsreader, with the updated scene without the character shadow.
+- Updated the OG renderer to output the actual size advertised in page metadata, and versioned the shared OG/Twitter image URL so preview services request the new asset.
+- Validation: verified the exported and served PNG are identical and exactly 1200x630, both OG and Twitter metadata use the new versioned URL, and Newsreader loads with the name fitting its text column. Visually checked the complete room and text layout.
+
+### 2026-10-27 — Remove the character's floor shadow
+
+- Removed the oval floor-shadow mesh beneath the character and its movement, seating, and portrait-resize updates.
+- Stabilized the existing bed check by waiting for its nearby hint, restored room controls, and actual movement. Its cross-room interaction now explicitly walks away after restoring the previous position; the nearby interaction accepts stopping beside the bed instead of requiring its exact walk-up point.
+- Regenerated the loading still and room/share images from the updated scene. Type checks report 0 errors/0 warnings; lint and the production build pass. All five focused browser cases pass for movement, seating, bed interaction, portrait resizing, and joystick input. Visually verified the shadow is absent on desktop and mobile without page errors. This is a follow-up to the user-authorized merge of PR #13; publish to `v3-world` and open a new PR into `main`.
+
 ### 2026-10-27 — Label the room shelf Collectibles
 
 - Renamed the shelf's room heading, preview action label, nearby-object hint, and room-menu entry to Collectibles, reflecting the cards, Batman cowl, DeLorean, and books. The dedicated card collection page and its site-navigation label remain Pokémon.
