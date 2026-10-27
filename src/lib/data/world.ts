@@ -244,7 +244,7 @@ export const world: WorldConfig = {
 						style: 'list',
 						items: [
 							'work-product-launches',
-							'work-ai-driven-content-processes',
+							'work-agent-first-content-workflows',
 							'work-documentation-and-website-ownership'
 						]
 					},

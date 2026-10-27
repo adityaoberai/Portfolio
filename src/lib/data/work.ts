@@ -30,9 +30,9 @@ export const workThemes: WorkTheme[] = [
 			},
 			{
 				tag: 'PROCESS',
-				title: 'AI-driven content processes',
+				title: 'Agent-first content workflows',
 				description:
-					'Designed content workflows built around AI tooling, publishing 200% more blogs in a year with a 50% smaller team.'
+					'Building agent-first workflows to document features, write tutorials, and create demos, while shaping that content for discovery through search and AI answer engines.'
 			},
 			{
 				tag: 'DOCS',

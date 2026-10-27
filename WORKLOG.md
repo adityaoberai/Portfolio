@@ -2,7 +2,7 @@
 
 ## Working agreement
 
-- Work exclusively on `v3-world`; do not modify `main`.
+- This follow-up uses `agent-first-content`, branched from `main` after PR #14, as requested by the user. Do not modify `main` directly. The original V3 implementation was completed on `v3-world`.
 - Update this file after every implementation or configuration change.
 - Start with Phase 0: audit, renderer/deployment decisions, and a small playable spike. Real-phone testing is required before expanding the room.
 - Source brief: user attachment, adityaoberai.com V3 (2026-09-30).
@@ -48,6 +48,13 @@
 5. Go live on Appwrite Sites: add `ORIGIN=https://adityaoberai.com` (site Settings → Environment variables), merge `v3-world` into `main` via a PR, add `adityaoberai.com` and `www.adityaoberai.com` as Active-deployment domains (the apex needs NS delegation from GoDaddy; copy its MX/TXT records first), keep oberai.dev on Active deployment until path-preserving redirects exist (Appwrite domain redirects drop paths). Rollback: reactivate V2 deployment `6aa7d3f0dc0c05bdc438`.
 
 ## Change log
+
+### 2026-10-27 — Reframe the content-workflow pitch
+
+- Replaced the publishing-volume and team-size claim with agent-first workflows for feature documentation, tutorials, and demos, with discovery through search and AI answer engines as part of the process. The wording describes ongoing work without claiming measured search results.
+- Renamed the shared work item to "Agent-first content workflows" and updated its generated artifact reference in the desk panel, keeping the room reader and Work page consistent.
+- Started the user-requested `agent-first-content` branch from the merged PR #14 state on `main`.
+- Validation: all eight existing content checks pass, including the desk panel's artifact references; type checks report 0 errors/0 warnings; lint and the production build pass. Checked the Work page and room reader at 1440px, 390px, and 320px: the new title and full description are visible, with no horizontal overflow or page errors. Visually reviewed the revised copy on desktop and mobile.
 
 ### 2026-10-27 — A new share image for the room
 
