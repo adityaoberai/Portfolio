@@ -1,6 +1,6 @@
 # OG image
 
-`og.html` is the source for `static/og.png`. It uses the V3 palette, the Newsreader font files, and `room.jpg`, a high-resolution capture of the room.
+`og.html` is the source for `static/og.png`, a 1200x630 share image featuring Aditya's actual room, name, invitation, and domain. It uses the room's palette, Newsreader, and `room.jpg`, a high-resolution capture of the current scene.
 
 Regenerate after the room or the copy changes:
 
@@ -11,4 +11,4 @@ npm run assets       # rewrites og/room.jpg, static/room-still.jpg, static/adity
 npm run og           # renders og.html to static/og.png
 ```
 
-`npm run assets` (`scripts/derive-assets.mjs`) pins the Bengaluru clock to 11:00 so the window shows a daytime sky, and hides the room's overlays before capturing. `npm run og` finds Chrome or Edge (or uses the `CHROME` env var) and screenshots the page at 1200x630 with a 2x device scale factor.
+`npm run assets` (`scripts/derive-assets.mjs`) pins the Bengaluru clock to 11:00 so the window shows a daytime sky, and hides the room's overlays before capturing. `npm run og` finds Chrome or Edge (or uses the `CHROME` env var) and screenshots the page at 1200x630. Update the image version in `src/lib/data/site.ts` after changing it so share previews request the new image.

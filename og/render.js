@@ -1,4 +1,4 @@
-// Renders og/og.html to static/og.png with headless Chrome (1200x630 at 2x).
+// Renders og/og.html to static/og.png with headless Chrome (1200x630).
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -28,7 +28,7 @@ execFileSync(
 		'--disable-gpu',
 		'--hide-scrollbars',
 		'--window-size=1200,630',
-		'--force-device-scale-factor=2',
+		'--force-device-scale-factor=1',
 		'--virtual-time-budget=4000',
 		`--screenshot=${out}`,
 		pathToFileURL(resolve('og/og.html')).href

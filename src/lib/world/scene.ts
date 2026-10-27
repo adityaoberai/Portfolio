@@ -355,10 +355,6 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		return leg;
 	});
 	const disc = keep(new CircleGeometry(1, 24));
-	const shadow = new Mesh(disc, own(new MeshBasicMaterial({ color: '#b68462' })));
-	shadow.rotation.x = -Math.PI / 2;
-	shadow.scale.set(0.28, 0.2, 1);
-	roomRoot.add(shadow);
 	const targetMarker = new Mesh(disc, own(new MeshBasicMaterial({ color: '#f1d8a7' })));
 	targetMarker.rotation.x = -Math.PI / 2;
 	targetMarker.scale.set(0.12, 0.12, 1);
@@ -593,7 +589,6 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		seated = station;
 		characterPlacement.position.set(seat.x, seat.lift, seat.z);
 		character.rotation.y = seat.facing;
-		shadow.visible = false;
 		pose();
 	}
 	// Back on the floor at the station's approach point, facing where it sat.
@@ -602,8 +597,6 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		const { approach } = seated;
 		seated = null;
 		characterPlacement.position.set(approach.x, 0, approach.z);
-		shadow.position.set(approach.x, 0.064, approach.z);
-		shadow.visible = true;
 		pose();
 	}
 	function setPosition(point: Point) {
@@ -611,7 +604,6 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		const dz = (point.z - characterPlacement.position.z) * depthScale;
 		if (Math.hypot(dx, dz) > 0.001) character.rotation.y = Math.atan2(dx, dz);
 		characterPlacement.position.set(point.x, 0, point.z);
-		shadow.position.set(point.x, 0.064, point.z);
 	}
 	function face(point: Vec3) {
 		character.rotation.y = Math.atan2(
@@ -1001,7 +993,6 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			unlitMesh.geometry = geometry.unlit;
 			collectionPictures.geometry = geometry.faces;
 			flagPictures.geometry = geometry.flag;
-			shadow.scale.y = 0.2 / depthScale;
 			targetMarker.scale.y = 0.12 / depthScale;
 			nearRing.scale.y = 1 / depthScale;
 			for (const { station, mesh } of stationHits) {
