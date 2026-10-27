@@ -18,24 +18,6 @@
 
 	onMount(() => {
 		readJourney();
-		// Google Analytics starts after the first interaction surface has had time to load.
-		if (['localhost', '127.0.0.1', 'terminal.local'].includes(location.hostname)) return;
-		const timer = window.setTimeout(() => {
-			const layer: unknown[] = Reflect.get(window, 'dataLayer') ?? [];
-			// Keep Google's argument-object queue format while deferring the loader.
-			const gtag: (...args: unknown[]) => void = function () {
-				layer.push(arguments);
-			};
-			Reflect.set(window, 'dataLayer', layer);
-			Reflect.set(window, 'gtag', gtag);
-			gtag('js', new Date());
-			gtag('config', 'G-1BXTEHW3F6');
-			const script = document.createElement('script');
-			script.async = true;
-			script.src = 'https://www.googletagmanager.com/gtag/js?id=G-1BXTEHW3F6';
-			document.head.append(script);
-		}, 3000);
-		return () => window.clearTimeout(timer);
 	});
 	onNavigate((navigation) => {
 		const surfaces = new Set(['/', '/world', '/index']);

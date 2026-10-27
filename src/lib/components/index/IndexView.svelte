@@ -4,6 +4,7 @@
 	import Portrait from '$lib/components/Portrait.svelte';
 	import { highlights } from '$lib/data/highlights';
 	import { sections } from '$lib/data/sections';
+	import { trackEvent } from '$lib/analytics';
 	const directory = sections.filter((section) => section.id !== 'now');
 	const roomHref = $derived(`/world${$roomJourney?.panel ? `#${$roomJourney.panel}` : ''}`);
 </script>
@@ -17,7 +18,7 @@
 				I'm Aditya, {site.role}. I help developers find their way from an idea to something they can
 				make. Away from the desk, there's usually a camera, a notebook, or a Pokémon card nearby.
 			</p>
-			<div class="intro-links">
+			<div class="intro-links" data-contact-section="index">
 				<a href="/contact">Get in touch</a><a href="/resume">Resume (PDF)</a>
 			</div>
 		</div>
@@ -32,7 +33,12 @@
 		</ul>
 	</section>
 
-	<a class="room-invitation" href={roomHref} data-sveltekit-preload-data="off">
+	<a
+		class="room-invitation"
+		href={roomHref}
+		data-sveltekit-preload-data="off"
+		onclick={() => trackEvent('mode_switched', { from: 'index', to: 'world' })}
+	>
 		<img
 			class="room-preview"
 			src="/room-still.jpg"

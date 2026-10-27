@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { trackEvent } from '$lib/analytics';
 	import PageMeta from '$lib/components/PageMeta.svelte';
 	import PageIntro from '$lib/components/PageIntro.svelte';
 	import Row from '$lib/components/Row.svelte';
@@ -30,6 +32,9 @@
 		},
 		{ meta: 'Support', title: 'GitHub Sponsors', subtitle: 'github.com', href: sponsorLink }
 	];
+	onMount(() => {
+		trackEvent('contact_section_viewed', { section: 'contact_page' });
+	});
 </script>
 
 <PageMeta
@@ -38,7 +43,7 @@
 	path="/contact"
 />
 
-<div class="v3-page">
+<div class="v3-page" data-contact-section="contact_page">
 	<PageIntro title="Say hello." station="door">
 		<p>
 			Whether it's a speaking invitation, a consulting question, or a community collaboration, my

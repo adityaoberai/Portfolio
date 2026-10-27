@@ -55,6 +55,7 @@
 	let lastStation: StationId | null = null;
 	let saved: RoomJourney | null = null;
 	let restoring = true;
+	let contactViewed = false;
 	let disposed = false;
 	const scrollPositions = new Map<StationId, number>();
 	const near = $derived((roomState?.near && stationById[roomState.near]) || null);
@@ -163,6 +164,11 @@
 		room?.setPreview(!reading);
 		room?.setPaused(reading);
 		dialog.focus(quietFocus);
+		if (open !== 'door') contactViewed = false;
+		else if (reading && !contactViewed) {
+			contactViewed = true;
+			trackEvent('contact_section_viewed', { section: 'room' });
+		}
 		measureLayout();
 	}
 	async function readStation(value: boolean) {
@@ -187,6 +193,7 @@
 		if (disposed) return;
 		if (open && (!narrow || expanded)) scrollPositions.set(open, dialog.scrollTop);
 		open = null;
+		contactViewed = false;
 		pending = null;
 		room?.setPanel(null);
 		room?.cancelVisit();
@@ -893,6 +900,7 @@
 <dialog
 	bind:this={dialog}
 	class="sheet"
+	data-contact-section={open === 'door' ? 'room' : undefined}
 	class:expanded
 	class:object-card={narrow && !expanded}
 	onclose={stationClosed}

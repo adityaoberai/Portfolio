@@ -13,7 +13,7 @@
 				Two ways in: <a href="/world">the room</a> or <a href="/index">On paper</a>.
 			</p>
 		</div>
-		<nav aria-label="Elsewhere">
+		<nav aria-label="Elsewhere" data-contact-section="footer">
 			<ul>
 				<li><a href="mailto:{site.email}">Email</a></li>
 				{#each socialLinks as link (link.name)}
