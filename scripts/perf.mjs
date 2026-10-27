@@ -1,4 +1,4 @@
-// Performance proxy for the room. NOT a substitute for the real-phone gate in v3.md:
+// Performance proxy for the room. NOT a substitute for the real-phone test in docs/room.md:
 // headless Chromium renders WebGL in software, so GPU cost and thermals are not measured.
 // It does measure JavaScript transfer, load milestones, main-thread frame pacing under a
 // 4x CPU throttle at phone size, and whether the renderer truly idles.

@@ -2,11 +2,11 @@
 
 ## Working agreement
 
-- This follow-up uses `contact-analytics`, branched from `main` after PR #18, for the user's requested contact and portfolio engagement analytics in PR #19. Do not modify `main` directly. The original V3 implementation was completed on `v3-world`.
+- This follow-up uses `copy-review-audit-readme`, branched from `main` after PR #19, to close the copy review, apply the safe dependency fixes, replace the template README, and fold `v3.md` into `docs/room.md`. Do not modify `main` directly. The original V3 implementation was completed on `v3-world`.
 - Update this file after every implementation or configuration change.
 - Start with Phase 0: audit, renderer/deployment decisions, and a small playable spike. Real-phone testing is required before expanding the room.
 - Source brief: user attachment, adityaoberai.com V3 (2026-09-30).
-- Full requirements and execution decisions live in root `v3.md`.
+- The room's build rules, rendering budget, and real-phone test live in `docs/room.md`. The original V3 brief (`v3.md`) was removed on 2026-10-28; it remains in git history.
 
 ## Current state (2026-10-26 mobile room pass)
 
@@ -33,21 +33,34 @@
 
 ## Open review items (not yet fixed)
 
-- Copy written by Claude, not Aditya, needs his review before launch: the four curiosity lines in `src/lib/data/world.ts` (the suitcase line names Yokohama, London, Toronto, Atlanta, inferred from talks and photos; the football line is invented flavour), and the station summaries. Also: the Squirtle plush, Batman cowl, LEGO DeLorean, and flag lines, the football line's "Premier League ball", the shelf panel's lead and its "Other favourites" lines, the combined board's summary and lanyards line, the football line's "by the bed", the bed's hint ("Time for a nap?", "Press E to sleep", "Tap the bed to sleep") and its line in the menu ("Not yet: miles to go before I sleep."; the poem itself is Robert Frost's, from 1923 and in the public domain) ("A few other favourites share the shelf…"), and the card details and alt text in `src/lib/data/collection.ts`, which Claude read off the card images (set names, numbers, illustrators). Also the gramophone's copy: its line ("A wind-up gramophone on the side table. It plays my playlist."), its hints ("Put a record on?", "Press E to play", "Lift the needle?", "Press E to stop"), the player card ("Putting the record on…", "On the gramophone", "Gramophone · paused", "Stop"), and the menu's "Put the record on" / "Stop the record".
-- The gramophone loads Spotify's iFrame API and player (third-party JavaScript and cookies) only once a visitor puts the record on. Logged-out visitors hear 30-second previews that move on by themselves (checked in Chrome); Safari may block the start, and then the card asks them to press play. Not yet checked on a real iPhone: add it to the phone gate. Also unchecked, as Claude can't log in to Spotify: on a phone the player is ~335 px wide, and for logged-in listeners (who also get a progress bar) Spotify squeezed its play button at ~300 px; at 400 px (desktop) it's full size.
+- The gramophone loads Spotify's iFrame API and player (third-party JavaScript and cookies) only once a visitor puts the record on. Logged-out visitors hear 30-second previews that move on by themselves (checked in Chrome); Safari may block the start, and then the card asks them to press play. Not yet checked on a real iPhone: it's step 8 of the phone test in `docs/room.md`. Also unchecked, as Claude can't log in to Spotify: on a phone the player is ~335 px wide, and for logged-in listeners (who also get a progress bar) Spotify squeezed its play button at ~300 px; at 400 px (desktop) it's full size.
 - `src/lib/data/now.ts`: "Reading" and "Thinking about" are left out because there is no source for them; Aditya should supply them. `now.updated` is a manual date and must change whenever the page changes.
-- `npm audit`: 3 low findings in the SvelteKit/cookie chain; only `--force` resolves them.
+- `npm audit`: 3 low findings remain, all from SvelteKit 2: two SvelteKit advisories published 2026-10-23 (GHSA-pfhg-q3qv-9q6r, GHSA-27mw-82g8-phjj) and its `cookie` 0.6 dependency (GHSA-pxg6-pf52-xh8x). Only SvelteKit 3 fixes them, which also needs Vite 8, TypeScript 6, vite-plugin-svelte 7, adapter-node 6, and Node 22.17+. None of them reaches this site: it has no form actions or `use:enhance`, its only `cache-control` header is a fixed value on `/`, which is not prerendered, and its only cookie (`mode`) has a fixed name and path. Migrating to SvelteKit 3 is the user's call.
 - Analytics decision resolved: Appwrite Analytics replaces the old Google Analytics loader; see the 2026-10-27 entry below.
 
 ## Earlier production-launch notes (2026-10-02)
 
-1. User: run the real-phone gate in `v3.md` and record results here.
+1. User: run the real-phone test in `docs/room.md` and record results here.
 2. User: check the branch preview while signed in to the Appwrite Console (preview URLs return 401 to anonymous visitors).
-3. User: review the Claude-written copy (open items above) and supply Now's Reading / Thinking about.
+3. User: supply Now's Reading / Thinking about. (Copy review done 2026-10-27.)
 4. User: decide on analytics.
 5. Go live on Appwrite Sites: add `ORIGIN=https://adityaoberai.com` (site Settings → Environment variables), merge `v3-world` into `main` via a PR, add `adityaoberai.com` and `www.adityaoberai.com` as Active-deployment domains (the apex needs NS delegation from GoDaddy; copy its MX/TXT records first), keep oberai.dev on Active deployment until path-preserving redirects exist (Appwrite domain redirects drop paths). Rollback: reactivate V2 deployment `6aa7d3f0dc0c05bdc438`.
 
 ## Change log
+
+### 2026-10-28 — Replace v3.md with docs/room.md
+
+- The user agreed to retire `v3.md`. Its first ~830 lines were the original V3 brief, phases, and acceptance criteria, all built and merged; its launch checklist was out of date (hosting and analytics were still undecided there). Git history keeps it.
+- Moved what still applies into `docs/room.md`: the product thesis, the direct-Three.js decision, where room code lives, the card and flag pipeline, the rendering budget with its last measurements, the performance and input rules, the mirror and doorway techniques, the mode-cookie rule, and the real-phone test. Refreshed stale details against the code: native pixel density capped at 6 million pixels (not the old 1.25/1.5 DPR caps), the stencilled hallway, the mobile joystick and controls, and stations as links in the room menu. Added the iPhone playback check to the phone test, as the open items asked.
+- Pointed the README, `vite.config.js`, `svelte.config.js`, `scripts/perf.mjs`, and this file's working agreement and launch notes at `docs/room.md`. At the user's request, removed the canonical-domain comment in `src/lib/data/site.ts` instead of repointing it. Older entries that mention `v3.md` are left as they were.
+
+### 2026-10-27 — Copy review, dependency fixes, and README
+
+- Aditya reviewed and fixed the Claude-written copy (curiosity lines, station summaries, shelf, board, bed, gramophone, and card details). Removed it from the open items and dropped the "to review" note from `src/lib/data/world.ts`. Now's Reading / Thinking about is still open.
+- `npm audit fix` raised Vite 6.4.3 → 6.4.5, source-map-js 1.2.1 → 1.2.2, and postcss-selector-parser 6.1.4 → 6.1.5 (lockfile only), clearing two high and one moderate finding. The 3 lows need SvelteKit 3; see the open items for why they don't reach this site. The local `node_modules` had drifted to SvelteKit 2.21.4; `npm ci` restored the locked 2.70.3.
+- Replaced the `sv create` template README with what the site is, its stack, setup, scripts, tests, layout, content editing, deployment, and links to the other docs. Removed `.env.example`: its `PEXELS_API_KEY` hasn't been used since Phase 2.
+- The unit tests need Node 22.18+ (`module.registerHooks` and built-in type stripping); this machine has Node 22.12, so they ran on a temporary Node 24.22.1. The README now says so.
+- Validation: type checks report 0 errors/0 warnings; lint and the production build pass. All 33 unit tests pass on Node 24, and all 63 browser tests pass against the built server (after installing Playwright's Chromium, which this machine lacked).
 
 ### 2026-10-27 — Correct contact and section-link attribution
 
