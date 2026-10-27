@@ -25,8 +25,7 @@ export const workThemes: WorkTheme[] = [
 				tag: 'LAUNCHES',
 				title: 'Product launches',
 				description:
-					"Leading Appwrite's public-facing product releases end to end, including Init, Appwrite's recurring launch week: announcements, blogs, documentation, newsletters, social media, events, and livestreams for every launch.",
-				link: { label: 'Appwrite Init', href: 'https://appwrite.io/init' }
+					"Leading Appwrite's public-facing product releases end to end, including Init, Appwrite's recurring launch week: announcements, blogs, documentation, newsletters, social media, events, and livestreams for every launch."
 			},
 			{
 				tag: 'PROCESS',

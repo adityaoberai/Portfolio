@@ -2,7 +2,7 @@
 
 ## Working agreement
 
-- This follow-up uses `agent-first-content`, branched from `main` after PR #14, as requested by the user. Do not modify `main` directly. The original V3 implementation was completed on `v3-world`.
+- This follow-up uses `remove-product-launch-link`, branched from `main` after PR #15. Do not modify `main` directly. The original V3 implementation was completed on `v3-world`.
 - Update this file after every implementation or configuration change.
 - Start with Phase 0: audit, renderer/deployment decisions, and a small playable spike. Real-phone testing is required before expanding the room.
 - Source brief: user attachment, adityaoberai.com V3 (2026-09-30).
@@ -48,6 +48,12 @@
 5. Go live on Appwrite Sites: add `ORIGIN=https://adityaoberai.com` (site Settings → Environment variables), merge `v3-world` into `main` via a PR, add `adityaoberai.com` and `www.adityaoberai.com` as Active-deployment domains (the apex needs NS delegation from GoDaddy; copy its MX/TXT records first), keep oberai.dev on Active deployment until path-preserving redirects exist (Appwrite domain redirects drop paths). Rollback: reactivate V2 deployment `6aa7d3f0dc0c05bdc438`.
 
 ## Change log
+
+### 2026-10-27 — Remove the product-launch link
+
+- Removed the Appwrite Init link from the shared Product launches work item, removing the "Take a look" action in the room's desk reader and the corresponding link on the Work page.
+- Started `remove-product-launch-link` from `main` because PR #15 is already merged.
+- Validation: all eight content checks, formatting, and the production build pass. Verified the resolved desk item has no link/action and the rendered Work page no longer contains the Init URL.
 
 ### 2026-10-27 — Reframe the content-workflow pitch
 
