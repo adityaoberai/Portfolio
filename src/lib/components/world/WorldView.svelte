@@ -55,6 +55,8 @@
 	let lastStation: StationId | null = null;
 	let saved: RoomJourney | null = null;
 	let restoring = true;
+	let viewedStation: StationId | null = null;
+	let poemViewed = false;
 	let disposed = false;
 	const scrollPositions = new Map<StationId, number>();
 	const near = $derived((roomState?.near && stationById[roomState.near]) || null);
@@ -140,6 +142,7 @@
 		selectStation(id);
 		const restore = restoring && saved?.panel === id;
 		expanded = restore ? saved!.expanded : false;
+		if (open !== id) viewedStation = null;
 		open = id;
 		pending = null;
 		hover = null;
@@ -163,6 +166,11 @@
 		room?.setPreview(!reading);
 		room?.setPaused(reading);
 		dialog.focus(quietFocus);
+		if (reading && viewedStation !== open) {
+			viewedStation = open;
+			trackEvent('room_station_viewed', { station: open });
+			if (open === 'door') trackEvent('contact_section_viewed', { section: 'room' });
+		}
 		measureLayout();
 	}
 	async function readStation(value: boolean) {
@@ -187,6 +195,7 @@
 		if (disposed) return;
 		if (open && (!narrow || expanded)) scrollPositions.set(open, dialog.scrollTop);
 		open = null;
+		viewedStation = null;
 		pending = null;
 		room?.setPanel(null);
 		room?.cancelVisit();
@@ -340,6 +349,7 @@
 	function menuToggled(event: ToggleEvent) {
 		menuOpen = event.newState === 'open';
 		if (menuOpen) {
+			trackEvent('room_menu_opened', { section: 'room' });
 			if (pending) room?.setMovement({ x: 0, y: 0 });
 			else room?.cancelVisit();
 		}
@@ -357,6 +367,7 @@
 		const item = curiosities[id];
 		if (item.poem) return void showPoem(id);
 		if (item.music) return setMusic(!musicOn);
+		trackEvent('room_curiosity_opened', { curiosity: id });
 		note = item;
 		window.clearTimeout(noteTimer);
 		noteTimer = window.setTimeout(() => (note = null), 5000);
@@ -371,11 +382,13 @@
 		window.clearTimeout(noteTimer);
 		note = null;
 		poemOf = id;
+		poemViewed = false;
 		poemExpanded = reading;
 		poemScroll = 0;
 		room?.look(id);
 		hover = null;
 		await presentPoem();
+		if (poemOf === id && poemDialog.open) trackEvent('room_curiosity_opened', { curiosity: id });
 		poemDialog.scrollTop = 0;
 	}
 	async function presentPoem() {
@@ -390,6 +403,10 @@
 		room?.setPreview(!reading);
 		room?.setPaused(reading);
 		poemDialog.focus(quietFocus);
+		if (reading && !poemViewed) {
+			poemViewed = true;
+			trackEvent('room_poem_viewed', { curiosity: poemOf });
+		}
 		measureLayout();
 	}
 	async function expandPoem(value: boolean) {
@@ -419,7 +436,9 @@
 		measureLayout();
 	}
 	function setMusic(value: boolean) {
+		if (value === musicOn) return;
 		musicOn = value;
+		trackEvent('music_toggled', { state: value ? 'on' : 'off' });
 		firstPlayback = true;
 		if (value) playerExpanded = true;
 		musicNews = value
@@ -427,6 +446,9 @@
 			: 'The record is off.';
 	}
 	function musicPlayback(playing: boolean) {
+		if (playing !== recordPlaying && (playing || recordPlaying === true)) {
+			trackEvent('music_playback_changed', { state: playing ? 'playing' : 'paused' });
+		}
 		recordPlaying = playing;
 		room?.setRecord(playing);
 		if (playing && narrow && firstPlayback) {
@@ -865,18 +887,37 @@
 		<details class="settings">
 			<summary>Room settings</summary>
 			<div>
-				<button onclick={() => room?.reset()} disabled={status !== 'ready'}>Reset view</button
+				<button
+					onclick={() => {
+						room?.reset();
+						trackEvent('room_setting_changed', { setting: 'view', value: 'reset' });
+					}}
+					disabled={status !== 'ready'}>Reset view</button
 				><label
 					><input
 						type="checkbox"
 						bind:checked={lowQuality}
-						onchange={() => room?.setLowQuality(lowQuality)}
+						onchange={(event) => {
+							const value = event.currentTarget.checked;
+							room?.setLowQuality(value);
+							trackEvent('room_setting_changed', {
+								setting: 'low_power',
+								value: String(value)
+							});
+						}}
 					/> Low power</label
 				><label
 					><input
 						type="checkbox"
 						bind:checked={reducedMotion}
-						onchange={() => room?.setReducedMotion(reducedMotion)}
+						onchange={(event) => {
+							const value = event.currentTarget.checked;
+							room?.setReducedMotion(value);
+							trackEvent('room_setting_changed', {
+								setting: 'less_motion',
+								value: String(value)
+							});
+						}}
 					/> Less motion</label
 				>
 			</div>
@@ -893,6 +934,8 @@
 <dialog
 	bind:this={dialog}
 	class="sheet"
+	data-contact-section={open === 'door' ? 'room' : undefined}
+	data-analytics-section={open ? `room_${open}` : undefined}
 	class:expanded
 	class:object-card={narrow && !expanded}
 	onclose={stationClosed}

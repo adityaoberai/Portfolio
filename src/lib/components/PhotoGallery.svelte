@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { externalLinkAttrs } from '$lib/external-links';
 	import { tick, untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { pushState, replaceState } from '$app/navigation';
@@ -72,6 +73,7 @@
 	{#each photos as photo, i (photo.id)}<li>
 			<a
 				href={photo.externalUrl ?? photo.link ?? '/photography'}
+				{...externalLinkAttrs(photo.externalUrl ?? photo.link)}
 				onclick={(event) => choose(i, event)}
 				aria-label="View photo: {photo.title}"
 			>
@@ -116,6 +118,10 @@
 				<h2 id="{scope}-photo-title">{current.title}</h2>
 				{#if current.externalUrl || current.link}<a
 						href={current.externalUrl ?? current.link}
+						data-content-type="photo"
+						data-content-id={current.id}
+						data-content-action="pexels"
+						data-analytics-section={scope}
 						target="_blank"
 						rel="noopener">View on Pexels ↗<span class="sr-only"> (opens in a new tab)</span></a
 					>{/if}

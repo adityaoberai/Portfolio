@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { externalLinkAttrs } from '$lib/external-links';
+	import { page } from '$app/state';
+	import { contactVisibility } from '$lib/contact-visibility';
 	import { site } from '$lib/data/site';
 	import { socialLinks } from '$lib/data/links';
 	import { sectionById } from '$lib/data/sections';
@@ -13,13 +16,17 @@
 				Two ways in: <a href="/world">the room</a> or <a href="/index">On paper</a>.
 			</p>
 		</div>
-		<nav aria-label="Elsewhere">
+		<nav
+			aria-label="Elsewhere"
+			data-contact-section="footer"
+			use:contactVisibility={{ section: 'footer', page: page.url.pathname }}
+		>
 			<ul>
 				<li><a href="mailto:{site.email}">Email</a></li>
 				{#each socialLinks as link (link.name)}
-					<li><a href={link.url}>{link.name}</a></li>
+					<li><a href={link.url} {...externalLinkAttrs(link.url)}>{link.name}</a></li>
 				{/each}
-				<li><a href="https://oberai.blog">Newsletter</a></li>
+				<li><a href="https://oberai.blog" target="_blank" rel="noopener">Newsletter</a></li>
 				<li><a href={sectionById.now.href}>Now</a></li>
 				<li><a href={sectionById.resume.href}>Resume</a></li>
 			</ul>

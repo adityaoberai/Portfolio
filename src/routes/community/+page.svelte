@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { externalLinkAttrs } from '$lib/external-links';
 	import PageMeta from '$lib/components/PageMeta.svelte';
 	import PageIntro from '$lib/components/PageIntro.svelte';
 	import { communityInitiatives } from '$lib/data/community';
@@ -20,7 +21,7 @@
 	path="/community"
 />
 
-<div class="v3-page">
+<div class="v3-page" data-analytics-section="community_page">
 	<PageIntro title="Bringing people together." station="corkboard">
 		<p>
 			Developer tools are only half the story. These are the programs and gatherings I've started or
@@ -38,6 +39,8 @@
 		<section
 			class="v3-section initiative"
 			id={initiative.slug}
+			data-content-type="community"
+			data-content-id={`community-${initiative.slug}`}
 			aria-labelledby="{initiative.slug}-title"
 		>
 			<h2 id="{initiative.slug}-title">
@@ -54,9 +57,9 @@
 			{#if initiative.links}
 				<p class="links">
 					{#each initiative.links as link (link.href)}
-						<a href={link.href}
+						<a href={link.href} {...externalLinkAttrs(link.href)}
 							>{link.label}<span aria-hidden="true">&nbsp;↗</span><span class="sr-only">
-								(external site)</span
+								(opens in a new tab)</span
 							></a
 						>
 					{/each}

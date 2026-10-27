@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { externalLinkAttrs, linkDestinationId } from '$lib/external-links';
 	// Renders a station's panel from src/lib/data/world.ts: title, lead, then its
 	// blocks in order, then links. No copy lives here.
 	import type { StationId } from '$lib/world/layout';
@@ -19,7 +20,9 @@
 </script>
 
 {#snippet itemLink(href: string | undefined, label: string)}
-	{#if href}<a class="item-link" {href}>{label} {external(href) ? '↗' : '→'}</a>{/if}
+	{#if href}<a class="item-link" {href} {...externalLinkAttrs(href)}
+			>{label} {external(href) ? '↗' : '→'}</a
+		>{/if}
 {/snippet}
 
 {#snippet cardImage(card: Artifact)}
@@ -45,7 +48,7 @@
 			{#if block.style === 'list'}
 				<ul class="entries">
 					{#each block.artifacts as item (item.id)}
-						<li>
+						<li data-content-type={item.type} data-content-id={item.id}>
 							{#if block.show.date && item.date}<span class="date">{item.date}</span>{/if}
 							<h3>{item.title}</h3>
 							{#if block.show.context && item.context}<p class="kicker">{item.context}</p>{/if}
@@ -60,9 +63,11 @@
 			{:else if block.style === 'pages'}
 				<ol class="pages">
 					{#each block.artifacts as item (item.id)}
-						<li>
+						<li data-content-type={item.type} data-content-id={item.id}>
 							{#if block.show.date && item.date}<span class="date">{item.date}</span>{/if}
-							{#if block.show.link && item.link}<a href={item.link}><h3>{item.title}</h3></a
+							{#if block.show.link && item.link}<a
+									href={item.link}
+									{...externalLinkAttrs(item.link)}><h3>{item.title}</h3></a
 								>{:else}<h3>{item.title}</h3>{/if}
 							{#if block.show.context && item.context}<p class="kicker">{item.context}</p>{/if}
 							{#if block.show.description && item.description}<p>{item.description}</p>{/if}
@@ -72,7 +77,7 @@
 			{:else if block.style === 'pins'}
 				<ul class="pins">
 					{#each block.artifacts as item (item.id)}
-						<li>
+						<li data-content-type={item.type} data-content-id={item.id}>
 							{#if block.show.date && item.date}<span class="date">{item.date}</span>{/if}
 							<h3>{item.title}</h3>
 							{#if block.show.description && item.description}<p>{item.description}</p>{/if}
@@ -89,7 +94,7 @@
 			{:else if block.style === 'badges'}
 				<ul class="badges">
 					{#each block.artifacts as item (item.id)}
-						<li>
+						<li data-content-type={item.type} data-content-id={item.id}>
 							<span class="badge-head"
 								>{[block.show.context && item.context, block.show.date && item.date]
 									.filter(Boolean)
@@ -109,9 +114,11 @@
 			{:else if block.style === 'cards'}
 				<ul class="cards">
 					{#each block.artifacts as card (card.id)}
-						<li>
+						<li data-content-type={card.type} data-content-id={card.id}>
 							<figure>
-								{#if block.show.link && card.link}<a href={card.link}>{@render cardImage(card)}</a
+								{#if block.show.link && card.link}<a
+										href={card.link}
+										{...externalLinkAttrs(card.link)}>{@render cardImage(card)}</a
 									>{:else}{@render cardImage(card)}{/if}
 								<figcaption>
 									<strong>{card.title}</strong>
@@ -126,7 +133,11 @@
 			{/if}
 		{:else if block.type === 'feature'}
 			{#if block.style === 'aside'}
-				<p class="aside">
+				<p
+					class="aside"
+					data-content-type={block.artifact.type}
+					data-content-id={block.artifact.id}
+				>
 					<strong>{block.artifact.title}</strong>{#if block.artifact.description}: {block.artifact
 							.description}{/if}
 					{@render itemLink(
@@ -135,7 +146,11 @@
 					)}
 				</p>
 			{:else}
-				<div class="feature">
+				<div
+					class="feature"
+					data-content-type={block.artifact.type}
+					data-content-id={block.artifact.id}
+				>
 					{#if block.kicker}<p class="kicker">{block.kicker}</p>{/if}
 					<h3>{block.artifact.title}</h3>
 					<p>{block.artifact.description} {block.artifact.context ?? ''}</p>
@@ -193,7 +208,8 @@
 					<div>
 						<dt>{row.label}</dt>
 						<dd>
-							{#if row.href}<a href={row.href}>{row.text}</a>{:else}{row.text}{/if}
+							{#if row.href}<a href={row.href} {...externalLinkAttrs(row.href)}>{row.text}</a
+								>{:else}{row.text}{/if}
 						</dd>
 					</div>
 				{/each}
@@ -203,7 +219,7 @@
 			<ul class="elsewhere">
 				{#each block.places as place (place.label)}
 					<li>
-						<a href={place.href}
+						<a href={place.href} {...externalLinkAttrs(place.href)}
 							><span>{place.label}</span><span class="detail">{place.detail} ↗</span></a
 						>
 					</li>
@@ -212,7 +228,9 @@
 		{:else if block.type === 'links'}
 			<div class="links inline">
 				{#each block.links as link (link.href + link.label)}
-					<a href={link.href}>{link.label} {link.external ? '↗' : '→'}</a>
+					<a href={link.href} {...externalLinkAttrs(link.href)}
+						>{link.label} {link.external ? '↗' : '→'}</a
+					>
 				{/each}
 			</div>
 		{/if}
@@ -221,7 +239,15 @@
 	{#if panel.links.length}
 		<div class="links">
 			{#each panel.links as link (link.href + link.label)}
-				<a href={link.href}>{link.label} {link.external ? '↗' : '→'}</a>
+				<a
+					href={link.href}
+					{...externalLinkAttrs(link.href)}
+					data-content-type={id === 'door' ? undefined : 'section'}
+					data-content-id={id === 'door' ? undefined : linkDestinationId(link.href)}
+					data-content-action="open_section"
+					data-contact-method={link.href === 'https://oberai.blog' ? 'newsletter' : undefined}
+					>{link.label} {link.external ? '↗' : '→'}</a
+				>
 			{/each}
 		</div>
 	{/if}

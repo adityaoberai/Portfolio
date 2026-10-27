@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { contactVisibility } from '$lib/contact-visibility';
 	import PageMeta from '$lib/components/PageMeta.svelte';
 	import PageIntro from '$lib/components/PageIntro.svelte';
 	import Row from '$lib/components/Row.svelte';
@@ -38,7 +39,7 @@
 	path="/contact"
 />
 
-<div class="v3-page">
+<div class="v3-page" data-contact-section="contact_page">
 	<PageIntro title="Say hello." station="door">
 		<p>
 			Whether it's a speaking invitation, a consulting question, or a community collaboration, my
@@ -46,7 +47,9 @@
 		</p>
 	</PageIntro>
 
-	<p class="mail"><a href="mailto:{site.email}">{site.email}</a></p>
+	<p class="mail" use:contactVisibility={{ section: 'contact_page' }}>
+		<a href="mailto:{site.email}">{site.email}</a>
+	</p>
 	<p class="also">
 		<a href="mailto:{site.email}?subject=Speaking invitation">Speaking invitation ↗</a>
 		<a href="/resume">Resume (PDF) →</a>

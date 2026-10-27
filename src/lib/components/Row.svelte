@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { externalLinkAttrs } from '$lib/external-links';
+	import type { ContentTracking } from '$lib/analytics';
 	// One entry in a V3 list: talks, podcasts, links, essays.
 	let {
 		meta,
@@ -6,7 +8,8 @@
 		subtitle,
 		description,
 		href,
-		external = false
+		external = false,
+		tracking
 	}: {
 		meta?: string;
 		title: string;
@@ -14,6 +17,7 @@
 		description?: string;
 		href?: string;
 		external?: boolean;
+		tracking?: ContentTracking;
 	} = $props();
 </script>
 
@@ -22,7 +26,7 @@
 	<span class="text">
 		<span class="title"
 			>{title}{#if href}<span class="arrow" aria-hidden="true">&nbsp;{external ? '↗' : '→'}</span
-				>{/if}{#if external}<span class="sr-only"> (external site)</span>{/if}</span
+				>{/if}{#if external}<span class="sr-only"> (opens in a new tab)</span>{/if}</span
 		>
 		{#if subtitle}<span class="subtitle">{subtitle}</span>{/if}
 		{#if description}<span class="description">{description}</span>{/if}
@@ -30,7 +34,14 @@
 {/snippet}
 
 {#if href}
-	<a class="row" {href}>{@render body()}</a>
+	<a
+		class="row"
+		{href}
+		{...externalLinkAttrs(href)}
+		data-content-type={tracking?.type}
+		data-content-id={tracking?.id}
+		data-content-action={tracking?.action}>{@render body()}</a
+	>
 {:else}
 	<div class="row">{@render body()}</div>
 {/if}

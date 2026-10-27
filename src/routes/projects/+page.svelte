@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { externalLinkAttrs } from '$lib/external-links';
 	import PageMeta from '$lib/components/PageMeta.svelte';
 	import PageIntro from '$lib/components/PageIntro.svelte';
 	import { projects } from '$lib/data/projects';
@@ -10,7 +11,7 @@
 	path="/projects"
 />
 
-<div class="v3-page">
+<div class="v3-page" data-analytics-section="projects_page">
 	<PageIntro title="Things I've built." station="desk">
 		<p>
 			Seven projects, curated. Most were built to teach something, and all of them to scratch an
@@ -20,7 +21,7 @@
 
 	<ol class="projects">
 		{#each projects as project, i (project.slug)}
-			<li id={project.slug}>
+			<li id={project.slug} data-content-type="project" data-content-id={`project-${project.slug}`}>
 				<span class="n">{String(i + 1).padStart(2, '0')}</span>
 				<article aria-labelledby="{project.slug}-title">
 					<h2 id="{project.slug}-title">{project.name}</h2>
@@ -45,9 +46,12 @@
 					</dl>
 					<p class="links">
 						{#each project.links as link (link.href)}
-							<a href={link.href}
+							<a
+								href={link.href}
+								{...externalLinkAttrs(link.href)}
+								data-content-action={link.label.toLowerCase()}
 								>{link.label}<span aria-hidden="true">&nbsp;↗</span><span class="sr-only">
-									(external site)</span
+									(opens in a new tab)</span
 								></a
 							>
 						{/each}

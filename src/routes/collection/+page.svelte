@@ -19,7 +19,7 @@
 	path="/collection"
 />
 
-<div class="v3-page">
+<div class="v3-page" data-analytics-section="collection_page">
 	<PageIntro title="{collection.favourite} gets the top shelf." station="shelf">
 		<p>
 			I collect {collection.subject}. {collection.favourite} is my favourite Pokémon, so it gets pride
@@ -40,7 +40,16 @@
 				Rather than rebuild a catalogue here, the full collection stays on Collectr, where it’s kept
 				up to date.
 			</p>
-			<p class="cta"><a href={collection.showcaseUrl}>Open the binder on Collectr ↗</a></p>
+			<p class="cta">
+				<a
+					href={collection.showcaseUrl}
+					target="_blank"
+					rel="noopener"
+					data-content-type="collectible"
+					data-content-id="collection"
+					data-content-action="showcase">Open the binder on Collectr ↗</a
+				>
+			</p>
 		</div>
 	</div>
 

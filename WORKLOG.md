@@ -2,7 +2,7 @@
 
 ## Working agreement
 
-- This follow-up uses `remove-room-subtitle`, branched from `main` after PR #16. Do not modify `main` directly. The original V3 implementation was completed on `v3-world`.
+- This follow-up uses `contact-analytics`, branched from `main` after PR #18, for the user's requested contact and portfolio engagement analytics in PR #19. Do not modify `main` directly. The original V3 implementation was completed on `v3-world`.
 - Update this file after every implementation or configuration change.
 - Start with Phase 0: audit, renderer/deployment decisions, and a small playable spike. Real-phone testing is required before expanding the room.
 - Source brief: user attachment, adityaoberai.com V3 (2026-09-30).
@@ -16,7 +16,7 @@
 - Station URLs support sharing/reload, Back dismisses an internally opened panel, and Forward restores it. The object menu has one primary destination per item, with curiosities and settings separated. Keyboard, reduced motion, demand rendering, and fallback routes remain supported.
 - Kept Newsreader for reading and headings; unified type roles, relaxed heading tracking, raised metadata to 13px, and used system sans for controls. Removed redundant eyebrows, aligned Collection/Now navigation, retained the mobile portrait, and removed the duplicate On paper footer. Enlarged-text and text-spacing checks exposed and fixed a grid overflow.
 - Photography now has an in-site reader, previous/next controls, arrow keys, native dialog focus, its own Back entry, and a Pexels link. The mobile music player collapses after playback starts and can be reopened or stopped.
-- Google Analytics retains the existing tag but starts after three seconds and is skipped on local test hosts. No new runtime dependency or font family was added.
+- Appwrite Analytics replaces Google Analytics, starts once in the client initialization hook, respects Do Not Track, and runs on `adityaoberai.com` and `www.adityaoberai.com`. Development and preview hosts are excluded from this property.
 - Validation: see the 2026-10-18 change-log entry below. Physical iPhone/Android, screen-reader, Safari playback, and sustained GPU/thermal testing still need real devices; Chromium emulation is not a substitute.
 
 ## Previous verified state (2026-10-02)
@@ -29,7 +29,7 @@
 - Every page is V3 now: one header (WORLD / INDEX switch everywhere, section nav on deep pages), one footer, one container width. Deep pages: `/work`, `/projects`, `/speaking`, `/writing`, `/community`, `/photography`, `/collection`, `/about`, `/contact`, `/now`; `/resume` stays a PDF redirect. All V2 components are gone.
 - Validation: `npm run check` 0/0, `npm test` 26/26, `npm run test:e2e` 29/29 (including axe WCAG 2.2 AA audits) against the built Node server, `npm run lint` passes. 13–15 draw calls (4 more while the character shows in the mirror), ~12.9k triangles, two textures (54 KB card atlas, 14.5 KB flag). While the record plays, the room renders about 30 frames a second; otherwise it idles as before. Launch checklist and measured performance proxy: `v3.md`, "Launch checklist".
 - Hosting: Appwrite Sites, the existing "My Portfolio" site (project `688230070011fbf10e1a`, Frankfurt). It already builds `v3-world` with SvelteKit SSR + adapter-node (deployment `6abd89d5091931398edf` at `b8ed4c3`, ready); production domains still serve V2 from `main`.
-- Blocked on the user: a physical mid-range phone test (see the gate in `v3.md`), analytics decision, copy review, and the go-live steps below.
+- Blocked on the user: a physical mid-range phone test (see the gate in `v3.md`), copy review, and the go-live steps below.
 
 ## Open review items (not yet fixed)
 
@@ -37,7 +37,7 @@
 - The gramophone loads Spotify's iFrame API and player (third-party JavaScript and cookies) only once a visitor puts the record on. Logged-out visitors hear 30-second previews that move on by themselves (checked in Chrome); Safari may block the start, and then the card asks them to press play. Not yet checked on a real iPhone: add it to the phone gate. Also unchecked, as Claude can't log in to Spotify: on a phone the player is ~335 px wide, and for logged-in listeners (who also get a progress bar) Spotify squeezed its play button at ~300 px; at 400 px (desktop) it's full size.
 - `src/lib/data/now.ts`: "Reading" and "Thinking about" are left out because there is no source for them; Aditya should supply them. `now.updated` is a manual date and must change whenever the page changes.
 - `npm audit`: 3 low findings in the SvelteKit/cookie chain; only `--force` resolves them.
-- Google Analytics retains its existing tag and is now deferred by three seconds. The earlier 160 KB observation is historical; current transfer cost and whether to replace analytics remain a separate review.
+- Analytics decision resolved: Appwrite Analytics replaces the old Google Analytics loader; see the 2026-10-27 entry below.
 
 ## Earlier production-launch notes (2026-10-02)
 
@@ -48,6 +48,45 @@
 5. Go live on Appwrite Sites: add `ORIGIN=https://adityaoberai.com` (site Settings → Environment variables), merge `v3-world` into `main` via a PR, add `adityaoberai.com` and `www.adityaoberai.com` as Active-deployment domains (the apex needs NS delegation from GoDaddy; copy its MX/TXT records first), keep oberai.dev on Active deployment until path-preserving redirects exist (Appwrite domain redirects drop paths). Rollback: reactivate V2 deployment `6aa7d3f0dc0c05bdc438`.
 
 ## Change log
+
+### 2026-10-27 — Correct contact and section-link attribution
+
+- Addressed both findings from Entire's review of `ece2d15`: modified room-menu contact activations now identify navigation to the Contact page, matching the room's actual modifier/button handling. Ordinary primary activation continues to identify the room's contact panel.
+- Room section links now identify their destination path and fragment, retaining the source station separately. Work/projects and community/speaking links therefore remain distinguishable. Email links are excluded from section content IDs so email addresses are not sent as custom properties.
+- Expanded the browser capture fixture to intercept Appwrite traffic in popup tabs as well. Added functional cases for actual new tabs plus analytics, modified contact-menu navigation, and distinct room-link destinations, and documented the corrected event semantics. Native modifier/middle-click tabs are observed at the browser-context level.
+- Validation: all 21 focused analytics/mode browser cases pass, including actual middle/Control/Shift-click Contact tabs, Cmd/Alt attribution, primary panel intent, distinct work/projects/speaking destinations, and the exclusion of email addresses from section-link IDs.
+
+### 2026-10-27 — Open external links in new tabs
+
+- Applied server-rendered new-tab attributes to external HTTP(S) links throughout the portfolio, including contact/profile links, content links, footer links, and room readers. Shared URL classification leaves internal routes, fragments and email actions in their existing contexts.
+- New tabs use `rel="noopener"`; existing photo-viewer and Spotify links keep their existing behavior. Photo thumbnails retain the in-site viewer, with external fallback links opening a new tab when JavaScript is unavailable. Updated existing screen-reader text to announce new tabs.
+- Validation: type checks report 0 errors and 0 warnings; lint and all 33 unit checks pass, and the production build completes. Verified all 151 external links across 11 rendered pages open new tabs while 226 internal/email links retain their context. All 21 focused browser cases pass, including an actual external tab with no opener and its contact/outbound events. Regenerated incomplete compressed test-build outputs and verified all 164 against their sources before browser validation. Publish on PR #19.
+
+### 2026-10-27 — Portfolio engagement events
+
+- Extended the existing contact-analytics branch for the user's request to track useful actions throughout the site, with contact sections as the priority.
+- Added content-link and resume attribution, speaker resource events, visible contact-area observations, and room reader, curiosity, menu, music, and settings events. Preserved the existing Appwrite property, automatic tracking, production-host restriction, and Do Not Track behavior.
+- Contact controls now record a view when at least half is visible in an active tab; footer observations reset on page changes. Content links carry public artifact IDs and entry sections across dedicated pages and room readers, and successful speaker-bio copies, headshot clicks, newsletter CTAs, and direct/redirected resume clicks have explicit events.
+- Room views distinguish mobile previews from actual readers and deduplicate collapse/reopen and resize updates. Added deliberate curiosity, poem, menu, music and settings actions; playback events require a real playing/paused transition. Room artifacts and full-section links now retain their item IDs and station entry points.
+- Added focused browser coverage for content attribution, keyboard/middle/right clicks, successful/failed clipboard writes, speaker assets, contact visibility and footer navigation, background tabs, room readers, music playback deduplication, and resume attribution. Resource-click tests cancel navigation before SvelteKit handles it while still exercising the real SDK. Room checkbox events read the actual input value so the event and renderer receive the newly chosen setting. Documented the complete event catalog and extension conventions in `docs/analytics.md`.
+- Validation: type checks report 0 errors and 0 warnings; lint, all 33 unit checks, the production build, and all 18 focused analytics/mode browser cases pass. Browser validation uses the actual SDK and a production-host mapping with Appwrite requests intercepted, so it adds no test traffic to the property. Publish this extension on the existing PR #19.
+
+### 2026-10-27 — Contact-section analytics
+
+- Added `contact_section_viewed` for the Contact page and the room's expanded contact reader. Mobile previews are excluded from reader-view counts, and collapsing and reopening the same reader does not repeat the event.
+- Extended `contact_clicked` with method, purpose, and section properties for email, speaking invitations, meeting shortcuts, links to the Contact page, and contact-area social/profile links. The Contact page, room, footer, On paper, navigation, and speaking page retain their entry points without sending email addresses or message text as custom properties.
+- The user requested a new PR after the core Appwrite Analytics PR #18 merged. This follow-up also contains the prepared removal of Google Analytics, production-host filtering, and room-invitation tracking.
+- Validation: all 12 focused browser cases pass, including contact-page and footer attribution, room-menu intent, mobile preview/reader counts, repeat-reader deduplication, Do Not Track, and existing automatic tracking and view-switch behavior. Type checks report 0 errors/0 warnings; lint, all 33 unit checks, and the clean production build pass. Verified all 164 compressed outputs match their sources after replacing incomplete incremental build artifacts.
+- Loaded the built Contact page using the production-host test setup. Appwrite accepted its actual `contact_section_viewed` SDK event with HTTP 204 at `/contact?analytics_validation=contact`, using the supplied project and property unchanged.
+
+### 2026-10-27 — Appwrite Analytics
+
+- Installed the Appwrite Web SDK and added one shared client for the supplied Singapore endpoint and project. Initialized the exact analytics property `6ae0a115002177037121` once in `hooks.client.ts`, preserving the SDK's default Do Not Track behavior.
+- Enabled automatic pageviews, outbound links, downloads, scroll depth, and engagement time. Extensionless resume routes emit download events for the PDF or legacy DOCX they serve; direct file links use the SDK listener. The SDK handles SPA history changes, so no additional `afterNavigate` pageview is sent.
+- Added `room_station_opened`, `mode_switched`, `photo_viewed`, and `contact_clicked` for portfolio actions, including the large room invitation on On paper. Removed the Google Analytics loader. Production domains are enabled; development and preview hosts are excluded.
+- Reviewed PR #18 in an isolated worktree, preserving its shared client, photo-view tracking, and existing event names. The additional tracking refinements now follow its merge in the user's requested separate PR.
+- Validation: type checks report 0 errors/0 warnings; lint, all 33 unit checks, and the production build pass. All 10 focused browser cases pass, covering automatic events, route/Back counts, room and photo interactions, email, direct/redirected downloads, Do Not Track, excluded local/preview hosts, and the existing view-switch behavior.
+- Loaded the final built app through a production-host test setup at `/index?analytics_validation=1`. The unchanged SDK pageview request was relayed using the system's verified TLS configuration, and the Singapore analytics endpoint accepted it with HTTP 204 for property `6ae0a115002177037121`.
 
 ### 2026-10-27 — Remove the room-header subtitle
 

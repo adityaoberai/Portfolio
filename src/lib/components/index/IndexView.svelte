@@ -1,9 +1,12 @@
 <script lang="ts">
+	import { externalLinkAttrs } from '$lib/external-links';
 	import { roomJourney } from '$lib/world/journey';
 	import { site } from '$lib/data/site';
 	import Portrait from '$lib/components/Portrait.svelte';
 	import { highlights } from '$lib/data/highlights';
 	import { sections } from '$lib/data/sections';
+	import { trackEvent } from '$lib/analytics';
+	import { contactVisibility } from '$lib/contact-visibility';
 	const directory = sections.filter((section) => section.id !== 'now');
 	const roomHref = $derived(`/world${$roomJourney?.panel ? `#${$roomJourney.panel}` : ''}`);
 </script>
@@ -17,7 +20,11 @@
 				I'm Aditya, {site.role}. I help developers find their way from an idea to something they can
 				make. Away from the desk, there's usually a camera, a notebook, or a Pokémon card nearby.
 			</p>
-			<div class="intro-links">
+			<div
+				class="intro-links"
+				data-contact-section="index"
+				use:contactVisibility={{ section: 'index' }}
+			>
 				<a href="/contact">Get in touch</a><a href="/resume">Resume (PDF)</a>
 			</div>
 		</div>
@@ -32,7 +39,12 @@
 		</ul>
 	</section>
 
-	<a class="room-invitation" href={roomHref} data-sveltekit-preload-data="off">
+	<a
+		class="room-invitation"
+		href={roomHref}
+		data-sveltekit-preload-data="off"
+		onclick={() => trackEvent('mode_switched', { from: 'index', to: 'world' })}
+	>
 		<img
 			class="room-preview"
 			src="/room-still.jpg"
@@ -51,13 +63,13 @@
 		<ul class="chapters">
 			{#each directory as section (section.id)}
 				<li id={section.id} tabindex="-1">
-					<a href={section.href} class="chapter"
+					<a href={section.href} {...externalLinkAttrs(section.href)} class="chapter"
 						><div>
 							<h3>{section.label}</h3>
 							<p>{section.summary}</p>
 						</div>
 						<span aria-hidden="true">{section.external ? '↗' : '→'}</span
-						>{#if section.external}<span class="sr-only"> (external site)</span>{/if}</a
+						>{#if section.external}<span class="sr-only"> (opens in a new tab)</span>{/if}</a
 					>
 				</li>
 			{/each}

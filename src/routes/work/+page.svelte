@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { externalLinkAttrs } from '$lib/external-links';
 	import PageMeta from '$lib/components/PageMeta.svelte';
 	import PageIntro from '$lib/components/PageIntro.svelte';
 	import { workThemes } from '$lib/data/work';
+	import { contentId } from '$lib/analytics';
 </script>
 
 <PageMeta
@@ -10,7 +12,7 @@
 	path="/work"
 />
 
-<div class="v3-page">
+<div class="v3-page" data-analytics-section="work_page">
 	<PageIntro title="The work, by theme." station="desk">
 		<p>
 			Job titles say less than the work does, so here it is, organized by what it was for rather
@@ -30,14 +32,14 @@
 			<p class="summary">{theme.summary}</p>
 			<ul class="items">
 				{#each theme.items as item (item.title)}
-					<li>
+					<li data-content-type="work" data-content-id={contentId('work', item.title)}>
 						<span class="tag">{item.tag}</span>
 						<div>
 							<h3>{item.title}</h3>
 							<p>{item.description}</p>
-							{#if item.link}<a href={item.link.href}
+							{#if item.link}<a href={item.link.href} {...externalLinkAttrs(item.link.href)}
 									>{item.link.label}<span aria-hidden="true">&nbsp;↗</span><span class="sr-only">
-										(external site)</span
+										(opens in a new tab)</span
 									></a
 								>{/if}
 						</div>
