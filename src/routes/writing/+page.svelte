@@ -41,7 +41,7 @@
 			{/each}
 		</div>
 		<p class="cta">
-			<a href="https://oberai.blog" data-contact-method="newsletter"
+			<a href="https://oberai.blog" target="_blank" rel="noopener" data-contact-method="newsletter"
 				>Subscribe to the newsletter ↗</a
 			>
 		</p>

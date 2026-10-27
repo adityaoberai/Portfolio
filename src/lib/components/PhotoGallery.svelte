@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { externalLinkAttrs } from '$lib/external-links';
 	import { tick, untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { pushState, replaceState } from '$app/navigation';
@@ -72,6 +73,7 @@
 	{#each photos as photo, i (photo.id)}<li>
 			<a
 				href={photo.externalUrl ?? photo.link ?? '/photography'}
+				{...externalLinkAttrs(photo.externalUrl ?? photo.link)}
 				onclick={(event) => choose(i, event)}
 				aria-label="View photo: {photo.title}"
 			>

@@ -31,7 +31,7 @@
 	<PhotoGallery {photos} />
 
 	<p class="cta">
-		<a href={pexelsProfile}>The full archive on Pexels ↗</a>
+		<a href={pexelsProfile} target="_blank" rel="noopener">The full archive on Pexels ↗</a>
 		{#if walks}<a href="/community#photo-walks">{walks.title}: come shoot with us →</a>{/if}
 	</p>
 </div>

@@ -14,7 +14,7 @@ type AnalyticsEvent = {
 async function captureEvents(page: Page) {
 	const events: AnalyticsEvent[] = [];
 	// Serve the built app under its production hostname without publishing it.
-	await page.route(`${site}/**`, async (route) => {
+	await page.context().route(`${site}/**`, async (route) => {
 		const url = new URL(route.request().url());
 		const response = await route.fetch({
 			url: `http://127.0.0.1:4173${url.pathname}${url.search}`
@@ -22,25 +22,27 @@ async function captureEvents(page: Page) {
 		await route.fulfill({ response });
 	});
 	// Exercise the real SDK without sending test traffic to the portfolio property.
-	await page.route('https://sgp.cloud.appwrite.io/v1/analytics/properties/*/events', (route) => {
-		const request = route.request();
-		expect(request.url()).toContain('/properties/6ae0a115002177037121/events');
-		if (request.method() === 'POST') {
-			expect(request.headers()['x-appwrite-project']).toBe('6adf4e1e00316521b4f6');
-			events.push(request.postDataJSON());
-		}
-		return route.fulfill({
-			status: request.method() === 'OPTIONS' ? 204 : 202,
-			contentType: 'application/json',
-			body: request.method() === 'OPTIONS' ? undefined : '{}',
-			headers: {
-				'access-control-allow-origin': site,
-				'access-control-allow-credentials': 'true',
-				'access-control-allow-methods': 'POST, OPTIONS',
-				'access-control-allow-headers': request.headers()['access-control-request-headers'] ?? '*'
+	await page
+		.context()
+		.route('https://sgp.cloud.appwrite.io/v1/analytics/properties/*/events', (route) => {
+			const request = route.request();
+			expect(request.url()).toContain('/properties/6ae0a115002177037121/events');
+			if (request.method() === 'POST') {
+				expect(request.headers()['x-appwrite-project']).toBe('6adf4e1e00316521b4f6');
+				events.push(request.postDataJSON());
 			}
+			return route.fulfill({
+				status: request.method() === 'OPTIONS' ? 204 : 202,
+				contentType: 'application/json',
+				body: request.method() === 'OPTIONS' ? undefined : '{}',
+				headers: {
+					'access-control-allow-origin': site,
+					'access-control-allow-credentials': 'true',
+					'access-control-allow-methods': 'POST, OPTIONS',
+					'access-control-allow-headers': request.headers()['access-control-request-headers'] ?? '*'
+				}
+			});
 		});
-	});
 	return events;
 }
 
@@ -599,6 +601,152 @@ test('music intent and actual playback transitions are counted separately withou
 		['state', 'playing'],
 		['state', 'paused']
 	]);
+});
+
+test('external contact links open a separate tab and retain contact and outbound tracking', async ({
+	page,
+	context
+}) => {
+	const events = await captureEvents(page);
+	await context.route('https://www.linkedin.com/**', (route) =>
+		route.fulfill({
+			contentType: 'text/html',
+			body: '<!doctype html><title>LinkedIn test destination</title>'
+		})
+	);
+	await page.goto('/contact');
+	const profile = page.locator('main a[href^="https://www.linkedin.com/"]');
+	const popupPromise = page.waitForEvent('popup');
+	await profile.click();
+	const popup = await popupPromise;
+	await popup.waitForLoadState('domcontentloaded');
+	await expect(popup).toHaveURL('https://www.linkedin.com/in/adityaoberai1/');
+	expect(await popup.evaluate(() => window.opener === null)).toBe(true);
+	await expect(page).toHaveURL(`${site}/contact`);
+	await expect
+		.poll(() => events.filter((event) => event.name === 'contact_clicked').length)
+		.toBe(1);
+	await expect.poll(() => events.filter((event) => event.name === 'outbound_link').length).toBe(1);
+	expect(events.find((event) => event.name === 'contact_clicked')?.props).toEqual([
+		'method',
+		'linkedin',
+		'purpose',
+		'general',
+		'section',
+		'contact_page'
+	]);
+	await popup.close();
+	await page
+		.getByRole('navigation', { name: 'Sections', exact: true })
+		.getByRole('link', { name: 'Work', exact: true })
+		.click();
+	await expect(page).toHaveURL(`${site}/work`);
+	expect(context.pages()).toHaveLength(1);
+});
+
+test('modified contact-menu activations identify page navigation and primary clicks identify the panel', async ({
+	page
+}) => {
+	const events = await captureEvents(page);
+	await page.goto('/world');
+	await expect(page.locator('canvas.loaded')).toBeVisible();
+	const menu = page.getByRole('navigation', { name: 'In the room', exact: true });
+	const contact = menu.getByRole('link', { name: 'Elsewhere & contact', exact: true });
+	const openMenu = async () => {
+		if (!(await menu.isVisible()))
+			await page.getByRole('button', { name: 'Room menu', exact: true }).click();
+	};
+	const actions: { button?: 'middle'; modifiers?: ('Control' | 'Shift')[] }[] = [
+		{ button: 'middle' },
+		{ modifiers: ['Control'] },
+		{ modifiers: ['Shift'] }
+	];
+	for (const action of actions) {
+		await openMenu();
+		// Native modifier/middle-click tabs are context pages, not always opener popups.
+		const popupPromise = page.context().waitForEvent('page');
+		await contact.click(action);
+		const popup = await popupPromise;
+		await expect(popup).toHaveURL(`${site}/contact`);
+		await popup.close();
+		await page.bringToFront();
+	}
+	// Exercise Cmd and Alt as well, cancelling their platform-dependent native navigation.
+	for (const modifier of ['metaKey', 'altKey']) {
+		await openMenu();
+		await contact.evaluate((anchor) =>
+			anchor.addEventListener('click', (event) => event.preventDefault(), { once: true })
+		);
+		await contact.dispatchEvent('click', { button: 0, [modifier]: true });
+	}
+	await expect
+		.poll(() => events.filter((event) => event.name === 'contact_clicked').length)
+		.toBe(5);
+	expect(
+		events
+			.filter((event) => event.name === 'contact_clicked')
+			.every(
+				(event) =>
+					JSON.stringify(event.props) ===
+					JSON.stringify(['method', 'contact_page', 'purpose', 'general', 'section', 'room_menu'])
+			)
+	).toBe(true);
+	await openMenu();
+	await contact.click();
+	await expect(page.locator('dialog.sheet:not(.poem)')).toBeVisible();
+	await expect
+		.poll(() => events.filter((event) => event.name === 'contact_clicked').length)
+		.toBe(6);
+	expect(events.filter((event) => event.name === 'contact_clicked').at(-1)?.props).toEqual([
+		'method',
+		'contact_panel',
+		'purpose',
+		'general',
+		'section',
+		'room_menu'
+	]);
+	await expect(page).toHaveURL(/\/world#door$/);
+});
+
+test('room section links identify their destinations separately from the source station', async ({
+	page
+}) => {
+	const events = await captureEvents(page);
+	const destinations = [
+		{ station: 'desk', href: '/work#developer-relations' },
+		{ station: 'desk', href: '/projects' },
+		{ station: 'corkboard', href: '/speaking' }
+	];
+	for (const [index, destination] of destinations.entries()) {
+		await page.goto(`/world#${destination.station}`);
+		const link = page.locator(`dialog.sheet a[href="${destination.href}"]`);
+		await link.evaluate((anchor) =>
+			anchor.addEventListener('click', (event) => event.preventDefault())
+		);
+		await link.click();
+		await expect
+			.poll(() => events.filter((event) => event.name === 'content_clicked').length)
+			.toBe(index + 1);
+		expect(events.filter((event) => event.name === 'content_clicked').at(-1)?.props).toEqual([
+			'type',
+			'section',
+			'content_id',
+			destination.href,
+			'action',
+			'open_section',
+			'section',
+			`room_${destination.station}`
+		]);
+	}
+	const invite = page.locator('dialog.sheet a[href^="mailto:"]');
+	await invite.evaluate((anchor) =>
+		anchor.addEventListener('click', (event) => event.preventDefault())
+	);
+	await invite.click();
+	await expect
+		.poll(() => events.filter((event) => event.name === 'contact_clicked').length)
+		.toBe(1);
+	expect(events.filter((event) => event.name === 'content_clicked')).toHaveLength(3);
 });
 
 test('local and preview hosts do not emit production analytics', async ({ page }) => {

@@ -43,6 +43,8 @@
 			<p class="cta">
 				<a
 					href={collection.showcaseUrl}
+					target="_blank"
+					rel="noopener"
 					data-content-type="collectible"
 					data-content-id="collection"
 					data-content-action="showcase">Open the binder on Collectr ↗</a

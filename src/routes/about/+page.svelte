@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { externalLinkAttrs } from '$lib/external-links';
 	import PageMeta from '$lib/components/PageMeta.svelte';
 	import PageIntro from '$lib/components/PageIntro.svelte';
 	import { about } from '$lib/data/about';
@@ -50,7 +51,9 @@
 			{#each about.beyond as item (item.text)}
 				<p>
 					{item.text}
-					{#if item.link}<a href={item.link.href}>{item.link.label} →</a>{/if}
+					{#if item.link}<a href={item.link.href} {...externalLinkAttrs(item.link.href)}
+							>{item.link.label} →</a
+						>{/if}
 				</p>
 			{/each}
 		</section>

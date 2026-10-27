@@ -101,17 +101,18 @@ function trackPortfolioLink(event: MouseEvent) {
 		});
 		return;
 	}
-	if (
-		url.origin === location.origin &&
-		['/contact', '/meet'].includes(url.pathname.replace(/\/$/, ''))
-	) {
+	if (url.origin === location.origin && ['/contact', '/meet'].includes(pathname)) {
+		// Match the room's visit() handler: modified activations use normal page navigation.
+		const opensPanel =
+			section === 'room_menu' &&
+			event.type === 'click' &&
+			event.button === 0 &&
+			!event.metaKey &&
+			!event.ctrlKey &&
+			!event.shiftKey &&
+			!event.altKey;
 		trackEvent('contact_clicked', {
-			method:
-				url.pathname.replace(/\/$/, '') === '/meet'
-					? 'meeting'
-					: section === 'room_menu'
-						? 'contact_panel'
-						: 'contact_page',
+			method: pathname === '/meet' ? 'meeting' : opensPanel ? 'contact_panel' : 'contact_page',
 			purpose: 'general',
 			section
 		});

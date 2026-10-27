@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { externalLinkAttrs } from '$lib/external-links';
 	import PageMeta from '$lib/components/PageMeta.svelte';
 	import PageIntro from '$lib/components/PageIntro.svelte';
 	import Row from '$lib/components/Row.svelte';
@@ -48,11 +49,15 @@
 					<span class="badge-head">{talk.event} · {talk.year}</span>
 					<h3>{talk.title}</h3>
 					<p>{talk.description}</p>
-					{#if talk.recording}<a href={talk.recording} data-content-action="recording"
-							>Watch the recording ↗</a
+					{#if talk.recording}<a
+							href={talk.recording}
+							{...externalLinkAttrs(talk.recording)}
+							data-content-action="recording">Watch the recording ↗</a
 						>
-					{:else if talk.slides}<a href={talk.slides} data-content-action="slides"
-							>See the slides ↗</a
+					{:else if talk.slides}<a
+							href={talk.slides}
+							{...externalLinkAttrs(talk.slides)}
+							data-content-action="slides">See the slides ↗</a
 						>{/if}
 				</li>
 			{/each}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { externalLinkAttrs } from '$lib/external-links';
 	import PageMeta from '$lib/components/PageMeta.svelte';
 	import PageIntro from '$lib/components/PageIntro.svelte';
 	import { workThemes } from '$lib/data/work';
@@ -36,9 +37,9 @@
 						<div>
 							<h3>{item.title}</h3>
 							<p>{item.description}</p>
-							{#if item.link}<a href={item.link.href}
+							{#if item.link}<a href={item.link.href} {...externalLinkAttrs(item.link.href)}
 									>{item.link.label}<span aria-hidden="true">&nbsp;↗</span><span class="sr-only">
-										(external site)</span
+										(opens in a new tab)</span
 									></a
 								>{/if}
 						</div>

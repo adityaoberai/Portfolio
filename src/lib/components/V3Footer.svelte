@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { externalLinkAttrs } from '$lib/external-links';
 	import { page } from '$app/state';
 	import { contactVisibility } from '$lib/contact-visibility';
 	import { site } from '$lib/data/site';
@@ -23,9 +24,9 @@
 			<ul>
 				<li><a href="mailto:{site.email}">Email</a></li>
 				{#each socialLinks as link (link.name)}
-					<li><a href={link.url}>{link.name}</a></li>
+					<li><a href={link.url} {...externalLinkAttrs(link.url)}>{link.name}</a></li>
 				{/each}
-				<li><a href="https://oberai.blog">Newsletter</a></li>
+				<li><a href="https://oberai.blog" target="_blank" rel="noopener">Newsletter</a></li>
 				<li><a href={sectionById.now.href}>Now</a></li>
 				<li><a href={sectionById.resume.href}>Resume</a></li>
 			</ul>

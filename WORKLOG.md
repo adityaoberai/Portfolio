@@ -49,6 +49,19 @@
 
 ## Change log
 
+### 2026-10-27 — Correct contact and section-link attribution
+
+- Addressed both findings from Entire's review of `ece2d15`: modified room-menu contact activations now identify navigation to the Contact page, matching the room's actual modifier/button handling. Ordinary primary activation continues to identify the room's contact panel.
+- Room section links now identify their destination path and fragment, retaining the source station separately. Work/projects and community/speaking links therefore remain distinguishable. Email links are excluded from section content IDs so email addresses are not sent as custom properties.
+- Expanded the browser capture fixture to intercept Appwrite traffic in popup tabs as well. Added functional cases for actual new tabs plus analytics, modified contact-menu navigation, and distinct room-link destinations, and documented the corrected event semantics. Native modifier/middle-click tabs are observed at the browser-context level.
+- Validation: all 21 focused analytics/mode browser cases pass, including actual middle/Control/Shift-click Contact tabs, Cmd/Alt attribution, primary panel intent, distinct work/projects/speaking destinations, and the exclusion of email addresses from section-link IDs.
+
+### 2026-10-27 — Open external links in new tabs
+
+- Applied server-rendered new-tab attributes to external HTTP(S) links throughout the portfolio, including contact/profile links, content links, footer links, and room readers. Shared URL classification leaves internal routes, fragments and email actions in their existing contexts.
+- New tabs use `rel="noopener"`; existing photo-viewer and Spotify links keep their existing behavior. Photo thumbnails retain the in-site viewer, with external fallback links opening a new tab when JavaScript is unavailable. Updated existing screen-reader text to announce new tabs.
+- Validation: type checks report 0 errors and 0 warnings; lint and all 33 unit checks pass, and the production build completes. Verified all 151 external links across 11 rendered pages open new tabs while 226 internal/email links retain their context. All 21 focused browser cases pass, including an actual external tab with no opener and its contact/outbound events. Regenerated incomplete compressed test-build outputs and verified all 164 against their sources before browser validation. Publish on PR #19.
+
 ### 2026-10-27 — Portfolio engagement events
 
 - Extended the existing contact-analytics branch for the user's request to track useful actions throughout the site, with contact sections as the priority.

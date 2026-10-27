@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { externalLinkAttrs } from '$lib/external-links';
 	import { onMount } from 'svelte';
 	import PageMeta from '$lib/components/PageMeta.svelte';
 	import { bengaluruTime, now } from '$lib/data/now';
@@ -31,7 +32,8 @@
 			<div>
 				<dt>{item.label}</dt>
 				<dd>
-					{#if item.href}<a href={item.href}>{item.text}</a>{:else}{item.text}{/if}
+					{#if item.href}<a href={item.href} {...externalLinkAttrs(item.href)}>{item.text}</a
+						>{:else}{item.text}{/if}
 				</dd>
 			</div>
 		{/each}

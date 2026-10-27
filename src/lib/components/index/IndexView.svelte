@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { externalLinkAttrs } from '$lib/external-links';
 	import { roomJourney } from '$lib/world/journey';
 	import { site } from '$lib/data/site';
 	import Portrait from '$lib/components/Portrait.svelte';
@@ -62,13 +63,13 @@
 		<ul class="chapters">
 			{#each directory as section (section.id)}
 				<li id={section.id} tabindex="-1">
-					<a href={section.href} class="chapter"
+					<a href={section.href} {...externalLinkAttrs(section.href)} class="chapter"
 						><div>
 							<h3>{section.label}</h3>
 							<p>{section.summary}</p>
 						</div>
 						<span aria-hidden="true">{section.external ? '↗' : '→'}</span
-						>{#if section.external}<span class="sr-only"> (external site)</span>{/if}</a
+						>{#if section.external}<span class="sr-only"> (opens in a new tab)</span>{/if}</a
 					>
 				</li>
 			{/each}

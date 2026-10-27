@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { externalLinkAttrs } from '$lib/external-links';
 	import PageMeta from '$lib/components/PageMeta.svelte';
 	import PageIntro from '$lib/components/PageIntro.svelte';
 	import { communityInitiatives } from '$lib/data/community';
@@ -56,9 +57,9 @@
 			{#if initiative.links}
 				<p class="links">
 					{#each initiative.links as link (link.href)}
-						<a href={link.href}
+						<a href={link.href} {...externalLinkAttrs(link.href)}
 							>{link.label}<span aria-hidden="true">&nbsp;↗</span><span class="sr-only">
-								(external site)</span
+								(opens in a new tab)</span
 							></a
 						>
 					{/each}
