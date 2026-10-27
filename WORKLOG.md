@@ -2,7 +2,7 @@
 
 ## Working agreement
 
-- This follow-up uses `remove-product-launch-link`, branched from `main` after PR #15. Do not modify `main` directly. The original V3 implementation was completed on `v3-world`.
+- This follow-up uses `remove-room-subtitle`, branched from `main` after PR #16. Do not modify `main` directly. The original V3 implementation was completed on `v3-world`.
 - Update this file after every implementation or configuration change.
 - Start with Phase 0: audit, renderer/deployment decisions, and a small playable spike. Real-phone testing is required before expanding the room.
 - Source brief: user attachment, adityaoberai.com V3 (2026-09-30).
@@ -48,6 +48,12 @@
 5. Go live on Appwrite Sites: add `ORIGIN=https://adityaoberai.com` (site Settings → Environment variables), merge `v3-world` into `main` via a PR, add `adityaoberai.com` and `www.adityaoberai.com` as Active-deployment domains (the apex needs NS delegation from GoDaddy; copy its MX/TXT records first), keep oberai.dev on Active deployment until path-preserving redirects exist (Appwrite domain redirects drop paths). Rollback: reactivate V2 deployment `6aa7d3f0dc0c05bdc438`.
 
 ## Change log
+
+### 2026-10-27 — Remove the room-header subtitle
+
+- Removed the role-and-interests paragraph beneath the room invitation and cleaned up its unused import and styles.
+- Started `remove-room-subtitle` from `main` after the merge of PR #16.
+- Validation: type checks report 0 errors/0 warnings; lint and the production build pass. Visually checked the room header at 1440px and 390px: the subtitle is absent, with no page errors or horizontal overflow.
 
 ### 2026-10-27 — Remove the product-launch link
 

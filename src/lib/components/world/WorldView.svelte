@@ -9,7 +9,6 @@
 	import StationPanel from './StationPanel.svelte';
 	import RoomJoystick from './RoomJoystick.svelte';
 	import { curiosities, page as copy, stationById, stations } from '$lib/data/room';
-	import { site } from '$lib/data/site';
 	import type { Curiosity } from '$lib/data/world';
 	import type { CuriosityId, StationId } from '$lib/world/layout';
 	import { readJourney, rememberJourney, stationId, type RoomJourney } from '$lib/world/journey';
@@ -682,7 +681,6 @@
 		<V3Header overlay menu={roomMenu} />
 		<div class="welcome">
 			<h1 id="world-title">{copy.title}</h1>
-			<p>{site.role}. Writer, photographer, and community builder.</p>
 		</div>
 		{#if diagnostics && roomState}<output class="diagnostics"
 				>{roomState.calls} draws · {roomState.triangles} triangles · DPR {roomState.dpr} · {roomState.frames}
@@ -1040,13 +1038,6 @@
 		line-height: 1.3;
 		letter-spacing: -0.01em;
 		font-weight: 400;
-	}
-	.welcome p {
-		margin-top: 8px;
-		font-size: 1rem;
-		line-height: 1.5;
-		color: var(--color-ink-soft);
-		max-width: 38ch;
 	}
 	.inspecting .welcome {
 		display: none;
