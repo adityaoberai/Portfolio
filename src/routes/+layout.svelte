@@ -18,7 +18,7 @@
 
 	onMount(() => {
 		readJourney();
-		// Analytics starts after the first interaction surface has had time to load.
+		// Google Analytics starts after the first interaction surface has had time to load.
 		if (['localhost', '127.0.0.1', 'terminal.local'].includes(location.hostname)) return;
 		const timer = window.setTimeout(() => {
 			const layer: unknown[] = Reflect.get(window, 'dataLayer') ?? [];

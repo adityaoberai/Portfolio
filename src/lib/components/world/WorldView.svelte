@@ -2,6 +2,7 @@
 	import { onMount, tick } from 'svelte';
 	import { beforeNavigate, pushState, replaceState } from '$app/navigation';
 	import { page as route } from '$app/state';
+	import { trackEvent } from '$lib/analytics';
 	import V3Header from '$lib/components/V3Header.svelte';
 	import ModeSwitch from '$lib/components/ModeSwitch.svelte';
 	import BengaluruTime from '$lib/components/BengaluruTime.svelte';
@@ -144,6 +145,7 @@
 		hover = null;
 		await presentStation();
 		if (open !== id) return;
+		trackEvent('room_station_opened', { station: id });
 		if (restore) scrollPositions.set(id, saved!.scroll);
 		dialog.scrollTop = narrow && !expanded ? 0 : (scrollPositions.get(id) ?? 0);
 		restoring = false;

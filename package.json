@@ -46,6 +46,7 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
+		"appwrite": "^29.1.0",
 		"three": "0.186.1"
 	}
 }
