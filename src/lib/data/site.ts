@@ -4,7 +4,6 @@ export const site = {
 	tagline: 'Developer Relations, communities, and open source',
 	description:
 		'Aditya Oberai is a DevRel practitioner, writer, speaker, and community builder helping developer tools communicate better, teach better, and build stronger developer communities.',
-	// Canonical domain for V3 (oberai.dev redirects are a hosting task; see v3.md).
 	url: 'https://adityaoberai.com',
 	ogImage: 'https://adityaoberai.com/og.png?v=world-20261027',
 	email: 'aditya@oberai.dev',

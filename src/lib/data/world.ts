@@ -476,7 +476,6 @@ export const world: WorldConfig = {
 		}
 	],
 
-	// Copy written by Claude for Aditya to review (see WORKLOG.md).
 	curiosities: {
 		plush: {
 			label: 'Squirtle plush',
@@ -513,7 +512,7 @@ export const world: WorldConfig = {
 			}
 		},
 		// Trying to sleep turns the character away from the bed, and the poem pops
-		// up. The poem is Robert Frost's (1923, public domain); the rest is Claude's.
+		// up. The poem is Robert Frost's (1923, public domain).
 		bed: {
 			label: 'Bed',
 			line: 'Not yet: miles to go before I sleep.',
