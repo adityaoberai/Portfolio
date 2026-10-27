@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { roomJourney } from '$lib/world/journey';
 	import { stationById } from '$lib/data/room';
+	import { trackEvent } from '$lib/analytics';
 	const path = $derived(page.url.pathname.replace(/\/$/, ''));
 	const inRoom = $derived(path === '/world' || (path === '' && page.data.mode !== 'index'));
 	const station = $derived($roomJourney?.station);
@@ -11,7 +12,15 @@
 </script>
 
 <nav class="surface-link" aria-label="Explore another way">
-	<a href={inRoom ? paperHref : roomHref} data-sveltekit-preload-data="off">
+	<a
+		href={inRoom ? paperHref : roomHref}
+		data-sveltekit-preload-data="off"
+		onclick={() =>
+			trackEvent('mode_switched', {
+				from: inRoom ? 'world' : 'index',
+				to: inRoom ? 'index' : 'world'
+			})}
+	>
 		{inRoom ? 'See it on paper' : 'Step into my room'}<span aria-hidden="true">↗</span>
 	</a>
 </nav>

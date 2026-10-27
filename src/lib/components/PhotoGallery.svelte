@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { tick } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { pushState, replaceState } from '$app/navigation';
 	import { withWidth } from '$lib/data/photography';
+	import { trackEvent } from '$lib/analytics';
 	interface Photo {
 		id: string;
 		title: string;
@@ -48,10 +49,12 @@
 		if (!viewer) return;
 		const index = photo?.scope === scope ? photos.findIndex((item) => item.id === photo.id) : -1;
 		if (index >= 0) {
+			const changed = untrack(() => selected !== index);
 			selected = index;
 			void tick().then(() => {
 				if (!viewer?.isConnected || selected !== index) return;
 				if (!viewer.open) viewer.showModal();
+				if (changed) trackEvent('photo_viewed', { photo_id: photos[index].id, scope });
 				viewer.focus({ preventScroll: true });
 			});
 		} else if (viewer.open) viewer.close();
