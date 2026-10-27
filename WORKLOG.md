@@ -2,7 +2,7 @@
 
 ## Working agreement
 
-- This follow-up uses `contact-analytics`, branched from `main` after PR #18, for the user's requested separate contact-analytics PR. Do not modify `main` directly. The original V3 implementation was completed on `v3-world`.
+- This follow-up uses `contact-analytics`, branched from `main` after PR #18, for the user's requested contact and portfolio engagement analytics in PR #19. Do not modify `main` directly. The original V3 implementation was completed on `v3-world`.
 - Update this file after every implementation or configuration change.
 - Start with Phase 0: audit, renderer/deployment decisions, and a small playable spike. Real-phone testing is required before expanding the room.
 - Source brief: user attachment, adityaoberai.com V3 (2026-09-30).
@@ -48,6 +48,15 @@
 5. Go live on Appwrite Sites: add `ORIGIN=https://adityaoberai.com` (site Settings → Environment variables), merge `v3-world` into `main` via a PR, add `adityaoberai.com` and `www.adityaoberai.com` as Active-deployment domains (the apex needs NS delegation from GoDaddy; copy its MX/TXT records first), keep oberai.dev on Active deployment until path-preserving redirects exist (Appwrite domain redirects drop paths). Rollback: reactivate V2 deployment `6aa7d3f0dc0c05bdc438`.
 
 ## Change log
+
+### 2026-10-27 — Portfolio engagement events
+
+- Extended the existing contact-analytics branch for the user's request to track useful actions throughout the site, with contact sections as the priority.
+- Added content-link and resume attribution, speaker resource events, visible contact-area observations, and room reader, curiosity, menu, music, and settings events. Preserved the existing Appwrite property, automatic tracking, production-host restriction, and Do Not Track behavior.
+- Contact controls now record a view when at least half is visible in an active tab; footer observations reset on page changes. Content links carry public artifact IDs and entry sections across dedicated pages and room readers, and successful speaker-bio copies, headshot clicks, newsletter CTAs, and direct/redirected resume clicks have explicit events.
+- Room views distinguish mobile previews from actual readers and deduplicate collapse/reopen and resize updates. Added deliberate curiosity, poem, menu, music and settings actions; playback events require a real playing/paused transition. Room artifacts and full-section links now retain their item IDs and station entry points.
+- Added focused browser coverage for content attribution, keyboard/middle/right clicks, successful/failed clipboard writes, speaker assets, contact visibility and footer navigation, background tabs, room readers, music playback deduplication, and resume attribution. Resource-click tests cancel navigation before SvelteKit handles it while still exercising the real SDK. Room checkbox events read the actual input value so the event and renderer receive the newly chosen setting. Documented the complete event catalog and extension conventions in `docs/analytics.md`.
+- Validation: type checks report 0 errors and 0 warnings; lint, all 33 unit checks, the production build, and all 18 focused analytics/mode browser cases pass. Browser validation uses the actual SDK and a production-host mapping with Appwrite requests intercepted, so it adds no test traffic to the property. Publish this extension on the existing PR #19.
 
 ### 2026-10-27 — Contact-section analytics
 

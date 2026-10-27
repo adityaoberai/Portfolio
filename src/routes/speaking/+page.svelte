@@ -5,6 +5,8 @@
 	import { talks, speakingTopics, speakerBio } from '$lib/data/talks';
 	import { podcasts } from '$lib/data/podcasts';
 	import { site } from '$lib/data/site';
+	import { contentId, trackEvent } from '$lib/analytics';
+	import { contactVisibility } from '$lib/contact-visibility';
 
 	const featured = talks.filter((t) => t.featured);
 	let copied = $state(false);
@@ -12,6 +14,7 @@
 	async function copyBio() {
 		try {
 			await navigator.clipboard.writeText(speakerBio);
+			trackEvent('speaker_bio_copied', { section: 'speaking_page' });
 			copied = true;
 			setTimeout(() => (copied = false), 2000);
 		} catch {
@@ -26,7 +29,7 @@
 	path="/speaking"
 />
 
-<div class="v3-page">
+<div class="v3-page" data-analytics-section="speaking_page">
 	<PageIntro title="Talks, stages, and the occasional microphone." station="corkboard">
 		<p>
 			I speak about developer relations, communities, and building with AI, and I've organized a
@@ -38,12 +41,19 @@
 		<h2 id="featured-title"><span class="n">01</span>Featured talks</h2>
 		<ul class="badges">
 			{#each featured as talk (talk.event + talk.year)}
-				<li>
+				<li
+					data-content-type="talk"
+					data-content-id={contentId('talk', `${talk.event}-${talk.year}`)}
+				>
 					<span class="badge-head">{talk.event} · {talk.year}</span>
 					<h3>{talk.title}</h3>
 					<p>{talk.description}</p>
-					{#if talk.recording}<a href={talk.recording}>Watch the recording ↗</a>
-					{:else if talk.slides}<a href={talk.slides}>See the slides ↗</a>{/if}
+					{#if talk.recording}<a href={talk.recording} data-content-action="recording"
+							>Watch the recording ↗</a
+						>
+					{:else if talk.slides}<a href={talk.slides} data-content-action="slides"
+							>See the slides ↗</a
+						>{/if}
 				</li>
 			{/each}
 		</ul>
@@ -56,9 +66,13 @@
 			{#each speakerBio.split('\n\n') as paragraph (paragraph)}
 				<p>{paragraph}</p>
 			{/each}
-			<div class="bio-actions">
+			<div
+				class="bio-actions"
+				data-contact-section="speaking_page"
+				use:contactVisibility={{ section: 'speaking_page' }}
+			>
 				<button type="button" onclick={copyBio}>{copied ? 'Copied!' : 'Copy bio'}</button>
-				<a href="/pic">Headshot</a>
+				<a href="/pic" data-speaker-asset="headshot">Headshot</a>
 				<a href="mailto:{site.email}?subject=Speaking invitation">Invite me to speak ↗</a>
 			</div>
 			<span class="sr-only" aria-live="polite">{copied ? 'Bio copied to clipboard' : ''}</span>
@@ -78,6 +92,11 @@
 					subtitle={talk.event}
 					description={talk.description}
 					href={talk.recording ?? talk.slides}
+					tracking={{
+						type: 'talk',
+						id: contentId('talk', `${talk.event}-${talk.year}`),
+						action: talk.recording ? 'recording' : 'slides'
+					}}
 					external={Boolean(talk.recording ?? talk.slides)}
 				/>
 			{/each}
@@ -94,6 +113,10 @@
 					title={episode.title}
 					subtitle={episode.show}
 					href={episode.url}
+					tracking={{
+						type: 'podcast',
+						id: contentId('podcast', `${episode.year}-${episode.title}`)
+					}}
 					external
 				/>
 			{/each}

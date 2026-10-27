@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { ContentTracking } from '$lib/analytics';
 	// One entry in a V3 list: talks, podcasts, links, essays.
 	let {
 		meta,
@@ -6,7 +7,8 @@
 		subtitle,
 		description,
 		href,
-		external = false
+		external = false,
+		tracking
 	}: {
 		meta?: string;
 		title: string;
@@ -14,6 +16,7 @@
 		description?: string;
 		href?: string;
 		external?: boolean;
+		tracking?: ContentTracking;
 	} = $props();
 </script>
 
@@ -30,7 +33,13 @@
 {/snippet}
 
 {#if href}
-	<a class="row" {href}>{@render body()}</a>
+	<a
+		class="row"
+		{href}
+		data-content-type={tracking?.type}
+		data-content-id={tracking?.id}
+		data-content-action={tracking?.action}>{@render body()}</a
+	>
 {:else}
 	<div class="row">{@render body()}</div>
 {/if}

@@ -1,5 +1,7 @@
 # sv
 
+Portfolio event definitions and extension instructions: [Analytics](docs/analytics.md).
+
 Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
 
 ## Creating a project

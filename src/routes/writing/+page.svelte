@@ -4,6 +4,7 @@
 	import Row from '$lib/components/Row.svelte';
 	import { ofType } from '$lib/data/artifacts';
 	import { workThemes } from '$lib/data/work';
+	import { contentId } from '$lib/analytics';
 
 	const essays = ofType('essay');
 	// Professional writing lives on Appwrite's site; these are the existing records for it.
@@ -16,7 +17,7 @@
 	path="/writing"
 />
 
-<div class="v3-page">
+<div class="v3-page" data-analytics-section="writing_page">
 	<PageIntro title="Writing things down." station="notebook">
 		<p>
 			I write about developer relations, developer tools, and whatever I'm currently figuring out:
@@ -34,11 +35,16 @@
 					title={essay.title}
 					description={essay.description}
 					href={essay.externalUrl}
+					tracking={{ type: 'essay', id: essay.id }}
 					external
 				/>
 			{/each}
 		</div>
-		<p class="cta"><a href="https://oberai.blog">Subscribe to the newsletter ↗</a></p>
+		<p class="cta">
+			<a href="https://oberai.blog" data-contact-method="newsletter"
+				>Subscribe to the newsletter ↗</a
+			>
+		</p>
 	</section>
 
 	<section class="v3-section" aria-labelledby="work-title">
@@ -50,6 +56,7 @@
 					title={item.title}
 					description={item.description}
 					href={item.link?.href}
+					tracking={{ type: 'work', id: contentId('work', item.title) }}
 					external={Boolean(item.link)}
 				/>
 			{/each}

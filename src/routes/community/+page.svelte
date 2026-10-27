@@ -20,7 +20,7 @@
 	path="/community"
 />
 
-<div class="v3-page">
+<div class="v3-page" data-analytics-section="community_page">
 	<PageIntro title="Bringing people together." station="corkboard">
 		<p>
 			Developer tools are only half the story. These are the programs and gatherings I've started or
@@ -38,6 +38,8 @@
 		<section
 			class="v3-section initiative"
 			id={initiative.slug}
+			data-content-type="community"
+			data-content-id={`community-${initiative.slug}`}
 			aria-labelledby="{initiative.slug}-title"
 		>
 			<h2 id="{initiative.slug}-title">

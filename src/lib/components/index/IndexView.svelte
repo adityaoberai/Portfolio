@@ -5,6 +5,7 @@
 	import { highlights } from '$lib/data/highlights';
 	import { sections } from '$lib/data/sections';
 	import { trackEvent } from '$lib/analytics';
+	import { contactVisibility } from '$lib/contact-visibility';
 	const directory = sections.filter((section) => section.id !== 'now');
 	const roomHref = $derived(`/world${$roomJourney?.panel ? `#${$roomJourney.panel}` : ''}`);
 </script>
@@ -18,7 +19,11 @@
 				I'm Aditya, {site.role}. I help developers find their way from an idea to something they can
 				make. Away from the desk, there's usually a camera, a notebook, or a Pokémon card nearby.
 			</p>
-			<div class="intro-links" data-contact-section="index">
+			<div
+				class="intro-links"
+				data-contact-section="index"
+				use:contactVisibility={{ section: 'index' }}
+			>
 				<a href="/contact">Get in touch</a><a href="/resume">Resume (PDF)</a>
 			</div>
 		</div>

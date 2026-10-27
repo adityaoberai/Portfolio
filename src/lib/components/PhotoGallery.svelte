@@ -116,6 +116,10 @@
 				<h2 id="{scope}-photo-title">{current.title}</h2>
 				{#if current.externalUrl || current.link}<a
 						href={current.externalUrl ?? current.link}
+						data-content-type="photo"
+						data-content-id={current.id}
+						data-content-action="pexels"
+						data-analytics-section={scope}
 						target="_blank"
 						rel="noopener">View on Pexels ↗<span class="sr-only"> (opens in a new tab)</span></a
 					>{/if}

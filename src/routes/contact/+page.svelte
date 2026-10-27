@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { trackEvent } from '$lib/analytics';
+	import { contactVisibility } from '$lib/contact-visibility';
 	import PageMeta from '$lib/components/PageMeta.svelte';
 	import PageIntro from '$lib/components/PageIntro.svelte';
 	import Row from '$lib/components/Row.svelte';
@@ -32,9 +31,6 @@
 		},
 		{ meta: 'Support', title: 'GitHub Sponsors', subtitle: 'github.com', href: sponsorLink }
 	];
-	onMount(() => {
-		trackEvent('contact_section_viewed', { section: 'contact_page' });
-	});
 </script>
 
 <PageMeta
@@ -51,7 +47,9 @@
 		</p>
 	</PageIntro>
 
-	<p class="mail"><a href="mailto:{site.email}">{site.email}</a></p>
+	<p class="mail" use:contactVisibility={{ section: 'contact_page' }}>
+		<a href="mailto:{site.email}">{site.email}</a>
+	</p>
 	<p class="also">
 		<a href="mailto:{site.email}?subject=Speaking invitation">Speaking invitation ↗</a>
 		<a href="/resume">Resume (PDF) →</a>

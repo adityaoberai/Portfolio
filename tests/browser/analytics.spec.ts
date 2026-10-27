@@ -184,6 +184,13 @@ test('contact, outbound links, and resume redirect downloads are tracked', async
 	await page.getByRole('link', { name: /Resume \(PDF\)/ }).click();
 	await expect.poll(() => events.filter((event) => event.name === 'file_download').length).toBe(3);
 	expect(events.filter((event) => event.name === 'file_download').at(-1)?.props).toContain('docx');
+	expect(
+		events.filter((event) => event.name === 'resume_clicked').map((event) => event.props)
+	).toEqual([
+		['format', 'pdf', 'section', 'contact_page'],
+		['format', 'pdf', 'section', 'contact_page'],
+		['format', 'docx', 'section', 'contact_page']
+	]);
 });
 
 test('Do Not Track suppresses automatic and custom events', async ({ page }) => {
@@ -272,6 +279,7 @@ test('mobile contact preview counts a view only when its reader opens', async ({
 		page.getByRole('button', { name: 'Open Elsewhere & contact', exact: true })
 	).toBeVisible();
 	expect(events.filter((event) => event.name === 'contact_section_viewed')).toHaveLength(0);
+	expect(events.filter((event) => event.name === 'room_station_viewed')).toHaveLength(0);
 	expect(events.find((event) => event.name === 'contact_clicked')?.props).toEqual([
 		'method',
 		'contact_panel',
@@ -308,6 +316,289 @@ test('mobile contact preview counts a view only when its reader opens', async ({
 	await page.getByRole('button', { name: 'Open Elsewhere & contact', exact: true }).click();
 	await expect(page.getByRole('dialog')).toHaveAttribute('aria-modal', 'true');
 	expect(events.filter((event) => event.name === 'contact_section_viewed')).toHaveLength(1);
+	expect(events.filter((event) => event.name === 'room_station_viewed')).toHaveLength(1);
+});
+
+test('content links identify the item and entry page, including keyboard and middle clicks', async ({
+	page
+}) => {
+	const events = await captureEvents(page);
+	const cases = [
+		{
+			path: '/projects',
+			selector: 'main li[data-content-id="project-relief-atl"] a',
+			type: 'project',
+			id: 'project-relief-atl',
+			action: 'devpost',
+			section: 'projects_page'
+		},
+		{
+			path: '/writing',
+			selector: 'main a[data-content-type="essay"]',
+			type: 'essay',
+			section: 'writing_page'
+		},
+		{ path: '/speaking', selector: 'main .badges a', type: 'talk', section: 'speaking_page' },
+		{ path: '/speaking', selector: '#podcasts a', type: 'podcast', section: 'speaking_page' },
+		{
+			path: '/community',
+			selector: 'main .initiative a',
+			type: 'community',
+			section: 'community_page'
+		},
+		{ path: '/work', selector: 'main .items a', type: 'work', section: 'work_page' },
+		{
+			path: '/collection',
+			selector: 'main .cta a',
+			type: 'collectible',
+			id: 'collection',
+			action: 'showcase',
+			section: 'collection_page'
+		}
+	];
+	for (const [index, item] of cases.entries()) {
+		await page.goto(item.path);
+		await page.evaluate(() => {
+			document.addEventListener('click', (event) => event.preventDefault());
+			document.addEventListener('auxclick', (event) => event.preventDefault());
+		});
+		const link = page.locator(item.selector).first();
+		if (index === 1) await link.press('Enter');
+		else if (index === 3) await link.click({ button: 'middle' });
+		else await link.click();
+		await expect
+			.poll(() => events.filter((event) => event.name === 'content_clicked').length)
+			.toBe(index + 1);
+		const props = events.filter((event) => event.name === 'content_clicked').at(-1)?.props ?? [];
+		expect(props).toContain(item.type);
+		expect(props).toContain(item.section);
+		if (item.id) expect(props).toContain(item.id);
+		if (item.action) expect(props).toContain(item.action);
+	}
+	// A context menu is not a content visit.
+	await page.locator('main .cta a').click({ button: 'right' });
+	expect(events.filter((event) => event.name === 'content_clicked')).toHaveLength(cases.length);
+});
+
+test('speaker bio counts successful copies, and headshot and speaking contact keep their entry point', async ({
+	page
+}) => {
+	const events = await captureEvents(page);
+	await page.addInitScript(() => {
+		Object.defineProperty(navigator, 'clipboard', {
+			configurable: true,
+			value: { writeText: async () => {} }
+		});
+	});
+	await page.goto('/speaking');
+	await page.getByRole('button', { name: 'Copy bio', exact: true }).click();
+	await expect(page.getByRole('button', { name: 'Copied!', exact: true })).toBeVisible();
+	await expect
+		.poll(() => events.filter((event) => event.name === 'speaker_bio_copied').length)
+		.toBe(1);
+	await page.evaluate(() => {
+		// Cancel resource navigation before SvelteKit handles the click at the document root.
+		document.addEventListener(
+			'click',
+			(event) => {
+				if (event.target instanceof Element && event.target.closest('a')) event.preventDefault();
+			},
+			{ capture: true }
+		);
+		Object.defineProperty(navigator, 'clipboard', {
+			value: {
+				writeText: async () => {
+					throw new Error('Denied');
+				}
+			}
+		});
+	});
+	await page.getByRole('button', { name: 'Copied!', exact: true }).click();
+	await expect(page.getByRole('button', { name: 'Copy bio', exact: true })).toBeVisible();
+	expect(events.filter((event) => event.name === 'speaker_bio_copied')).toHaveLength(1);
+	await page.getByRole('link', { name: 'Headshot', exact: true }).click();
+	await expect
+		.poll(() => events.filter((event) => event.name === 'speaker_asset_clicked').length)
+		.toBe(1);
+	expect(events.find((event) => event.name === 'speaker_asset_clicked')?.props).toEqual([
+		'asset',
+		'headshot',
+		'section',
+		'speaking_page'
+	]);
+	await page.getByRole('link', { name: /Invite me to speak/ }).click();
+	await expect
+		.poll(() => events.filter((event) => event.name === 'contact_clicked').length)
+		.toBe(1);
+	expect(events.find((event) => event.name === 'contact_clicked')?.props).toEqual([
+		'method',
+		'email',
+		'purpose',
+		'speaking',
+		'section',
+		'speaking_page'
+	]);
+});
+
+test('contact views reflect visibility, deduplicate scrolling, and reset the footer on navigation', async ({
+	page
+}) => {
+	const events = await captureEvents(page);
+	await page.goto('/projects');
+	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+	expect(events.filter((event) => event.name === 'contact_section_viewed')).toHaveLength(0);
+	await page.locator('footer nav').scrollIntoViewIfNeeded();
+	await expect
+		.poll(() => events.filter((event) => event.name === 'contact_section_viewed').length)
+		.toBe(1);
+	expect(events.find((event) => event.name === 'contact_section_viewed')?.props).toEqual([
+		'section',
+		'footer'
+	]);
+	await page.evaluate(() => scrollTo(0, 0));
+	await page.locator('footer nav').scrollIntoViewIfNeeded();
+	await page.waitForTimeout(100);
+	expect(events.filter((event) => event.name === 'contact_section_viewed')).toHaveLength(1);
+	await page.locator('footer a[href="/index"]').click();
+	await expect(page).toHaveURL(/\/index$/);
+	await expect
+		.poll(
+			() =>
+				events.filter(
+					(event) => event.name === 'contact_section_viewed' && event.props?.includes('index')
+				).length
+		)
+		.toBe(1);
+	await page.locator('footer nav').scrollIntoViewIfNeeded();
+	await expect
+		.poll(
+			() =>
+				events.filter(
+					(event) => event.name === 'contact_section_viewed' && event.props?.includes('footer')
+				).length
+		)
+		.toBe(2);
+});
+
+test('room readers, artifacts, curiosities and settings send deliberate engagement events', async ({
+	page
+}) => {
+	const events = await captureEvents(page);
+	await page.goto('/world#notebook');
+	await expect(page.locator('dialog.sheet:not(.poem)')).toBeVisible();
+	await expect
+		.poll(() => events.filter((event) => event.name === 'room_station_viewed').length)
+		.toBe(1);
+	const essay = page.locator('dialog.sheet [data-content-type="essay"] a').first();
+	await essay.evaluate((anchor) =>
+		anchor.addEventListener('click', (event) => event.preventDefault())
+	);
+	await essay.click();
+	await expect
+		.poll(() => events.filter((event) => event.name === 'content_clicked').length)
+		.toBe(1);
+	expect(events.find((event) => event.name === 'content_clicked')?.props).toContain(
+		'room_notebook'
+	);
+	await page.getByRole('button', { name: 'Close and return to the room', exact: true }).click();
+	await page.getByRole('button', { name: 'Room menu', exact: true }).click();
+	await page.getByText('Little things in the room', { exact: true }).click();
+	await page.getByRole('button', { name: /^Read “/ }).click();
+	await expect
+		.poll(() => events.filter((event) => event.name === 'room_poem_viewed').length)
+		.toBe(1);
+	await expect
+		.poll(() => events.filter((event) => event.name === 'room_curiosity_opened').length)
+		.toBe(1);
+	await page.getByRole('button', { name: 'Close and return to the room', exact: true }).click();
+	await page.getByRole('button', { name: 'Room menu', exact: true }).click();
+	await page.getByText('Room settings', { exact: true }).click();
+	await page.getByLabel('Low power', { exact: true }).check();
+	await expect
+		.poll(() => events.filter((event) => event.name === 'room_setting_changed').length)
+		.toBe(1);
+	expect(events.find((event) => event.name === 'room_setting_changed')?.props).toEqual([
+		'setting',
+		'low_power',
+		'value',
+		'true'
+	]);
+	expect(events.filter((event) => event.name === 'room_menu_opened')).toHaveLength(2);
+});
+
+test('hidden contact controls count a view only after the tab becomes visible', async ({
+	page
+}) => {
+	const events = await captureEvents(page);
+	await page.addInitScript(() => {
+		Object.defineProperty(document, 'visibilityState', {
+			configurable: true,
+			get: () => Reflect.get(window, '__testVisibility') ?? 'hidden'
+		});
+	});
+	await page.goto('/contact');
+	await expect(page.locator('main .mail')).toBeVisible();
+	await page.waitForTimeout(200);
+	expect(events.filter((event) => event.name === 'contact_section_viewed')).toHaveLength(0);
+	await page.evaluate(() => {
+		Reflect.set(window, '__testVisibility', 'visible');
+		document.dispatchEvent(new Event('visibilitychange'));
+	});
+	await expect
+		.poll(() => events.filter((event) => event.name === 'contact_section_viewed').length)
+		.toBe(1);
+});
+
+test('music intent and actual playback transitions are counted separately without duplicate updates', async ({
+	page
+}) => {
+	const events = await captureEvents(page);
+	await page.route('https://open.spotify.com/**', (route) =>
+		route.fulfill({
+			contentType: 'text/javascript',
+			body: `window.onSpotifyIframeApiReady({ createController(element, options, created) {
+			const listeners = {};
+			const report = (paused) => listeners.playback_update?.({ data: { isPaused: paused } });
+			window.__testPlayback = report;
+			created({
+				addListener(name, fn) { listeners[name] = fn; if (name === 'ready') setTimeout(fn, 0); },
+				play() { report(false); }, resume() { report(false); }, pause() { report(true); }, destroy() {}
+			});
+		} });`
+		})
+	);
+	await page.goto('/world');
+	await expect(page.locator('canvas.loaded')).toBeVisible();
+	await page.getByRole('button', { name: 'Room menu', exact: true }).click();
+	await page.getByText('Little things in the room', { exact: true }).click();
+	await page.getByRole('button', { name: 'Put the record on', exact: true }).click();
+	await expect
+		.poll(() => events.filter((event) => event.name === 'music_playback_changed').length)
+		.toBe(1);
+	await page.evaluate(() => {
+		const report = Reflect.get(window, '__testPlayback');
+		report(false);
+		report(false);
+		report(true);
+		report(true);
+	});
+	await expect
+		.poll(() => events.filter((event) => event.name === 'music_playback_changed').length)
+		.toBe(2);
+	await page.getByRole('button', { name: 'Stop', exact: true }).click();
+	await expect.poll(() => events.filter((event) => event.name === 'music_toggled').length).toBe(2);
+	expect(
+		events.filter((event) => event.name === 'music_toggled').map((event) => event.props)
+	).toEqual([
+		['state', 'on'],
+		['state', 'off']
+	]);
+	expect(
+		events.filter((event) => event.name === 'music_playback_changed').map((event) => event.props)
+	).toEqual([
+		['state', 'playing'],
+		['state', 'paused']
+	]);
 });
 
 test('local and preview hosts do not emit production analytics', async ({ page }) => {

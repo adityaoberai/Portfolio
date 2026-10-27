@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { page } from '$app/state';
+	import { contactVisibility } from '$lib/contact-visibility';
 	import { site } from '$lib/data/site';
 	import { socialLinks } from '$lib/data/links';
 	import { sectionById } from '$lib/data/sections';
@@ -13,7 +15,11 @@
 				Two ways in: <a href="/world">the room</a> or <a href="/index">On paper</a>.
 			</p>
 		</div>
-		<nav aria-label="Elsewhere" data-contact-section="footer">
+		<nav
+			aria-label="Elsewhere"
+			data-contact-section="footer"
+			use:contactVisibility={{ section: 'footer', page: page.url.pathname }}
+		>
 			<ul>
 				<li><a href="mailto:{site.email}">Email</a></li>
 				{#each socialLinks as link (link.name)}

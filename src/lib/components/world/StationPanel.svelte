@@ -45,7 +45,7 @@
 			{#if block.style === 'list'}
 				<ul class="entries">
 					{#each block.artifacts as item (item.id)}
-						<li>
+						<li data-content-type={item.type} data-content-id={item.id}>
 							{#if block.show.date && item.date}<span class="date">{item.date}</span>{/if}
 							<h3>{item.title}</h3>
 							{#if block.show.context && item.context}<p class="kicker">{item.context}</p>{/if}
@@ -60,7 +60,7 @@
 			{:else if block.style === 'pages'}
 				<ol class="pages">
 					{#each block.artifacts as item (item.id)}
-						<li>
+						<li data-content-type={item.type} data-content-id={item.id}>
 							{#if block.show.date && item.date}<span class="date">{item.date}</span>{/if}
 							{#if block.show.link && item.link}<a href={item.link}><h3>{item.title}</h3></a
 								>{:else}<h3>{item.title}</h3>{/if}
@@ -72,7 +72,7 @@
 			{:else if block.style === 'pins'}
 				<ul class="pins">
 					{#each block.artifacts as item (item.id)}
-						<li>
+						<li data-content-type={item.type} data-content-id={item.id}>
 							{#if block.show.date && item.date}<span class="date">{item.date}</span>{/if}
 							<h3>{item.title}</h3>
 							{#if block.show.description && item.description}<p>{item.description}</p>{/if}
@@ -89,7 +89,7 @@
 			{:else if block.style === 'badges'}
 				<ul class="badges">
 					{#each block.artifacts as item (item.id)}
-						<li>
+						<li data-content-type={item.type} data-content-id={item.id}>
 							<span class="badge-head"
 								>{[block.show.context && item.context, block.show.date && item.date]
 									.filter(Boolean)
@@ -109,7 +109,7 @@
 			{:else if block.style === 'cards'}
 				<ul class="cards">
 					{#each block.artifacts as card (card.id)}
-						<li>
+						<li data-content-type={card.type} data-content-id={card.id}>
 							<figure>
 								{#if block.show.link && card.link}<a href={card.link}>{@render cardImage(card)}</a
 									>{:else}{@render cardImage(card)}{/if}
@@ -126,7 +126,11 @@
 			{/if}
 		{:else if block.type === 'feature'}
 			{#if block.style === 'aside'}
-				<p class="aside">
+				<p
+					class="aside"
+					data-content-type={block.artifact.type}
+					data-content-id={block.artifact.id}
+				>
 					<strong>{block.artifact.title}</strong>{#if block.artifact.description}: {block.artifact
 							.description}{/if}
 					{@render itemLink(
@@ -135,7 +139,11 @@
 					)}
 				</p>
 			{:else}
-				<div class="feature">
+				<div
+					class="feature"
+					data-content-type={block.artifact.type}
+					data-content-id={block.artifact.id}
+				>
 					{#if block.kicker}<p class="kicker">{block.kicker}</p>{/if}
 					<h3>{block.artifact.title}</h3>
 					<p>{block.artifact.description} {block.artifact.context ?? ''}</p>
@@ -221,7 +229,14 @@
 	{#if panel.links.length}
 		<div class="links">
 			{#each panel.links as link (link.href + link.label)}
-				<a href={link.href}>{link.label} {link.external ? '↗' : '→'}</a>
+				<a
+					href={link.href}
+					data-content-type={id === 'door' ? undefined : 'section'}
+					data-content-id={id === 'door' ? undefined : station.section}
+					data-content-action="open_section"
+					data-contact-method={link.href === 'https://oberai.blog' ? 'newsletter' : undefined}
+					>{link.label} {link.external ? '↗' : '→'}</a
+				>
 			{/each}
 		</div>
 	{/if}
