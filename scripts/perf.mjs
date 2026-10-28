@@ -5,7 +5,7 @@
 // Usage: npm run build && npm start (in another terminal), then npm run perf.
 import { chromium } from 'playwright';
 
-const base = process.env.BASE ?? 'http://127.0.0.1:4173';
+const base = process.env.BASE ?? 'http://127.0.0.1:3000';
 const browser = await chromium.launch();
 
 async function transfer(path) {

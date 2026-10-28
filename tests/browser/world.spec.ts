@@ -39,13 +39,15 @@ async function openMenu(page: Page) {
 
 // Spotify's iFrame API, stubbed: a blank player that reports playback changes
 // and records what it was asked to do. Nothing reaches Spotify.
-async function stubSpotify(page: Page) {
+async function stubSpotify(page: Page, stallFirstPlayer = false) {
 	await page.route('https://open.spotify.com/**', (route) =>
 		route.fulfill({
 			contentType: 'text/javascript',
 			body: `window.__spotify = [];
+			let players = 0;
 			window.onSpotifyIframeApiReady({
 				createController(element, options, created) {
+					players++;
 					const frame = document.createElement('iframe');
 					frame.width = options.width;
 					frame.height = options.height;
@@ -65,7 +67,7 @@ async function stubSpotify(page: Page) {
 						pause: say('pause', true),
 						destroy: () => frame.remove()
 					});
-					setTimeout(() => emit('ready'), 50);
+					if (!${stallFirstPlayer} || players > 1) setTimeout(() => emit('ready'), 50);
 				}
 			});`
 		})
@@ -324,6 +326,47 @@ for (const width of [320, 390, 430]) {
 		await expect(page.locator('canvas')).toBeFocused();
 		expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
 		await context.close();
+	});
+}
+
+for (const stalledStage of ['api', 'player']) {
+	test(`a stalled Spotify ${stalledStage} shows a fallback and can be retried`, async ({
+		page
+	}) => {
+		await page.emulateMedia({ reducedMotion: 'reduce' });
+		const errors: string[] = [];
+		page.on('pageerror', (error) => errors.push(error.message));
+		await stubSpotify(page, stalledStage === 'player');
+		// Only the first attempt stalls. Retrying exercises the normal player above.
+		if (stalledStage === 'api')
+			await page.route(
+				'https://open.spotify.com/embed/iframe-api/v1',
+				(route) => route.fulfill({ contentType: 'text/javascript', body: '' }),
+				{ times: 1 }
+			);
+		await openRoom(page);
+		await page.clock.install();
+		await openMenu(page);
+		await page.locator('summary').filter({ hasText: 'Little things in the room' }).click();
+		const response = page.waitForResponse('https://open.spotify.com/embed/iframe-api/v1');
+		await page.getByRole('button', { name: 'Put the record on', exact: true }).click();
+		await (await response).finished();
+		const dock = page.getByRole('region', { name: 'Gramophone' });
+		if (stalledStage === 'player') await expect(dock.locator('iframe')).toHaveCount(1);
+		await page.clock.fastForward(10001);
+		await expect(dock).toContainText('Spotify’s player didn’t load here.');
+		await expect(dock.getByRole('link', { name: /Listen on Spotify/ })).toBeVisible();
+		await expect(dock.locator('iframe')).toHaveCount(0);
+		if (stalledStage === 'api') {
+			await dock.getByRole('button', { name: 'Stop', exact: true }).click();
+			await openMenu(page);
+			await page.getByRole('button', { name: 'Put the record on', exact: true }).click();
+		} else {
+			await dock.getByRole('button', { name: 'Retry player', exact: true }).click();
+		}
+		await expect(dock.locator('iframe')).toHaveAttribute('title', 'Spotify player');
+		await expect.poll(() => spotifyCalls(page)).toEqual(['play']);
+		expect(errors).toEqual([]);
 	});
 }
 

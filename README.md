@@ -13,7 +13,7 @@ The home page is **My room**: a small 3D bedroom you can walk around, where each
 
 ## Getting started
 
-Use Node.js 24. Node 22.18 or later also works; older versions can build the site but can't run the unit tests.
+Use Node.js 24, as recorded in `.node-version` and used by CI. The package requires Node 22.18 or later so the unit tests can import TypeScript directly.
 
 ```bash
 npm install
@@ -40,7 +40,7 @@ Open http://localhost:5173. Local development doesn't need any environment varia
 | `npm run og`                    | Render the share image (see [og/README.md](og/README.md))                       |
 | `npm run perf`                  | Measure a performance proxy for the room (no substitute for a real-phone test)  |
 
-`npm run assets` and `npm run perf` need the production server running in another terminal (`npm run build && npm start`).
+`npm run assets` and `npm run perf` need the production server running in another terminal (`npm run build && npm start`). Both use the server's default URL, `http://127.0.0.1:3000`. If you set a different `PORT`, pass its URL as `BASE` when running either script, for example `BASE=http://127.0.0.1:4173 npm run perf`.
 
 ## Tests
 
@@ -53,6 +53,8 @@ npm run test:e2e
 ```
 
 They cover movement, panels, mobile layouts, music, mode switching, analytics events, and axe accessibility scans using the WCAG 2.2 AA tags. To use a different Chromium, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE`; it then renders WebGL in software.
+
+GitHub Actions runs lint, type checking, unit tests, the dependency audit, the production build, and the browser suite for pull requests and pushes to `main`. Moderate or higher dependency findings fail CI; the remaining low-severity findings are tracked in [docs/maintenance.md](docs/maintenance.md).
 
 ## Project layout
 
@@ -84,6 +86,7 @@ Appwrite Sites builds this repository with SvelteKit SSR. On any other Node host
 ## Further reading
 
 - [docs/room.md](docs/room.md): how the room is built, its rendering budget, input rules, and the real-phone test
-- [WORKLOG.md](WORKLOG.md): change log and open items
+- [WORKLOG.md](WORKLOG.md): current maintenance notes and open items
+- [docs/maintenance.md](docs/maintenance.md): dependency findings and upgrade follow-up
 - [docs/analytics.md](docs/analytics.md): analytics events and how to add more
 - [og/README.md](og/README.md): regenerating the share image

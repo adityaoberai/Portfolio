@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
-import { STATIONS, type StationId } from './layout';
+import type { StationId } from './layout';
+import { world } from '../data/world';
 
 export interface RoomPosition {
 	x: number;
@@ -14,10 +15,9 @@ export interface RoomJourney {
 	scroll: number;
 }
 const KEY = 'aditya-room-journey-v1';
-const ids = new Set(STATIONS.map((station) => station.id));
 export const roomJourney = writable<RoomJourney | null>(null);
 export function stationId(value: string | null | undefined): StationId | null {
-	return value && ids.has(value as StationId) && value !== 'lanyards' ? (value as StationId) : null;
+	return world.stations.find((station) => station.id === value && !station.hidden)?.id ?? null;
 }
 export function parseJourney(value: string | null): RoomJourney | null {
 	try {

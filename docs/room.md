@@ -14,6 +14,7 @@ How the 3D room (`/world`, and `/` for most visitors) is built, the rules that k
 - `src/lib/world/layout.ts`: positions, hitboxes, approach points, and furniture footprints. It has no Three.js import, so it's unit-tested.
 - `src/lib/world/build.ts`: builds the furniture from primitives, placed from their footprints so a model and its footprint can't drift apart.
 - `src/lib/world/scene.ts`: renderer, camera, input, movement, and the mirror.
+- `src/lib/components/world/WorldView.svelte`: room state, navigation history, dialogs, and scene lifecycle. `RoomMenu.svelte` owns the guide and settings UI; `MusicDock.svelte` owns the music controls and their responsive layout. `RecordPlayer.svelte` loads Spotify only on request and offers a retry if the API or player is not ready within ten seconds of its loading stage.
 - `src/lib/world/time.ts`: the window's Bengaluru time of day.
 - Cards: the favourite Pokémon cards are listed in `src/lib/data/collection.ts`, with originals in `assets/cards/<id>.png`. `npm run images` derives the 400px WebPs and the shelf's texture atlas. List order is shelf order, and a unit test fails if an image is missing or the atlas is stale.
 - Flag: `npm run images` also renders `static/room/flag.webp` from `assets/flag/manutd-crest.png`; its size and position are `FLAG` in `layout.ts`.
