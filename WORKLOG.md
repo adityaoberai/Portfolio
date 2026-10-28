@@ -27,6 +27,7 @@
 
 - The failed CI trace shows middle-click and Ctrl-click reaching `/contact`, but the Shift-click window never committing its navigation after the local server returned HTTP 200. CI used Playwright's default headless shell while the earlier local validation used full Chromium.
 - Select the `chromium` channel explicitly so CI and local tests use full Chromium's headless mode, including native new-window behavior. Keep every native activation and analytics assertion; additionally require the contact heading to render and the source room to stay unchanged with no panel open.
+- The first full-Chromium CI run passed the native-window regression and exposed a second test isolation bug: its late bubbling `preventDefault` ran after SvelteKit had handled the resume link, opening the PDF viewer. Cancel in capture phase without stopping propagation, preserving all analytics assertions.
 - Validation: clean dependency installation, lint, type checking, 34 unit tests, and the production build pass. Local browser execution is blocked by the cloud sandbox's socket restrictions; the matching PR CI run must validate the browser suite before this fix is considered verified.
 
 ## Outstanding work

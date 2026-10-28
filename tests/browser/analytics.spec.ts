@@ -148,12 +148,16 @@ test('contact, outbound links, and resume redirect downloads are tracked', async
 	const events = await captureEvents(page);
 	await page.goto('/contact');
 	await expect.poll(() => events.length).toBeGreaterThan(0);
-	// Avoid launching a mail client or navigating away while exercising actual link clicks.
+	// Cancel before SvelteKit's bubbling router listener, without stopping analytics listeners.
 	await page.evaluate(() =>
-		document.addEventListener('click', (event) => {
-			if (event.target instanceof Element && event.target.closest('a[href]'))
-				event.preventDefault();
-		})
+		document.addEventListener(
+			'click',
+			(event) => {
+				if (event.target instanceof Element && event.target.closest('a[href]'))
+					event.preventDefault();
+			},
+			{ capture: true }
+		)
 	);
 	await page.getByRole('link', { name: /Speaking invitation/ }).click();
 	await expect
@@ -170,6 +174,7 @@ test('contact, outbound links, and resume redirect downloads are tracked', async
 	await page.getByRole('link', { name: /Resume \(PDF\)/ }).click();
 	await expect.poll(() => events.filter((event) => event.name === 'file_download').length).toBe(1);
 	expect(events.find((event) => event.name === 'file_download')?.props).toContain('resume.pdf');
+	await expect(page).toHaveURL(`${site}/contact`);
 	await page.locator('main a[href="https://oberai.blog"]').click();
 	await expect.poll(() => events.filter((event) => event.name === 'outbound_link').length).toBe(1);
 	expect(events.find((event) => event.name === 'outbound_link')?.props).toContain('oberai.blog');
