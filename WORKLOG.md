@@ -23,6 +23,12 @@
 - Archived the V3 implementation history and replaced obsolete launch instructions with the current maintenance state.
 - Validation: clean `npm ci`, lint, type checking (0 errors/0 warnings), all 34 unit tests, the production build, and all 65 browser tests pass. Browser coverage includes Spotify API/player timeouts and retry, mobile controls, accessibility, analytics, mode persistence, and WebGL fallback. Visually checked the desktop room menu and mobile music fallback at 390px, with no horizontal overflow. The audit threshold passes with seven low-severity affected packages and no moderate/high/critical findings.
 
+## 28 October 2026 — Native contact-window CI coverage
+
+- The failed CI trace shows middle-click and Ctrl-click reaching `/contact`, but the Shift-click window never committing its navigation after the local server returned HTTP 200. CI used Playwright's default headless shell while the earlier local validation used full Chromium.
+- Select the `chromium` channel explicitly so CI and local tests use full Chromium's headless mode, including native new-window behavior. Keep every native activation and analytics assertion; additionally require the contact heading to render and the source room to stay unchanged with no panel open.
+- Validation: clean dependency installation, lint, type checking, 34 unit tests, and the production build pass. Local browser execution is blocked by the cloud sandbox's socket restrictions; the matching PR CI run must validate the browser suite before this fix is considered verified.
+
 ## Outstanding work
 
 - Run the physical iPhone/Android, screen-reader, Safari playback, and sustained GPU/thermal checks in [docs/room.md](docs/room.md#real-phone-test-not-yet-passed), then record device, browser, connection, and results here. Automated Chromium checks do not replace those checks.

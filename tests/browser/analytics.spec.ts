@@ -668,6 +668,9 @@ test('modified contact-menu activations identify page navigation and primary cli
 		await contact.click(action);
 		const popup = await popupPromise;
 		await expect(popup).toHaveURL(`${site}/contact`);
+		await expect(popup.getByRole('heading', { name: 'Say hello.', exact: true })).toBeVisible();
+		await expect(page).toHaveURL(`${site}/world`);
+		await expect(page.locator('dialog.sheet:not(.poem)')).not.toBeVisible();
 		await popup.close();
 		await page.bringToFront();
 	}
