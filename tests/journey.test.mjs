@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseJourney, stationId } from '../src/lib/world/journey.ts';
 import { focusViewport } from '../src/lib/world/viewport.ts';
+import { world } from '../src/lib/data/world.ts';
 
 test('visit data survives a round trip without allowing hidden or invalid station IDs', () => {
 	const saved = {
@@ -14,6 +15,22 @@ test('visit data survives a round trip without allowing hidden or invalid statio
 	assert.deepEqual(parseJourney(JSON.stringify(saved)), saved);
 	assert.equal(stationId('lanyards'), null);
 	assert.equal(stationId('__proto__'), null);
+});
+test('shared links and saved visits follow configured station visibility', () => {
+	const lanyards = world.stations.find((station) => station.id === 'lanyards');
+	const camera = world.stations.find((station) => station.id === 'camera');
+	const previous = [lanyards.hidden, camera.hidden];
+	try {
+		lanyards.hidden = false;
+		camera.hidden = true;
+		assert.equal(stationId('lanyards'), 'lanyards');
+		assert.equal(stationId('camera'), null);
+		const saved = parseJourney(JSON.stringify({ station: 'lanyards', panel: 'camera' }));
+		assert.equal(saved.station, 'lanyards');
+		assert.equal(saved.panel, null);
+	} finally {
+		[lanyards.hidden, camera.hidden] = previous;
+	}
 });
 test('unavailable or corrupt session data never prevents a visit', () => {
 	for (const value of [null, '', '{', 'null', 'false', '42'])

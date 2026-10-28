@@ -6,7 +6,7 @@
 import { writeFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 
-const base = process.env.BASE ?? 'http://127.0.0.1:4173';
+const base = process.env.BASE ?? 'http://127.0.0.1:3000';
 // 11:00 in Bengaluru, so the window shows a daytime sky.
 const daytime = new Date('2026-10-01T05:30:00Z');
 const browser = await chromium.launch();

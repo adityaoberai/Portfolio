@@ -25,19 +25,40 @@
 	// Loaded the first time a record goes on, never before, and kept for the visit.
 	let api: Promise<IFrameAPI> | undefined;
 	function loadApi() {
-		api ??= new Promise<IFrameAPI>((resolve, reject) => {
-			Reflect.set(window, 'onSpotifyIframeApiReady', resolve);
+		if (api) return api;
+		const loading = new Promise<IFrameAPI>((resolve, reject) => {
+			let settled = false;
 			const script = document.createElement('script');
-			script.src = 'https://open.spotify.com/embed/iframe-api/v1';
-			script.async = true;
-			script.onerror = () => {
+			const cleanup = () => {
+				window.clearTimeout(timeout);
+				if (Reflect.get(window, 'onSpotifyIframeApiReady') === ready)
+					Reflect.deleteProperty(window, 'onSpotifyIframeApiReady');
+			};
+			const fail = () => {
+				if (settled) return;
+				settled = true;
+				cleanup();
 				script.remove();
-				api = undefined;
 				reject(new Error('Spotify’s player did not load'));
 			};
+			const ready = (value: IFrameAPI) => {
+				if (settled) return;
+				settled = true;
+				cleanup();
+				resolve(value);
+			};
+			const timeout = window.setTimeout(fail, 10000);
+			Reflect.set(window, 'onSpotifyIframeApiReady', ready);
+			script.src = 'https://open.spotify.com/embed/iframe-api/v1';
+			script.async = true;
+			script.onerror = fail;
 			document.head.append(script);
 		});
-		return api;
+		api = loading;
+		void loading.catch(() => {
+			if (api === loading) api = undefined;
+		});
+		return loading;
 	}
 </script>
 
@@ -67,6 +88,25 @@
 	// play button has to.
 	let nudge = $state(false);
 	let nudgeTimer = 0;
+	let readyTimer = 0;
+	let attempt = 0;
+
+	function fail(current: number) {
+		if (destroyed || current !== attempt) return;
+		attempt++;
+		window.clearTimeout(readyTimer);
+		window.clearTimeout(nudgeTimer);
+		controller?.destroy();
+		controller = undefined;
+		holder.replaceChildren();
+		if (playing) {
+			playing = false;
+			onplayback(false);
+		}
+		begun = false;
+		failed = true;
+		nudge = false;
+	}
 
 	function play(embed: EmbedController, how: 'play' | 'resume') {
 		embed[how]();
@@ -80,27 +120,31 @@
 		if (begun) return;
 		begun = true;
 		failed = false;
+		const current = ++attempt;
 		try {
 			const IFrameAPI = await loadApi();
-			if (destroyed) return;
+			if (destroyed || current !== attempt) return;
 			const slot = document.createElement('div');
 			holder.replaceChildren(slot);
+			readyTimer = window.setTimeout(() => fail(current), 10000);
 			IFrameAPI.createController(slot, { url: spotify, width: '100%', height: 80 }, (embed) => {
-				if (destroyed) return embed.destroy();
+				if (destroyed || current !== attempt) return embed.destroy();
 				controller = embed;
 				holder.querySelector('iframe')?.setAttribute('title', 'Spotify player');
 				embed.addListener('ready', () => {
+					if (destroyed || current !== attempt) return;
+					window.clearTimeout(readyTimer);
 					if (on) play(embed, 'play');
 				});
 				embed.addListener('playback_update', ({ data }) => {
+					if (destroyed || current !== attempt) return;
 					playing = !data.isPaused;
 					if (playing) nudge = false;
 					onplayback(playing);
 				});
 			});
 		} catch {
-			begun = false;
-			failed = true;
+			fail(current);
 		}
 	}
 
@@ -117,6 +161,8 @@
 	// Effects only run in the browser, so this cleanup does too (onDestroy runs on the server).
 	$effect(() => () => {
 		destroyed = true;
+		attempt++;
+		window.clearTimeout(readyTimer);
 		window.clearTimeout(nudgeTimer);
 		controller?.destroy();
 	});
@@ -124,13 +170,14 @@
 
 <div class="player" class:failed bind:this={holder}></div>
 {#if failed}
-	<p class="line">
+	<p class="line" role="status">
 		Spotify’s player didn’t load here.
 		<a href={spotify} target="_blank" rel="noopener"
 			>Listen on Spotify<span aria-hidden="true">&nbsp;↗</span><span class="sr-only">
 				(opens in a new tab)</span
 			></a
 		>
+		<button onclick={() => start()}>Retry player</button>
 	</p>
 {:else if nudge}
 	<p class="line">Press play on the player to start the music.</p>
@@ -158,9 +205,16 @@
 			sans-serif;
 		color: #5f6555;
 	}
-	.line a {
+	.line a,
+	.line button {
 		color: #304e42;
 		text-decoration: underline;
 		text-underline-offset: 3px;
+	}
+	.line button {
+		display: inline-block;
+		min-height: 44px;
+		margin-left: 12px;
+		cursor: pointer;
 	}
 </style>

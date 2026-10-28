@@ -202,20 +202,6 @@ export const artifacts: Artifact[] = [
 
 export const artifactById = new Map(artifacts.map((artifact) => [artifact.id, artifact]));
 
-export function inWorld(world: World, type?: ArtifactType) {
-	return artifacts.filter((a) => a.worlds.includes(world) && (!type || a.type === type));
-}
-
 export function ofType(type: ArtifactType) {
 	return artifacts.filter((a) => a.type === type);
 }
-
-export const featured = artifacts.filter((a) => a.featured);
-
-// The first artifact for each room object; stations and Index share these records.
-export const deskArtifact = work[0];
-export const notebookArtifact = written[0];
-export const cameraArtifact = photographed[0];
-export const shelfArtifact = collected[0];
-
-export const collectionUrl = collection.showcaseUrl;

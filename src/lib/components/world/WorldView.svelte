@@ -4,9 +4,9 @@
 	import { page as route } from '$app/state';
 	import { trackEvent } from '$lib/analytics';
 	import V3Header from '$lib/components/V3Header.svelte';
-	import ModeSwitch from '$lib/components/ModeSwitch.svelte';
 	import BengaluruTime from '$lib/components/BengaluruTime.svelte';
-	import RecordPlayer from './RecordPlayer.svelte';
+	import MusicDock from './MusicDock.svelte';
+	import RoomMenu from './RoomMenu.svelte';
 	import StationPanel from './StationPanel.svelte';
 	import RoomJoystick from './RoomJoystick.svelte';
 	import { curiosities, page as copy, stationById, stations } from '$lib/data/room';
@@ -20,7 +20,7 @@
 	let topEl: HTMLDivElement;
 	let cornerEl: HTMLDivElement;
 	let menuButton: HTMLButtonElement;
-	let menu: HTMLDivElement;
+	let menu = $state<HTMLDivElement>(null!);
 	let dockEl = $state<HTMLElement>(null!);
 	let musicButton = $state<HTMLButtonElement>(null!);
 	let menuOpen = $state(false);
@@ -236,7 +236,7 @@
 		const id =
 			route.state.roomPanel === undefined
 				? stationId(route.url.hash.slice(1))
-				: route.state.roomPanel;
+				: stationId(route.state.roomPanel);
 		if (status === 'loading') return;
 		if (id) {
 			if (id === open || id === pending) return;
@@ -345,6 +345,15 @@
 		canvas.dispatchEvent(
 			new KeyboardEvent('keydown', { key: event.key, repeat: event.repeat, cancelable: true })
 		);
+	}
+	function changeRoomSetting(setting: 'view' | 'low_power' | 'less_motion', value = false) {
+		if (setting === 'view') room?.reset();
+		else if (setting === 'low_power') room?.setLowQuality(value);
+		else room?.setReducedMotion(value);
+		trackEvent('room_setting_changed', {
+			setting,
+			value: setting === 'view' ? 'reset' : String(value)
+		});
 	}
 	function menuToggled(event: ToggleEvent) {
 		menuOpen = event.newState === 'open';
@@ -723,76 +732,20 @@
 		class:object-row={objectRowOpen}
 		bind:this={cornerEl}
 	>
-		{#if music}<section class="dock" aria-label="Gramophone" hidden={!musicOn} bind:this={dockEl}>
-				<button
-					class="music-button"
-					bind:this={musicButton}
-					hidden={!compactPlayer}
-					disabled={menuOpen || Boolean(pending)}
-					aria-label="Open player"
-					aria-expanded="false"
-					aria-controls="music-player"
-					onclick={() => togglePlayer(true)}
-				>
-					<svg class="gramophone-icon" viewBox="0 0 64 56" aria-hidden="true">
-						<path d="M14 48h5v4h-5zm28 0h5v4h-5z" fill="#5e3b27" />
-						<rect x="12" y="36" width="38" height="14" rx="2" fill="#7a4e33" />
-						<path d="M11 36h40v4H11z" fill="#a9805c" />
-						<rect x="25" y="43" width="12" height="4" rx="1" fill="#c9a24a" />
-						<path d="M50 42h4v5h3" fill="none" stroke="#a48342" stroke-width="2" />
-						<ellipse cx="27" cy="35" rx="12" ry="4" fill="#263b33" />
-						<ellipse cx="27" cy="35" rx="9" ry="2.5" fill="none" stroke="#647369" />
-						<ellipse cx="27" cy="35" rx="4" ry="1.5" fill="#c23b3b" />
-						<path d="M27 35v-3" stroke="#efe4c8" stroke-width="1.5" />
-						<path
-							d="M42 35V25q0-7-10-7"
-							fill="none"
-							stroke="#c9a24a"
-							stroke-width="5"
-							stroke-linecap="round"
-						/>
-						<path d="M34 15 16 5l-5 21 23-5z" fill="#d4ad55" stroke="#a48342" />
-						<ellipse
-							cx="13.5"
-							cy="15.5"
-							rx="6"
-							ry="11"
-							transform="rotate(13 13.5 15.5)"
-							fill="#5a4220"
-							stroke="#c9a24a"
-							stroke-width="2"
-						/>
-						<path d="M43 32h-6l-3 4" fill="none" stroke="#d4ad55" stroke-width="2" />
-					</svg>
-					<span>Gramophone</span>
-				</button>
-				<div class="dock-top" hidden={compactPlayer}>
-					<span class="disc" class:turning={recordPlaying && !reducedMotion} aria-hidden="true"
-					></span>
-					<span class="dock-label">Gramophone</span>
-					<div class="dock-actions">
-						<button
-							aria-label={playerExpanded ? 'Hide player' : 'Open player'}
-							title={playerExpanded ? 'Hide player' : 'Open player'}
-							aria-expanded={playerExpanded}
-							aria-controls="music-player"
-							onclick={() => togglePlayer(!playerExpanded)}
-						>
-							<svg viewBox="0 0 24 24" aria-hidden="true">
-								<path d={playerExpanded ? 'm6 15 6-6 6 6' : 'm6 9 6 6 6-6'} />
-							</svg>
-						</button>
-						<button aria-label="Stop" title="Stop music" onclick={stopMusic}>
-							<svg viewBox="0 0 24 24" aria-hidden="true">
-								<rect x="6" y="6" width="12" height="12" rx="1" fill="currentColor" stroke="none" />
-							</svg>
-						</button>
-					</div>
-				</div>
-				<div id="music-player" hidden={!playerExpanded}>
-					<RecordPlayer spotify={music.spotify} on={musicOn} onplayback={musicPlayback} />
-				</div>
-			</section>{/if}
+		{#if music}<MusicDock
+				spotify={music.spotify}
+				on={musicOn}
+				expanded={playerExpanded}
+				compact={compactPlayer}
+				playing={recordPlaying === true}
+				{reducedMotion}
+				disabled={menuOpen || Boolean(pending)}
+				bind:element={dockEl}
+				bind:button={musicButton}
+				ontoggle={togglePlayer}
+				onstop={stopMusic}
+				onplayback={musicPlayback}
+			/>{/if}
 		{#if status === 'ready'}<div class="movement" hidden={playerRowOpen}>
 				<div
 					class="room-hint"
@@ -843,86 +796,20 @@
 					</div>{/if}
 			</div>{/if}
 	</div>
-	<div id="room-menu" class="menu" popover bind:this={menu} ontoggle={menuToggled}>
-		<div class="menu-head">
-			<h2>In the room</h2>
-			<button popovertarget="room-menu" popovertargetaction="hide" aria-label="Close the menu"
-				>×</button
-			>
-		</div>
-		<div class="menu-surface"><ModeSwitch /></div>
-		<nav aria-label="In the room">
-			<ul class="guide">
-				{#each stations as station (station.id)}<li class:is-near={roomState?.near === station.id}>
-						<a
-							href={station.href}
-							onclick={(event) => visit(station.id, event)}
-							aria-label={station.area}
-							><span class="destination-label"
-								>{station.area}{#if station.id === 'window'}<BengaluruTime />{/if}</span
-							><span class="object">{station.short} <span aria-hidden="true">→</span></span></a
-						>
-					</li>{/each}
-			</ul>
-		</nav>
-		<details class="little-things">
-			<summary>Little things in the room</summary>
-			<ul>
-				{#each Object.entries(curiosities) as [id, item] (id)}<li>
-						<strong>{item.label}</strong>
-						<p>{item.line}</p>
-						{#if item.poem}<button onclick={() => readPoem(id as CuriosityId)}
-								>Read “{item.poem.title}”</button
-							>{:else if item.music}<button onclick={musicFromMenu}
-								>{musicOn ? 'Stop the record' : 'Put the record on'}</button
-							>{:else}<button
-								onclick={() => {
-									menu.hidePopover();
-									showCuriosity(id as CuriosityId);
-								}}>Take a look</button
-							>{/if}
-					</li>{/each}
-			</ul>
-		</details>
-		<details class="settings">
-			<summary>Room settings</summary>
-			<div>
-				<button
-					onclick={() => {
-						room?.reset();
-						trackEvent('room_setting_changed', { setting: 'view', value: 'reset' });
-					}}
-					disabled={status !== 'ready'}>Reset view</button
-				><label
-					><input
-						type="checkbox"
-						bind:checked={lowQuality}
-						onchange={(event) => {
-							const value = event.currentTarget.checked;
-							room?.setLowQuality(value);
-							trackEvent('room_setting_changed', {
-								setting: 'low_power',
-								value: String(value)
-							});
-						}}
-					/> Low power</label
-				><label
-					><input
-						type="checkbox"
-						bind:checked={reducedMotion}
-						onchange={(event) => {
-							const value = event.currentTarget.checked;
-							room?.setReducedMotion(value);
-							trackEvent('room_setting_changed', {
-								setting: 'less_motion',
-								value: String(value)
-							});
-						}}
-					/> Less motion</label
-				>
-			</div>
-		</details>
-	</div>
+	<RoomMenu
+		bind:element={menu}
+		bind:lowQuality
+		bind:reducedMotion
+		near={roomState?.near}
+		ready={status === 'ready'}
+		{musicOn}
+		onvisit={visit}
+		oncuriosity={showCuriosity}
+		onpoem={readPoem}
+		onmusic={musicFromMenu}
+		onsetting={changeRoomSetting}
+		ontoggle={menuToggled}
+	/>
 	<p class="sr-only" aria-live="polite">
 		{near
 			? `Near the ${near.short}. ${coarse ? 'Tap the object or use Menu to explore.' : 'Press E while the room is focused to explore.'}`
@@ -1098,9 +985,7 @@
 	.corner.object-row {
 		visibility: hidden;
 	}
-	.movement[hidden],
-	.dock-top[hidden],
-	.music-button[hidden] {
+	.movement[hidden] {
 		display: none;
 	}
 	.diagnostics {
@@ -1173,8 +1058,7 @@
 		min-height: 108px;
 		padding-bottom: 52px;
 	}
-	.enter-button,
-	.music-button {
+	.enter-button {
 		display: grid;
 		place-items: center;
 		width: 80px;
@@ -1188,32 +1072,7 @@
 		pointer-events: auto;
 		cursor: pointer;
 	}
-	.music-button {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 6px;
-		width: 100%;
-		height: 100%;
-		min-height: 108px;
-		padding: 10px 4px;
-		border-color: #c5b58d;
-		background: #faf7ed;
-		color: var(--color-accent);
-		font-size: 0.8125rem;
-	}
-	.music-button:hover {
-		background: #f0ebdc;
-		border-color: #a48342;
-	}
-	.gramophone-icon {
-		width: 64px;
-		height: 56px;
-		flex: none;
-	}
-	.enter-button:disabled,
-	.music-button:disabled {
+	.enter-button:disabled {
 		background: #faf7edda;
 		color: var(--color-secondary);
 		border-color: var(--color-hairline-strong);
@@ -1268,142 +1127,6 @@
 	}
 	.menu-button:hover {
 		background: #eeeee2;
-	}
-	.menu {
-		position: fixed;
-		inset: var(--menu-top, 80px) var(--gutter) auto auto;
-		width: min(380px, calc(100vw - 32px));
-		max-height: calc(100dvh - var(--menu-top, 80px) - 16px);
-		margin: 0;
-		overflow-y: auto;
-		padding: 8px 20px 16px;
-		background: #faf7ed;
-		color: var(--color-ink);
-		border: 1px solid #c9c4b6;
-		border-radius: 14px;
-		box-shadow: 0 20px 60px #1f2a2433;
-	}
-	.menu::backdrop {
-		background: transparent;
-	}
-	.menu-head {
-		position: sticky;
-		top: -8px;
-		z-index: 1;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		background: #faf7ed;
-		padding: 8px 0;
-	}
-	.menu-head h2 {
-		font-size: 1.5rem;
-		font-weight: 500;
-	}
-	.menu-head button {
-		width: 44px;
-		height: 44px;
-		font-size: 1.5rem;
-		cursor: pointer;
-	}
-	.guide {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
-	.guide li {
-		border-top: 1px solid var(--color-hairline);
-	}
-	.guide a {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 16px;
-		min-height: 56px;
-		padding: 8px 0;
-		font-size: 1.25rem;
-	}
-	.guide a > span:first-child {
-		min-width: 0;
-	}
-	.guide a:hover {
-		color: var(--color-accent);
-	}
-	.guide .object {
-		font: 0.875rem/1.4 var(--font-ui);
-		color: var(--color-secondary);
-	}
-	.guide .is-near a {
-		color: var(--color-accent);
-	}
-	details {
-		border-top: 1px solid var(--color-hairline);
-	}
-	summary {
-		display: flex;
-		align-items: center;
-		min-height: 48px;
-		font: 0.9375rem/1.4 var(--font-ui);
-		cursor: pointer;
-	}
-	summary::after {
-		content: '+';
-		margin-left: auto;
-	}
-	details[open] summary::after {
-		content: '−';
-	}
-	.little-things ul {
-		list-style: none;
-		padding: 0 0 12px;
-	}
-	.little-things li {
-		padding: 10px 0;
-	}
-	.little-things p {
-		font-size: 1rem;
-		line-height: 1.5;
-		color: var(--color-secondary);
-		margin-top: 4px;
-	}
-	.little-things button {
-		min-height: 44px;
-		color: var(--color-accent);
-		text-decoration: underline;
-		text-underline-offset: 4px;
-		cursor: pointer;
-	}
-	.settings div {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 4px 20px;
-		padding-bottom: 12px;
-	}
-	.settings button,
-	.settings label {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		min-height: 44px;
-		font: 0.875rem/1.4 var(--font-ui);
-		cursor: pointer;
-	}
-	.settings button {
-		text-decoration: underline;
-		text-underline-offset: 4px;
-	}
-	.settings button:disabled {
-		opacity: 0.5;
-		cursor: default;
-	}
-	input {
-		accent-color: #304e42;
-		width: 18px;
-		height: 18px;
-	}
-	.menu-surface {
-		padding: 4px 0 8px;
-		border-bottom: 1px solid var(--color-hairline);
 	}
 	.fallback {
 		position: absolute;
@@ -1501,8 +1224,7 @@
 	.object-head h2 {
 		font: 500 1.25rem/1.25 var(--font-serif);
 	}
-	.object-title,
-	.destination-label {
+	.object-title {
 		display: flex;
 		align-items: baseline;
 		flex-wrap: wrap;
@@ -1595,68 +1317,6 @@
 	.verse p + p {
 		margin-top: 20px;
 	}
-	.dock {
-		width: 400px;
-		max-width: 100%;
-		padding: 6px 10px;
-		background: #faf7ed;
-		border: 1px solid #c9c4b6;
-		border-radius: 10px;
-		pointer-events: auto;
-	}
-	.dock[hidden] {
-		display: none;
-	}
-	.dock-top {
-		display: flex;
-		align-items: center;
-		flex-wrap: wrap;
-		gap: 4px 8px;
-		font: 0.8125rem/1.5 var(--font-ui);
-	}
-	.dock-label {
-		flex: 1;
-	}
-	.dock-actions {
-		display: flex;
-		gap: 4px;
-		margin-left: auto;
-	}
-	.dock-top button {
-		display: inline-grid;
-		place-items: center;
-		min-width: 44px;
-		min-height: 44px;
-		padding: 0;
-		border-radius: 6px;
-		color: var(--color-accent);
-		cursor: pointer;
-	}
-	.dock-top button:hover {
-		background: #eeece1;
-	}
-	.dock-top svg {
-		width: 20px;
-		height: 20px;
-		fill: none;
-		stroke: currentColor;
-		stroke-width: 1.75;
-		stroke-linecap: round;
-		stroke-linejoin: round;
-	}
-	#music-player {
-		padding-bottom: 4px;
-	}
-	#music-player[hidden] {
-		display: none;
-	}
-	.disc {
-		flex: none;
-		width: 18px;
-		height: 18px;
-		border-radius: 50%;
-		background: radial-gradient(circle, #f8f5ed 0 2px, #c23b3b 2px 5px, #263b33 5px);
-	}
 	@media (prefers-reduced-motion: no-preference) {
 		.sheet[open] {
 			animation: reveal 220ms ease-out;
@@ -1665,14 +1325,6 @@
 			from {
 				opacity: 0;
 				transform: translateX(20px);
-			}
-		}
-		.disc.turning {
-			animation: turn 1.8s linear infinite;
-		}
-		@keyframes turn {
-			to {
-				transform: rotate(360deg);
 			}
 		}
 	}
@@ -1695,9 +1347,6 @@
 			max-width: none;
 			justify-items: stretch;
 		}
-		.dock {
-			width: 100%;
-		}
 		.compact-player {
 			grid-template-columns: 96px minmax(0, 1fr) 80px;
 			gap: 8px 10px;
@@ -1719,18 +1368,6 @@
 			grid-column: 3;
 			grid-row: 2;
 		}
-		.compact-player .dock {
-			display: grid;
-			grid-column: 2;
-			grid-row: 2;
-			justify-self: center;
-			align-self: stretch;
-			max-width: 136px;
-			min-width: 0;
-			padding: 0;
-			border: 0;
-			background: transparent;
-		}
 		.room-hint {
 			background: #faf7edeb;
 		}
@@ -1750,22 +1387,6 @@
 			right: 16px;
 			bottom: calc(var(--corner, 160px) + 12px);
 			max-width: none;
-		}
-		.menu {
-			inset: 0 0 0 auto;
-			width: min(380px, calc(100vw - 24px));
-			height: 100dvh;
-			max-height: 100dvh;
-			padding: 0 20px max(20px, env(safe-area-inset-bottom));
-			border: 0;
-			border-left: 1px solid var(--color-hairline-strong);
-			border-radius: 0;
-			box-shadow: -16px 0 48px #25352926;
-			overscroll-behavior: contain;
-		}
-		.menu-head {
-			top: 0;
-			padding: max(12px, env(safe-area-inset-top)) 0 8px;
 		}
 		.menu-button {
 			position: fixed;
