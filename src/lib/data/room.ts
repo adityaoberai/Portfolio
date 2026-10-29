@@ -169,7 +169,7 @@ function resolvePanel(panel: Panel, section: SectionId, where: string): Resolved
 	};
 }
 
-const spotifyLink = /^https:\/\/open\.spotify\.com\/(playlist|album|track)\/[A-Za-z0-9]+$/;
+const soundcloudPlaylist = /^https:\/\/soundcloud\.com\/[A-Za-z0-9_-]+\/sets\/[A-Za-z0-9_-]+\/?$/;
 
 // Every object in the room needs content, and every configured station must exist.
 const layoutIds = new Set<string>(STATIONS.map((s) => s.id));
@@ -194,10 +194,10 @@ for (const curiosity of CURIOSITIES) {
 	if (poem?.bold && !poem.stanzas.flat().some((line) => line.startsWith(poem.bold!)))
 		throw problem(`curiosity "${curiosity.id}"`, `no line of its poem starts with "${poem.bold}".`);
 	const music = world.curiosities[curiosity.id].music;
-	if (music && !spotifyLink.test(music.spotify))
+	if (music && !soundcloudPlaylist.test(music.soundcloud))
 		throw problem(
 			`curiosity "${curiosity.id}"`,
-			`"${music.spotify}" isn't a Spotify playlist, album, or track link (https://open.spotify.com/playlist/…, without ?si=…).`
+			`"${music.soundcloud}" isn't a public SoundCloud playlist link (https://soundcloud.com/artist/sets/playlist).`
 		);
 }
 
