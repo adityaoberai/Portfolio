@@ -209,7 +209,8 @@
 
 <style>
 	.player {
-		min-height: clamp(166px, 36dvh, 300px);
+		--player-height: clamp(166px, 36dvh, 300px);
+		min-height: var(--player-height);
 		border-radius: 8px;
 		background: #ece6d3;
 	}
@@ -219,9 +220,14 @@
 	.player :global(iframe) {
 		display: block;
 		width: 100%;
-		height: clamp(166px, 36dvh, 300px);
+		height: var(--player-height);
 		border: 0;
 		border-radius: 8px;
+	}
+	@media (max-width: 820px), (pointer: coarse) {
+		.player {
+			--player-height: 166px;
+		}
 	}
 	.line {
 		margin-top: 10px;
