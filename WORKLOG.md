@@ -13,6 +13,15 @@
 - Appwrite Analytics replaces Google Analytics and runs only on the two production hostnames, respecting Do Not Track.
 - Node 24 is the development and CI default. The minimum supported version is 22.18.
 
+## 29 October 2026 — SoundCloud playlist and explicit player visibility
+
+- Replaced Spotify with SoundCloud's hosted player for Aditya's supplied public playlist, `https://soundcloud.com/user-298651421/sets/adis-world`. SoundCloud's oEmbed endpoint confirms the playlist title as "adi's world". No audio files or custom audio player were added.
+- Keep the player expanded whenever music is switched on, including on phones. Remove automatic collapse after playback begins and preserve the visitor's visibility choice across room readers and playback changes.
+- Replace chevrons with a minus icon and a visible Hide label. Show player uses a player-window icon, and the compact mobile control names the same action. Hiding keeps the existing iframe and playback session mounted.
+- Preserve lazy loading, retry/fallback behavior, playback-driven record animation, and existing analytics event names. Allow ten seconds for the API and thirty seconds for the playlist, with a loading message. Track-level errors keep SoundCloud's native controls available. Use its documented widget events and encrypted-media permission.
+- Replace provider-specific test doubles with a shared SoundCloud fixture and cover the supplied playlist, loading failure recovery, manual hide/show, stopping/restarting, focus, mobile geometry, and analytics deduplication.
+- Validation: lint, type checking (0 errors/0 warnings), all 34 unit tests, the production build, and all 66 browser tests pass. Visually checked the expanded and hidden mobile controls at 390px; responsive browser coverage includes portrait and landscape with no horizontal overflow. SoundCloud's real Widget API resolves the 39-track playlist. In a separate signed-out Chrome session, its public embedded player kept the first track playing beyond thirty seconds (the visible progress indicator passed 21% of the 4:20 track). Browser regression tests stub SoundCloud playback; live provider availability is checked separately.
+
 ## 28 October 2026 — Repository cleanup
 
 - Added Spotify API and player readiness timeouts, retry controls, and cleanup for failed or late loading attempts.

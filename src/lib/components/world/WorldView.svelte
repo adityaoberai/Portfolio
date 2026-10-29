@@ -50,7 +50,6 @@
 	let playerExpanded = $state(true);
 	let recordPlaying = $state<boolean | null>(null);
 	let musicNews = $state('');
-	let firstPlayback = true;
 	let returnFocus: HTMLElement | null = null;
 	let lastStation: StationId | null = null;
 	let saved: RoomJourney | null = null;
@@ -136,7 +135,6 @@
 			poemOf = null;
 			poemDialog.close();
 		}
-		if (touchControls) playerExpanded = false;
 		const focused = document.activeElement as HTMLElement | null;
 		returnFocus ??= focused && focused !== document.body ? focused : null;
 		selectStation(id);
@@ -387,7 +385,6 @@
 			closeStation();
 			replaceState(baseUrl(), { ...route.state, roomPanel: null, roomPanelEntry: false });
 		}
-		if (touchControls) playerExpanded = false;
 		window.clearTimeout(noteTimer);
 		note = null;
 		poemOf = id;
@@ -448,10 +445,9 @@
 		if (value === musicOn) return;
 		musicOn = value;
 		trackEvent('music_toggled', { state: value ? 'on' : 'off' });
-		firstPlayback = true;
 		if (value) playerExpanded = true;
 		musicNews = value
-			? 'The record is on. Open the player for playback controls, or stop the record.'
+			? 'The record is on. Hide the player to keep listening while you explore, or stop the record.'
 			: 'The record is off.';
 	}
 	function musicPlayback(playing: boolean) {
@@ -460,10 +456,6 @@
 		}
 		recordPlaying = playing;
 		room?.setRecord(playing);
-		if (playing && narrow && firstPlayback) {
-			playerExpanded = false;
-			firstPlayback = false;
-		}
 	}
 	function stopMusic() {
 		setMusic(false);
@@ -567,7 +559,6 @@
 		reducedMotion = motion.matches;
 		narrow = size.matches;
 		coarse = pointer.matches;
-		playerExpanded = !narrow;
 		const updateMotion = () => {
 			reducedMotion = motion.matches;
 			room?.setReducedMotion(reducedMotion);
@@ -733,7 +724,7 @@
 		bind:this={cornerEl}
 	>
 		{#if music}<MusicDock
-				spotify={music.spotify}
+				soundcloud={music.soundcloud}
 				on={musicOn}
 				expanded={playerExpanded}
 				compact={compactPlayer}

@@ -1,3 +1,4 @@
+import { stubSoundCloud, soundcloudPlayback } from './helpers/soundcloud';
 import { test, expect, type Page } from '@playwright/test';
 
 const site = 'https://adityaoberai.com';
@@ -560,20 +561,7 @@ test('music intent and actual playback transitions are counted separately withou
 	page
 }) => {
 	const events = await captureEvents(page);
-	await page.route('https://open.spotify.com/**', (route) =>
-		route.fulfill({
-			contentType: 'text/javascript',
-			body: `window.onSpotifyIframeApiReady({ createController(element, options, created) {
-			const listeners = {};
-			const report = (paused) => listeners.playback_update?.({ data: { isPaused: paused } });
-			window.__testPlayback = report;
-			created({
-				addListener(name, fn) { listeners[name] = fn; if (name === 'ready') setTimeout(fn, 0); },
-				play() { report(false); }, resume() { report(false); }, pause() { report(true); }, destroy() {}
-			});
-		} });`
-		})
-	);
+	await stubSoundCloud(page);
 	await page.goto('/world');
 	await expect(page.locator('canvas.loaded')).toBeVisible();
 	await page.getByRole('button', { name: 'Room menu', exact: true }).click();
@@ -582,13 +570,10 @@ test('music intent and actual playback transitions are counted separately withou
 	await expect
 		.poll(() => events.filter((event) => event.name === 'music_playback_changed').length)
 		.toBe(1);
-	await page.evaluate(() => {
-		const report = Reflect.get(window, '__testPlayback');
-		report(false);
-		report(false);
-		report(true);
-		report(true);
-	});
+	await soundcloudPlayback(page, false);
+	await soundcloudPlayback(page, false);
+	await soundcloudPlayback(page, true);
+	await soundcloudPlayback(page, true);
 	await expect
 		.poll(() => events.filter((event) => event.name === 'music_playback_changed').length)
 		.toBe(2);

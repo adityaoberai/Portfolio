@@ -10,7 +10,7 @@
 //             `links`. Mix blocks freely; any station can use any block.
 // curiosities One-line notes on the small objects. The ones you walk up to have
 //             `use`, the hint shown while standing beside them. The bed opens a
-//             `poem`; the gramophone plays `music`, a Spotify playlist.
+//             `poem`; the gramophone plays `music`, a SoundCloud playlist.
 //
 // BLOCKS (see the `Block` type below for every option)
 //   items    A list of artifacts. `style`: 'list' | 'pages' | 'pins' | 'badges'
@@ -173,7 +173,7 @@ export interface Curiosity {
 	// A poem that pops up instead of the note (the bed's). The menu's list of
 	// little things shows `line` and a button to read it.
 	poem?: Poem;
-	// Music it plays instead of showing the note (the gramophone's): Spotify's player shows
+	// Music it plays instead of showing the note (the gramophone's): SoundCloud's player shows
 	// over the hint card until it's used again, or Stop. The menu's list has a button too.
 	music?: Music;
 }
@@ -184,10 +184,9 @@ export interface Hint {
 	touch: string;
 }
 
-// What the gramophone plays: a Spotify link (open.spotify.com, a playlist, album, or
-// track), and the hint shown beside it while the music is on.
+// What the gramophone plays: a public SoundCloud playlist link, and the hint shown beside it while the music is on.
 export interface Music {
-	spotify: string;
+	soundcloud: string;
 	stop: Hint;
 }
 
@@ -501,13 +500,13 @@ export const world: WorldConfig = {
 			label: 'Football',
 			line: 'A Premier League ball by the bed, a little scuffed. It has seen some games.'
 		},
-		// Using it plays Aditya's playlist, with Spotify's player over the hint card.
+		// Using it plays Aditya's playlist, with SoundCloud's player over the hint card.
 		gramophone: {
 			label: 'Gramophone',
 			line: 'A wind-up gramophone on the side table. It plays my playlist.',
 			use: { title: 'Put a record on?', keys: 'to play', touch: 'Tap the gramophone to play' },
 			music: {
-				spotify: 'https://open.spotify.com/playlist/529YYSE5ZPtqODX4MWF222',
+				soundcloud: 'https://soundcloud.com/user-298651421/sets/adis-world',
 				stop: { title: 'Lift the needle?', keys: 'to stop', touch: 'Tap the gramophone to stop' }
 			}
 		},

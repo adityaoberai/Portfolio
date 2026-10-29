@@ -3,7 +3,7 @@
 	let {
 		element = $bindable<HTMLElement>(null!),
 		button = $bindable<HTMLButtonElement>(null!),
-		spotify,
+		soundcloud,
 		on,
 		expanded,
 		compact,
@@ -16,7 +16,7 @@
 	}: {
 		element?: HTMLElement;
 		button?: HTMLButtonElement;
-		spotify: string;
+		soundcloud: string;
 		on: boolean;
 		expanded: boolean;
 		compact: boolean;
@@ -35,7 +35,7 @@
 		bind:this={button}
 		hidden={!compact}
 		{disabled}
-		aria-label="Open player"
+		aria-label="Show player"
 		aria-expanded="false"
 		aria-controls="music-player"
 		onclick={() => ontoggle(true)}
@@ -70,22 +70,29 @@
 			/>
 			<path d="M43 32h-6l-3 4" fill="none" stroke="#d4ad55" stroke-width="2" />
 		</svg>
-		<span>Gramophone</span>
+		<span>Show player</span>
 	</button>
 	<div class="dock-top" hidden={compact}>
 		<span class="disc" class:turning={playing && !reducedMotion} aria-hidden="true"></span>
 		<span class="dock-label">Gramophone</span>
 		<div class="dock-actions">
 			<button
-				aria-label={expanded ? 'Hide player' : 'Open player'}
-				title={expanded ? 'Hide player' : 'Open player'}
+				aria-label={expanded ? 'Hide player' : 'Show player'}
+				title={expanded ? 'Hide player' : 'Show player'}
 				aria-expanded={expanded}
 				aria-controls="music-player"
 				onclick={() => ontoggle(!expanded)}
 			>
 				<svg viewBox="0 0 24 24" aria-hidden="true">
-					<path d={expanded ? 'm6 15 6-6 6 6' : 'm6 9 6 6 6-6'} />
+					{#if expanded}<path d="M5 12h14" />{:else}<rect
+							x="3"
+							y="4"
+							width="18"
+							height="16"
+							rx="2"
+						/><path d="m10 9 5 3-5 3z" />{/if}
 				</svg>
+				<span>{expanded ? 'Hide' : 'Show'}</span>
 			</button>
 			<button aria-label="Stop" title="Stop music" onclick={onstop}>
 				<svg viewBox="0 0 24 24" aria-hidden="true">
@@ -95,7 +102,7 @@
 		</div>
 	</div>
 	<div id="music-player" hidden={!expanded}>
-		<RecordPlayer {spotify} {on} {onplayback} />
+		<RecordPlayer {soundcloud} {on} {onplayback} />
 	</div>
 </section>
 
@@ -166,11 +173,13 @@
 		margin-left: auto;
 	}
 	.dock-top button {
-		display: inline-grid;
-		place-items: center;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 5px;
 		min-width: 44px;
 		min-height: 44px;
-		padding: 0;
+		padding: 0 8px;
 		border-radius: 6px;
 		color: var(--color-accent);
 		cursor: pointer;

@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type Route } from '@playwright/test';
+import { stubSoundCloud, soundcloudCalls, soundcloudPlayback } from './helpers/soundcloud';
 
 type Anchor = { x: number; y: number };
 const anchor = (page: Page, id: string) =>
@@ -36,53 +37,6 @@ async function openMenu(page: Page) {
 	await page.getByRole('button', { name: 'Room menu', exact: true }).click();
 	await expect(page.getByRole('navigation', { name: 'In the room' })).toBeVisible();
 }
-
-// Spotify's iFrame API, stubbed: a blank player that reports playback changes
-// and records what it was asked to do. Nothing reaches Spotify.
-async function stubSpotify(page: Page, stallFirstPlayer = false) {
-	await page.route('https://open.spotify.com/**', (route) =>
-		route.fulfill({
-			contentType: 'text/javascript',
-			body: `window.__spotify = [];
-			let players = 0;
-			window.onSpotifyIframeApiReady({
-				createController(element, options, created) {
-					players++;
-					const frame = document.createElement('iframe');
-					frame.width = options.width;
-					frame.height = options.height;
-					element.replaceWith(frame);
-					const listeners = {};
-					const emit = (name, data) => (listeners[name] || []).forEach((fn) => fn({ data }));
-					window.__spotifyPlayback = (paused) =>
-						emit('playback_update', { isPaused: paused, isBuffering: false, position: 0, duration: 29713 });
-					const say = (call, paused) => () => {
-						window.__spotify.push(call);
-						window.__spotifyPlayback(paused);
-					};
-					created({
-						addListener: (name, fn) => (listeners[name] ||= []).push(fn),
-						play: say('play', false),
-						resume: say('resume', false),
-						pause: say('pause', true),
-						destroy: () => frame.remove()
-					});
-					if (!${stallFirstPlayer} || players > 1) setTimeout(() => emit('ready'), 50);
-				}
-			});`
-		})
-	);
-}
-const spotifyCalls = (page: Page) =>
-	page.evaluate(() => (window as unknown as { __spotify?: string[] }).__spotify ?? []);
-const spotifyPlayback = (page: Page, paused: boolean) =>
-	page.evaluate(
-		(value) =>
-			(window as unknown as { __spotifyPlayback: (paused: boolean) => void }).__spotifyPlayback(
-				value
-			),
-		paused
-	);
 
 async function openRoom(page: Page) {
 	await page.goto('/world?diagnostics=1');
@@ -330,65 +284,99 @@ for (const width of [320, 390, 430]) {
 }
 
 for (const stalledStage of ['api', 'player']) {
-	test(`a stalled Spotify ${stalledStage} shows a fallback and can be retried`, async ({
+	test(`a stalled SoundCloud ${stalledStage} shows a fallback and can be retried`, async ({
 		page
 	}) => {
 		await page.emulateMedia({ reducedMotion: 'reduce' });
 		const errors: string[] = [];
 		page.on('pageerror', (error) => errors.push(error.message));
-		await stubSpotify(page, stalledStage === 'player');
+		await stubSoundCloud(page, stalledStage === 'player');
 		// Only the first attempt stalls. Retrying exercises the normal player above.
+		let stalledRequest: Route | undefined;
 		if (stalledStage === 'api')
 			await page.route(
-				'https://open.spotify.com/embed/iframe-api/v1',
-				(route) => route.fulfill({ contentType: 'text/javascript', body: '' }),
+				'https://w.soundcloud.com/player/api.js',
+				(route) => {
+					stalledRequest = route;
+				},
 				{ times: 1 }
 			);
 		await openRoom(page);
 		await page.clock.install();
 		await openMenu(page);
 		await page.locator('summary').filter({ hasText: 'Little things in the room' }).click();
-		const response = page.waitForResponse('https://open.spotify.com/embed/iframe-api/v1');
 		await page.getByRole('button', { name: 'Put the record on', exact: true }).click();
-		await (await response).finished();
+		if (stalledStage === 'api') await expect.poll(() => Boolean(stalledRequest)).toBe(true);
 		const dock = page.getByRole('region', { name: 'Gramophone' });
 		if (stalledStage === 'player') await expect(dock.locator('iframe')).toHaveCount(1);
-		await page.clock.fastForward(10001);
-		await expect(dock).toContainText('Spotify’s player didn’t load here.');
-		await expect(dock.getByRole('link', { name: /Listen on Spotify/ })).toBeVisible();
+		await page.clock.fastForward(stalledStage === 'api' ? 10001 : 30001);
+		await expect(dock).toContainText('SoundCloud’s player didn’t load here.');
+		await expect(dock.getByRole('link', { name: /Listen on SoundCloud/ })).toBeVisible();
 		await expect(dock.locator('iframe')).toHaveCount(0);
 		if (stalledStage === 'api') {
+			await stalledRequest!.abort();
 			await dock.getByRole('button', { name: 'Stop', exact: true }).click();
 			await openMenu(page);
 			await page.getByRole('button', { name: 'Put the record on', exact: true }).click();
 		} else {
 			await dock.getByRole('button', { name: 'Retry player', exact: true }).click();
 		}
-		await expect(dock.locator('iframe')).toHaveAttribute('title', 'Spotify player');
-		await expect.poll(() => spotifyCalls(page)).toEqual(['play']);
+		await expect(dock.locator('iframe')).toHaveAttribute('title', 'SoundCloud player');
+		await expect
+			.poll(() => soundcloudCalls(page))
+			.toEqual(stalledStage === 'api' ? ['play'] : ['pause', 'play']);
 		expect(errors).toEqual([]);
 	});
 }
 
-test('the gramophone plays the playlist, with Spotify’s player over the hint card', async ({
+test('an unavailable SoundCloud track keeps the playlist open and can recover', async ({
 	page
 }) => {
-	await stubSpotify(page);
+	await stubSoundCloud(page);
+	await openRoom(page);
+	await openMenu(page);
+	await page.getByText('Little things in the room', { exact: true }).click();
+	await page.getByRole('button', { name: 'Put the record on', exact: true }).click();
+	await expect.poll(() => soundcloudCalls(page)).toEqual(['play']);
+	const frame = page.getByRole('region', { name: 'Gramophone' }).locator('iframe');
+	await frame.evaluate((element) => element.setAttribute('data-playback-session', 'retained'));
+	await page.evaluate(() => Reflect.get(window, '__soundcloudError')());
+	await expect(frame).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Retry player', exact: true })).toHaveCount(0);
+	await soundcloudPlayback(page, false);
+	await expect(frame).toHaveAttribute('data-playback-session', 'retained');
+	await expect(page.getByRole('button', { name: 'Hide player', exact: true })).toBeVisible();
+});
+
+test('the gramophone plays the playlist, with SoundCloud’s player over the hint card', async ({
+	page
+}) => {
+	const soundcloudRequests: string[] = [];
+	page.on('request', (request) => {
+		if (request.url().startsWith('https://w.soundcloud.com/'))
+			soundcloudRequests.push(request.url());
+	});
+	await stubSoundCloud(page);
 	await openRoom(page);
 	await settle(page);
 	const canvas = page.locator('canvas');
+	expect(soundcloudRequests).toEqual([]);
 	const dock = page.getByRole('region', { name: 'Gramophone' });
 	const hint = page.locator('.room-hint');
 	await expect(dock).toBeHidden();
-	// Clicking it walks over and puts the record on: Spotify's player shows over the hint card,
+	// Clicking it walks over and puts the record on: SoundCloud's player shows over the hint card,
 	// and the room keeps the keyboard.
 	const gramophone = await anchor(page, 'gramophone');
 	await page.mouse.click(gramophone.x, gramophone.y);
 	await expect(dock).toBeVisible();
 	await expect(canvas).toHaveAttribute('data-x', '-2.400');
 	await expect(canvas).toHaveAttribute('data-z', '1.350');
-	await expect(dock.locator('iframe')).toHaveAttribute('title', 'Spotify player');
-	await expect.poll(() => spotifyCalls(page)).toEqual(['play']);
+	await expect(dock.locator('iframe')).toHaveAttribute('title', 'SoundCloud player');
+	await expect(dock.locator('iframe')).toHaveAttribute('allow', 'autoplay; encrypted-media');
+	expect(new URL((await dock.locator('iframe').getAttribute('src'))!).searchParams.get('url')).toBe(
+		'https://soundcloud.com/user-298651421/sets/adis-world'
+	);
+	await expect.poll(() => soundcloudCalls(page)).toEqual(['play']);
 	const dockBox = (await dock.boundingBox())!;
 	expect(dockBox.y + dockBox.height).toBeLessThanOrEqual((await hint.boundingBox())!.y);
 	await expect(canvas).toBeFocused();
@@ -397,14 +385,14 @@ test('the gramophone plays the playlist, with Spotify’s player over the hint c
 	await expect
 		.poll(async () => Number(await canvas.getAttribute('data-frames')))
 		.toBeGreaterThan(frames + 5);
-	// Spotify's compact player: just the song that's playing.
-	expect((await dock.locator('iframe').boundingBox())!.height).toBe(80);
+	// SoundCloud supplies the playlist UI at a usable height.
+	expect((await dock.locator('iframe').boundingBox())!.height).toBe(300);
 	// Hiding and reopening a paused player does not change playback.
-	await spotifyPlayback(page, true);
+	await soundcloudPlayback(page, true);
 	await dock.getByRole('button', { name: 'Hide player', exact: true }).focus();
 	await page.keyboard.press('Enter');
 	await expect(dock.locator('iframe')).toBeHidden();
-	await expect(dock.getByRole('button', { name: 'Open player', exact: true })).toHaveAttribute(
+	await expect(dock.getByRole('button', { name: 'Show player', exact: true })).toHaveAttribute(
 		'aria-expanded',
 		'false'
 	);
@@ -414,8 +402,8 @@ test('the gramophone plays the playlist, with Spotify’s player over the hint c
 		'aria-expanded',
 		'true'
 	);
-	await expect.poll(() => spotifyCalls(page)).toEqual(['play']);
-	await spotifyPlayback(page, false);
+	await expect.poll(() => soundcloudCalls(page)).toEqual(['play']);
+	await soundcloudPlayback(page, false);
 	// A click in the player keeps the keyboard there; moving over the room gives it back.
 	await dock.locator('iframe').click();
 	await expect(canvas).not.toBeFocused();
@@ -425,18 +413,18 @@ test('the gramophone plays the playlist, with Spotify’s player over the hint c
 	await expect(hint).toContainText('Press E to stop');
 	await page.keyboard.press('e');
 	await expect(dock).toBeHidden();
-	await expect.poll(() => spotifyCalls(page)).toEqual(['play', 'pause']);
+	await expect.poll(() => soundcloudCalls(page)).toEqual(['play', 'pause']);
 	await settle(page);
 	// E again puts it back on, where it stopped.
 	await expect(hint).toContainText('Press E to play');
 	await page.keyboard.press('e');
 	await expect(dock).toBeVisible();
-	await expect.poll(() => spotifyCalls(page)).toEqual(['play', 'pause', 'resume']);
+	await expect.poll(() => soundcloudCalls(page)).toEqual(['play', 'pause', 'play']);
 	// Stop takes it off, and the room has the keyboard.
 	await dock.getByRole('button', { name: 'Stop' }).click();
 	await expect(dock).toBeHidden();
 	await expect(canvas).toBeFocused();
-	await expect.poll(() => spotifyCalls(page)).toEqual(['play', 'pause', 'resume', 'pause']);
+	await expect.poll(() => soundcloudCalls(page)).toEqual(['play', 'pause', 'play', 'pause']);
 	// Standing on the corkboard's spot still opens the corkboard.
 	await page.evaluate(() =>
 		(window as unknown as { __room: { visit: (id: string) => void } }).__room.visit('corkboard')
@@ -444,21 +432,40 @@ test('the gramophone plays the playlist, with Spotify’s player over the hint c
 	await expect(page.getByRole('heading', { name: 'Pinned to the corkboard' })).toBeVisible();
 });
 
-test('mobile music controls stay compact and return after reading a panel', async ({ browser }) => {
+test('mobile music stays open until hidden, preserves playback, and reopens when switched on', async ({
+	browser
+}) => {
 	const context = await browser.newContext({
 		viewport: { width: 320, height: 844 },
 		isMobile: true,
 		hasTouch: true
 	});
 	const page = await context.newPage();
-	await stubSpotify(page);
+	await stubSoundCloud(page);
 	await openRoom(page);
 	await settle(page);
 	const gramophone = await anchor(page, 'gramophone');
 	await page.touchscreen.tap(gramophone.x, gramophone.y);
 	const dock = page.getByRole('region', { name: 'Gramophone' });
 	const hint = page.locator('.room-hint');
-	await expect(dock.getByRole('button', { name: 'Open player', exact: true })).toBeVisible();
+	const playerFrame = dock.locator('iframe');
+	const musicButton = dock.getByRole('button', { name: 'Show player', exact: true });
+	await expect(playerFrame).toBeVisible();
+	await expect(dock.getByRole('button', { name: 'Hide player', exact: true })).toHaveText('Hide');
+	await expect.poll(() => soundcloudCalls(page)).toEqual(['play']);
+	// Real playback changes leave the player's visibility in the visitor's hands.
+	await soundcloudPlayback(page, true);
+	await soundcloudPlayback(page, false);
+	await expect(playerFrame).toBeVisible();
+	const expandedBox = (await dock.boundingBox())!;
+	expect(expandedBox.x).toBeGreaterThanOrEqual(16);
+	expect(expandedBox.x + expandedBox.width).toBeLessThanOrEqual(304);
+	expect(expandedBox.width).toBeCloseTo(288, 0);
+	expect(expandedBox.y + expandedBox.height).toBeCloseTo(824, 0);
+	await expect(page.getByRole('button', { name: 'Movement joystick' })).toHaveCount(0);
+	await expect(page.locator('.enter-button')).toHaveCount(0);
+	await expect(page.getByRole('button', { name: 'Room menu', exact: true })).toBeHidden();
+	await expect(hint).toBeHidden();
 	const fitsBetweenControls = async () => {
 		const playerBox = (await dock.boundingBox())!;
 		const stickBox = (await page.getByRole('button', { name: 'Movement joystick' }).boundingBox())!;
@@ -471,37 +478,21 @@ test('mobile music controls stay compact and return after reading a panel', asyn
 		expect(playerBox.y).toBeCloseTo(enterBox.y, 0);
 		expect(playerBox.y + playerBox.height).toBeCloseTo(menuBox.y + menuBox.height, 0);
 	};
-	await fitsBetweenControls();
-	const musicButton = dock.getByRole('button', { name: 'Open player', exact: true });
-	await expect(musicButton).toHaveText('Gramophone');
-	const buttonBox = (await musicButton.boundingBox())!;
-	expect(buttonBox.height).toBe(108);
-	expect(buttonBox.y).toBeCloseTo((await page.locator('.enter-button').boundingBox())!.y, 0);
-	await expect(dock.getByRole('button', { name: 'Stop', exact: true })).toHaveCount(0);
-	await expect(hint).toContainText('Lift the needle?');
-	await expect(hint).toBeHidden();
-	await expect(dock.locator('iframe')).not.toBeVisible();
-	await dock.getByRole('button', { name: 'Open player', exact: true }).tap();
-	await expect(dock.locator('iframe')).toBeVisible();
-	const expandedBox = (await dock.boundingBox())!;
-	expect(expandedBox.x).toBeGreaterThanOrEqual(16);
-	expect(expandedBox.x + expandedBox.width).toBeLessThanOrEqual(304);
-	expect(expandedBox.width).toBeCloseTo(288, 0);
-	expect(expandedBox.y + expandedBox.height).toBeCloseTo(824, 0);
-	await expect(page.getByRole('button', { name: 'Movement joystick' })).toHaveCount(0);
-	await expect(page.locator('.enter-button')).toHaveCount(0);
-	await expect(page.getByRole('button', { name: 'Room menu', exact: true })).toBeHidden();
-	await expect(hint).toBeHidden();
-	const playerFrame = dock.locator('iframe');
 	await playerFrame.evaluate((element) =>
 		element.setAttribute('data-playback-session', 'retained')
 	);
 	await dock.getByRole('button', { name: 'Hide player', exact: true }).tap();
 	await fitsBetweenControls();
+	await expect(musicButton).toHaveText('Show player');
 	await expect(musicButton).toBeFocused();
+	await expect(playerFrame).toBeHidden();
 	await expect(playerFrame).toHaveAttribute('data-playback-session', 'retained');
-	await expect.poll(() => spotifyCalls(page)).toEqual(['play']);
+	await soundcloudPlayback(page, true);
+	await soundcloudPlayback(page, false);
+	await expect(musicButton).toBeVisible();
+	await expect.poll(() => soundcloudCalls(page)).toEqual(['play']);
 	await musicButton.tap();
+	await expect(playerFrame).toBeVisible();
 	const canvas = page.locator('canvas');
 	const position = await canvas.getAttribute('data-x');
 	await canvas.focus();
@@ -514,15 +505,19 @@ test('mobile music controls stay compact and return after reading a panel', asyn
 	await expect(musicButton).toBeFocused();
 	await expect(playerFrame).toHaveAttribute('data-playback-session', 'retained');
 	await page.setViewportSize({ width: 844, height: 390 });
-	await expect(hint).toBeHidden();
-	await page.setViewportSize({ width: 320, height: 844 });
+	await expect(musicButton).toBeInViewport();
 	await musicButton.tap();
+	await expect(playerFrame).toBeVisible();
+	const landscapeBox = (await dock.boundingBox())!;
+	expect(landscapeBox.y).toBeGreaterThanOrEqual(0);
+	expect(landscapeBox.y + landscapeBox.height).toBeLessThanOrEqual(390);
+	await page.setViewportSize({ width: 320, height: 844 });
 	await dock.getByRole('button', { name: 'Stop', exact: true }).tap();
 	await expect(hint).toBeVisible();
 	await expect(hint).toContainText('Put a record on?');
 	await page.locator('.enter-button').tap();
-	await expect(dock.getByRole('button', { name: 'Open player', exact: true })).toBeVisible();
-	await expect(hint).toBeHidden();
+	await expect(playerFrame).toBeVisible();
+	await dock.getByRole('button', { name: 'Hide player', exact: true }).tap();
 	await page.getByRole('button', { name: 'Room menu', exact: true }).tap();
 	await page
 		.getByRole('navigation', { name: 'In the room', exact: true })
@@ -539,7 +534,7 @@ test('mobile music controls stay compact and return after reading a panel', asyn
 	await expect(dock).not.toBeVisible();
 	await openMenu(page);
 	await page.getByText('Little things in the room', { exact: true }).click();
-	// Start walking and choose music in the same frame, before the station can arrive.
+	// Starting music cancels a pending station visit, so the player remains usable.
 	await page.evaluate(() => {
 		(window as unknown as { __room: { visit(id: string): void } }).__room.visit('camera');
 		const action = [...document.querySelectorAll<HTMLButtonElement>('.little-things button')].find(
@@ -547,11 +542,9 @@ test('mobile music controls stay compact and return after reading a panel', asyn
 		);
 		action!.click();
 	});
-	await expect(musicButton).toBeEnabled();
+	await expect(playerFrame).toBeVisible();
 	await expect(page).toHaveURL(/\/world\?diagnostics=1$/);
 	await expect(hint).not.toContainText('Heading to');
-	await musicButton.tap();
-	await expect(dock.locator('iframe')).toBeVisible();
 	await dock.getByRole('button', { name: 'Hide player', exact: true }).tap();
 	await fitsBetweenControls();
 	await context.close();

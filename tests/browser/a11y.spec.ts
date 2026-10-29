@@ -1,3 +1,4 @@
+import { stubSoundCloud } from './helpers/soundcloud';
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
@@ -133,19 +134,8 @@ test('mobile object cards and readers meet WCAG 2.2 AA (automated checks)', asyn
 });
 
 test('the gramophone’s player card meets WCAG 2.2 AA (automated checks)', async ({ page }) => {
-	// Spotify's player is stubbed out: its contents aren't this site's to audit.
-	await page.route('https://open.spotify.com/**', (route) =>
-		route.fulfill({
-			contentType: 'text/javascript',
-			body: `window.onSpotifyIframeApiReady({ createController(element, options, created) {
-				const frame = document.createElement('iframe');
-				frame.width = options.width;
-				frame.height = options.height;
-				element.replaceWith(frame);
-				created({ addListener() {}, play() {}, resume() {}, pause() {}, destroy() {} });
-			} });`
-		})
-	);
+	// SoundCloud's player is stubbed out: its contents aren't this site's to audit.
+	await stubSoundCloud(page);
 	await page.goto('/world');
 	await expect(page.locator('canvas')).toHaveClass(/\bloaded\b/);
 	await page.getByRole('button', { name: 'Room menu', exact: true }).click();
@@ -156,12 +146,12 @@ test('the gramophone’s player card meets WCAG 2.2 AA (automated checks)', asyn
 	await dock.evaluate((card) => Promise.all(card.getAnimations().map((a) => a.finished)));
 	await audit(page, '/world (music on)');
 	await dock.getByRole('button', { name: 'Hide player', exact: true }).click();
-	await expect(dock.getByRole('button', { name: 'Open player', exact: true })).toBeVisible();
+	await expect(dock.getByRole('button', { name: 'Show player', exact: true })).toBeVisible();
 	await audit(page, '/world (music player collapsed)');
 	await page.setViewportSize({ width: 320, height: 844 });
 	await expect(page.locator('.corner')).toHaveClass(/compact-player/);
 	await audit(page, '/world (mobile music between movement controls)');
-	await dock.getByRole('button', { name: 'Open player', exact: true }).click();
+	await dock.getByRole('button', { name: 'Show player', exact: true }).click();
 	await expect(dock.locator('iframe')).toBeVisible();
 	await audit(page, '/world (mobile music expanded)');
 });
