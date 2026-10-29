@@ -80,9 +80,3 @@ test('short links still redirect with real status codes', async ({ request }) =>
 		expect(response.headers()['location']).toContain(location);
 	}
 });
-
-test('the sitemap lists every page', async ({ request }) => {
-	const body = await (await request.get('/sitemap.xml')).text();
-	for (const path of ['/world', '/index', '/now', ...deepPages.map(([p]) => p)])
-		expect(body, path).toContain(`${path}</loc>`);
-});

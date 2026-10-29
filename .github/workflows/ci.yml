@@ -25,6 +25,8 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
+      - name: Check generated sitemap freshness
+        run: npm run sitemap:check
       - run: npm run lint
       - run: npm run check
       - run: npm test
@@ -35,7 +37,10 @@ jobs:
           npm_config_cache: ${{ runner.temp }}/npm-audit-cache
       - run: npm run build
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e -- --reporter=line
+      - name: Check sitemap coverage and indexability
+        run: npm run test:sitemap -- --reporter=line
+      - name: Check browser behavior and accessibility
+        run: npm run test:e2e -- --grep-invert @sitemap --reporter=line
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
