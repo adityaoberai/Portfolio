@@ -1,4 +1,12 @@
 import { test, expect, type Page, type Route } from '@playwright/test';
+import { Vector3 } from 'three';
+import {
+	CAMERA_OFFSET,
+	PORTRAIT_CAMERA_OFFSET,
+	STATIONS,
+	CURIOSITIES,
+	type Vec3
+} from '../../src/lib/world/layout';
 import { stubSoundCloud, soundcloudCalls, soundcloudPlayback } from './helpers/soundcloud';
 
 type Anchor = { x: number; y: number };
@@ -614,6 +622,91 @@ test('an open station scrolls with the keys and the wheel, and Space doesn’t c
 	await page.mouse.move(300, 450);
 	await page.mouse.wheel(0, 400);
 	await expect.poll(top).toBeGreaterThan(0);
+});
+
+test('room layout stays consistent across screen sizes and camera angles', async ({ page }) => {
+	await openRoom(page);
+	await settle(page);
+	const ids = ['desk', 'bed', 'shelf', 'mirror', 'gramophone'];
+	const corners: Vec3[] = [
+		[-3.5, 0, -3],
+		[3.5, 0, -3],
+		[-3.5, 0, 3.2],
+		[3.5, 0, 3.2],
+		[-3.5, 3.1, -3]
+	];
+	const physicalPoints = [
+		...corners,
+		...ids.map((id) => [...STATIONS, ...CURIOSITIES].find((item) => item.id === id)!.hit.center)
+	];
+	const landmarks = () =>
+		page.evaluate(
+			({ corners, ids }) => {
+				const room = (
+					window as unknown as {
+						__room: {
+							project(point: number[]): Anchor;
+							anchor(id: string): Anchor;
+							snapshot(): { x: number; z: number; heading: number };
+						};
+					}
+				).__room;
+				return {
+					points: [
+						...corners.map((point) => room.project(point)),
+						...ids.map((id) => room.anchor(id))
+					],
+					position: room.snapshot()
+				};
+			},
+			{ corners, ids }
+		);
+	// Allow a portrait camera angle and responsive scaling/translation. Project
+	// the same physical landmarks analytically, without stretching their depth.
+	const normalize = (points: Anchor[]) => {
+		const origin = points[0];
+		const scale = Math.hypot(points[1].x - origin.x, points[1].y - origin.y);
+		return points.map((point) => ({
+			x: (point.x - origin.x) / scale,
+			y: (point.y - origin.y) / scale
+		}));
+	};
+	const desktop = await landmarks();
+	for (const viewport of [
+		{ width: 390, height: 844 },
+		{ width: 320, height: 844 },
+		{ width: 844, height: 390 },
+		{ width: 390, height: 844 },
+		{ width: 1440, height: 1000 }
+	]) {
+		await page.setViewportSize(viewport);
+		await settle(page);
+		const current = await landmarks();
+		const offset =
+			viewport.width <= 820 && viewport.height > viewport.width
+				? PORTRAIT_CAMERA_OFFSET
+				: CAMERA_OFFSET;
+		const looking = new Vector3(...offset).normalize();
+		const right = new Vector3(0, 1, 0).cross(looking).normalize();
+		const up = looking.clone().cross(right);
+		const expected = normalize(
+			physicalPoints.map((point) => {
+				const position = new Vector3(...point);
+				return { x: position.dot(right), y: -position.dot(up) };
+			})
+		);
+		normalize(current.points).forEach((point, index) => {
+			expect(point.x).toBeCloseTo(expected[index].x, 4);
+			expect(point.y).toBeCloseTo(expected[index].y, 4);
+		});
+		expect(current.position).toEqual(desktop.position);
+		for (const point of current.points) {
+			expect(point.x).toBeGreaterThanOrEqual(0);
+			expect(point.x).toBeLessThanOrEqual(viewport.width);
+			expect(point.y).toBeGreaterThanOrEqual(0);
+			expect(point.y).toBeLessThanOrEqual(viewport.height);
+		}
+	}
 });
 
 test('portrait touch input, sharp rendering, reduced motion, and low-power DPR', async ({

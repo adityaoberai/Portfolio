@@ -15,8 +15,6 @@ import {
 import {
 	CAMERA_OFFSET,
 	PORTRAIT_CAMERA_OFFSET,
-	PORTRAIT_ROOM_DEPTH,
-	BED,
 	CHARACTER_RADIUS,
 	CURIOSITIES,
 	FOOTPRINTS,
@@ -112,67 +110,33 @@ test('arrow and letter controls map to the same screen-relative direction', () =
 });
 
 test('joystick input follows the screen, supports slow movement, and caps diagonal speed', () => {
-	for (const [camera, depth] of [
-		[CAMERA_OFFSET, 1],
-		[PORTRAIT_CAMERA_OFFSET, PORTRAIT_ROOM_DEPTH]
-	]) {
-		assert.deepEqual(screenDirection(0, 0, camera, depth), { x: 0, z: 0 });
-		assert.deepEqual(
-			screenDirection(0, -1, camera, depth),
-			keyboardDirection(new Set(['w']), camera, depth)
-		);
-		assert.deepEqual(
-			screenDirection(1, 0, camera, depth),
-			keyboardDirection(new Set(['d']), camera, depth)
-		);
-		const slow = screenDirection(0.3, -0.4, camera, depth);
-		assert.ok(Math.abs(Math.hypot(slow.x, slow.z * depth) - 0.5) < 1e-12);
-		const diagonal = screenDirection(1, -1, camera, depth);
-		assert.ok(Math.abs(Math.hypot(diagonal.x, diagonal.z * depth) - 1) < 1e-12);
+	for (const camera of [CAMERA_OFFSET, PORTRAIT_CAMERA_OFFSET]) {
+		assert.deepEqual(screenDirection(0, 0, camera), { x: 0, z: 0 });
+		assert.deepEqual(screenDirection(0, -1, camera), keyboardDirection(new Set(['w']), camera));
+		assert.deepEqual(screenDirection(1, 0, camera), keyboardDirection(new Set(['d']), camera));
+		const slow = screenDirection(0.3, -0.4, camera);
+		assert.ok(Math.abs(Math.hypot(slow.x, slow.z) - 0.5) < 1e-12);
+		const diagonal = screenDirection(1, -1, camera);
+		assert.ok(Math.abs(Math.hypot(diagonal.x, diagonal.z) - 1) < 1e-12);
 	}
 });
 
 test('"up" walks directly away from the camera', () => {
-	for (const [camera, depth] of [
-		[CAMERA_OFFSET, 1],
-		[PORTRAIT_CAMERA_OFFSET, PORTRAIT_ROOM_DEPTH]
-	]) {
-		const up = keyboardDirection(new Set(['w']), camera, depth);
+	for (const camera of [CAMERA_OFFSET, PORTRAIT_CAMERA_OFFSET]) {
+		const up = keyboardDirection(new Set(['w']), camera);
 		const length = Math.hypot(camera[0], camera[2]);
 		assert.ok(Math.abs(up.x + camera[0] / length) < 1e-12);
-		assert.ok(Math.abs(up.z * depth + camera[2] / length) < 1e-12);
+		assert.ok(Math.abs(up.z + camera[2] / length) < 1e-12);
 	}
 });
 
-test('portrait floor depth preserves furniture proportions and moves its anchor', async () => {
-	const { Batch, buildBedroom } = await import('../src/lib/world/build.ts');
-	const { Matrix4, Vector3 } = await import('three');
-	const bounds = (depth) => {
-		const batch = new Batch();
-		batch.preserveDepth(depth, BED.z, () => buildBedroom(batch));
-		const geometry = batch.build();
-		geometry.applyMatrix4(new Matrix4().makeScale(1, 1, depth));
-		geometry.computeBoundingBox();
-		const size = geometry.boundingBox.getSize(new Vector3());
-		const centre = geometry.boundingBox.getCenter(new Vector3());
-		geometry.dispose();
-		return { size, centre };
-	};
-	const desktop = bounds(1);
-	const portrait = bounds(PORTRAIT_ROOM_DEPTH);
-	assert.ok(desktop.size.distanceTo(portrait.size) < 1e-6, 'bed or plush has been stretched');
-	assert.ok(
-		Math.abs(portrait.centre.z - desktop.centre.z - BED.z * (PORTRAIT_ROOM_DEPTH - 1)) < 1e-6
-	);
-});
-
-test('keyboard and click-to-walk retain the same physical speed in the longer room', () => {
-	for (const depth of [1, PORTRAIT_ROOM_DEPTH]) {
-		const direction = keyboardDirection(new Set(['w', 'd']), PORTRAIT_CAMERA_OFFSET, depth);
-		assert.ok(Math.abs(Math.hypot(direction.x, direction.z * depth) - 1) < 1e-12);
-		const next = stepToward({ x: 0, z: 0 }, { x: 3, z: 3 }, 1 / 60, depth);
-		assert.ok(Math.abs(Math.hypot(next.x, next.z * depth) - SPEED / 60) < 1e-12);
+test('keyboard and click-to-walk use the same physical speed', () => {
+	for (const camera of [CAMERA_OFFSET, PORTRAIT_CAMERA_OFFSET]) {
+		const direction = keyboardDirection(new Set(['w', 'd']), camera);
+		assert.ok(Math.abs(Math.hypot(direction.x, direction.z) - 1) < 1e-12);
 	}
+	const next = stepToward({ x: 0, z: 0 }, { x: 3, z: 3 }, 1 / 60);
+	assert.ok(Math.abs(Math.hypot(next.x, next.z) - SPEED / 60) < 1e-12);
 });
 
 test('a long frame does not teleport across the room', () => {

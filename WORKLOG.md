@@ -20,6 +20,15 @@
 - Three exceptions remain: two SvelteKit 2 advisories, fixed only in SvelteKit 3, and `deepmerge` 4.3.1, which has no patched release and is still required by the latest Svelte Vite plugin (7.3.1). Rechecked each exposure note against the code; `deepmerge` is absent from the build output.
 - Reviewed the maintenance doc: recorded the audit policy, the override, and SvelteKit 3.1.0's peer requirements, and noted that `npm audit fix --force` would not resolve `deepmerge`.
 - Validation on Node 24: lint, type checking (0 errors/0 warnings), all 34 unit tests, `npm run audit`, the production build, and all 66 browser tests pass, including the mode-cookie tests against the 0.7.2 server bundle. The audit check also fails, as intended, on edited reports with a new advisory (including an informational one), a re-scored exception, a stale exception, an npm error, and empty output. Locally, `npm ci` could not replace a native module held open by another process, so the tree was restored with `npm install` and checked against the lockfile; CI runs the clean install.
+- After merging the consistent-room change from `main`: lint, type checking, 33 unit tests, `npm run audit`, and the build pass, and 65 of 67 browser tests pass locally. The local failures come from one `ux.spec.ts` check of where the mobile object card sits. It measures the card during its 20px reveal animation (831–837px against the settled 824px), and fails intermittently at all three phone widths. This change does not touch that client code, which is identical to `main`, where CI passed.
+
+## 29 October 2026 — Consistent room across screen sizes
+
+- Use the desktop room geometry and furniture positions on every screen. Remove the portrait-only 40% floor-depth increase, along with duplicate geometry, inverse model scaling, hitbox remapping, and movement compensation. Keep a portrait-specific camera angle without changing the layout.
+- Keep responsive camera fitting around the header, touch controls, music player, and reading sheets. Retarget an active focus animation when the available space changes.
+- Fit the narrower shared room more closely on phones so removing the depth stretch does not leave unnecessary space at its sides.
+- Add browser coverage comparing room corners, wall height, and furniture landmarks against the same floor plan at each camera angle across desktop, phone portrait, landscape, and rotation back. Resizing must preserve the character's saved position.
+- Validation: lint, type checking (0 errors/0 warnings), 33 unit tests, and a clean production build pass. The new browser regression reproduces the original 40% depth stretch and passes after removing it. Visually checked the room and bed views at desktop, 390 × 844, 320 × 740, and 844 × 390 with no page overflow. Full browser validation also runs in PR CI.
 
 ## 29 October 2026 — SoundCloud playlist and explicit player visibility
 

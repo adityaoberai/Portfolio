@@ -61,9 +61,6 @@ import { bengaluruHour, skyAt } from './time';
 import {
 	CAMERA_OFFSET,
 	CAMERA_TARGET,
-	BED,
-	BOARD,
-	CABINET,
 	CURIOSITIES,
 	DESK,
 	DOOR_HINGE,
@@ -73,8 +70,6 @@ import {
 	LAPTOP,
 	MIRROR,
 	PORTRAIT_CAMERA_OFFSET,
-	PORTRAIT_ROOM_DEPTH,
-	SHELF,
 	ROOM,
 	SIDE_TABLE,
 	START,
@@ -149,7 +144,6 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	const scene = new Scene();
 	const roomRoot = new Group();
 	scene.add(roomRoot);
-	let depthScale = 1;
 	const camera = new OrthographicCamera(-6, 6, 5, -5, 0.1, 80);
 	const hemisphere = new HemisphereLight('#fff5d8', '#8e9a7e', 2.5);
 	scene.add(hemisphere);
@@ -164,34 +158,24 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	const litMaterial = own(new MeshLambertMaterial({ vertexColors: true, flatShading: true }));
 	const unlitMaterial = own(new MeshBasicMaterial({ vertexColors: true }));
 
-	// Cache the two floor plans. Furniture meshes retain their dimensions while
-	// their anchors, the shell, and logical hit volumes follow the room's depth.
-	function roomGeometry(depth: number) {
+	// Build one room for every viewport; resizing only changes its framing.
+	function roomGeometry() {
 		const lit = new Batch();
 		const unlit = new Batch();
 		const faces = new Batch();
 		const flag = new Batch();
-		function furniture(z: number, batches: Batch[], draw: () => void) {
-			function next(index: number) {
-				if (index === batches.length) draw();
-				else batches[index].preserveDepth(depth, z, () => next(index + 1));
-			}
-			next(0);
-		}
-		buildShell(lit, unlit, depth);
-		furniture(DESK.z, [lit], () => buildDesk(lit));
-		furniture(CABINET.z, [lit], () => buildPhotography(lit));
-		furniture(SHELF.z, [lit, faces], () => buildCollection(lit, faces, shelfCards.length));
-		furniture(BED.z, [lit], () => buildBedroom(lit));
-		furniture(-3, [lit], () => buildWindow(lit));
-		furniture(BOARD.z, [lit], () => {
-			buildLanyards(lit);
-			buildCorkboard(lit);
-		});
-		furniture(MIRROR.z, [lit], () => buildMirror(lit));
+		buildShell(lit, unlit);
+		buildDesk(lit);
+		buildPhotography(lit);
+		buildCollection(lit, faces, shelfCards.length);
+		buildBedroom(lit);
+		buildWindow(lit);
+		buildLanyards(lit);
+		buildCorkboard(lit);
+		buildMirror(lit);
 		buildDoorFrame(lit);
-		furniture(SIDE_TABLE.z, [lit], () => buildGramophone(lit));
-		buildDecor(lit, unlit, flag, depth);
+		buildGramophone(lit);
+		buildDecor(lit, unlit, flag);
 		return {
 			lit: keep(lit.build()),
 			unlit: keep(unlit.build()),
@@ -199,13 +183,9 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			flag: keep(flag.build())
 		};
 	}
-	const layouts = new Map([
-		[1, roomGeometry(1)],
-		[PORTRAIT_ROOM_DEPTH, roomGeometry(PORTRAIT_ROOM_DEPTH)]
-	]);
-	const desktopGeometry = layouts.get(1)!;
-	const litMesh = new Mesh(desktopGeometry.lit, litMaterial);
-	const unlitMesh = new Mesh(desktopGeometry.unlit, unlitMaterial);
+	const geometry = roomGeometry();
+	const litMesh = new Mesh(geometry.lit, litMaterial);
+	const unlitMesh = new Mesh(geometry.unlit, unlitMaterial);
 	roomRoot.add(litMesh, unlitMesh);
 
 	const unit = keep(new BoxGeometry(1, 1, 1));
@@ -227,8 +207,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	roomRoot.add(deskPlacement);
 
 	// Bengaluru through the window: sky colour and city lights follow local time there.
-	// Keep every layer at its original depth from the wall in the portrait room,
-	// matching the static window art so the sky cannot cover the skyline.
+	// Match the static window art so the sky cannot cover the skyline.
 	const windowPlacement = new Group();
 	windowPlacement.position.z = -3;
 	roomRoot.add(windowPlacement);
@@ -272,10 +251,9 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			mesh.visible = true;
 			requestFrame();
 		});
-		return mesh;
 	}
-	const collectionPictures = pictures(desktopGeometry.faces, SHELF_ATLAS);
-	const flagPictures = pictures(desktopGeometry.flag, FLAG.texture);
+	pictures(geometry.faces, SHELF_ATLAS);
+	pictures(geometry.flag, FLAG.texture);
 
 	// The door swings open while its station is focused.
 	const door = new Group();
@@ -368,8 +346,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	nearRing.visible = false;
 	roomRoot.add(nearRing);
 
-	// The character's reflection in the mirror. The room camera never turns, so
-	// neither does its view in the mirror: a second camera looks along the
+	// The character's reflection in the mirror: a second camera looks along the
 	// reflected view direction and renders only the character (layer 1) into a
 	// small texture, laid over the glass. The rest of the room isn't reflected.
 	const REFLECTED = 1;
@@ -540,7 +517,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 
 	// Camera framing tween: target point and zoom.
 	const view = {
-		target: new Vector3(CAMERA_TARGET[0], CAMERA_TARGET[1], CAMERA_TARGET[2] * depthScale),
+		target: new Vector3(...CAMERA_TARGET),
 		zoom: 1,
 		door: 0
 	};
@@ -601,14 +578,14 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	}
 	function setPosition(point: Point) {
 		const dx = point.x - characterPlacement.position.x;
-		const dz = (point.z - characterPlacement.position.z) * depthScale;
+		const dz = point.z - characterPlacement.position.z;
 		if (Math.hypot(dx, dz) > 0.001) character.rotation.y = Math.atan2(dx, dz);
 		characterPlacement.position.set(point.x, 0, point.z);
 	}
 	function face(point: Vec3) {
 		character.rotation.y = Math.atan2(
 			point[0] - characterPlacement.position.x,
-			(point[2] - characterPlacement.position.z) * depthScale
+			point[2] - characterPlacement.position.z
 		);
 	}
 	function applyView() {
@@ -626,7 +603,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 	function framing(at: typeof framed) {
 		if (!at || preview)
 			return {
-				target: new Vector3(CAMERA_TARGET[0], CAMERA_TARGET[1], CAMERA_TARGET[2] * depthScale),
+				target: new Vector3(...CAMERA_TARGET),
 				zoom: 1,
 				door: at?.door ?? 0
 			};
@@ -640,7 +617,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		const upAxis = new Vector3().setFromMatrixColumn(camera.matrixWorld, 1);
 		const localX = (camera.left + camera.right) / 2 + (area.x / canvas.clientWidth - 0.5) * width;
 		const localY = (camera.top + camera.bottom) / 2 + (0.5 - area.y / canvas.clientHeight) * height;
-		const target = new Vector3(at.focus[0], at.focus[1], at.focus[2] * depthScale)
+		const target = new Vector3(...at.focus)
 			.addScaledVector(rightAxis, -localX)
 			.addScaledVector(upAxis, -localY);
 		return { target, zoom, door: at.door };
@@ -693,8 +670,8 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		const delta = lastTime ? Math.min((time - lastTime) / 1000, 0.05) : 1 / 60;
 		lastTime = time;
 		const direction = keys.size
-			? keyboardDirection(keys, cameraOffset, depthScale)
-			: screenDirection(stick.x, stick.y, cameraOffset, depthScale);
+			? keyboardDirection(keys, cameraOffset)
+			: screenDirection(stick.x, stick.y, cameraOffset);
 		const directMoving = !paused && (direction.x !== 0 || direction.z !== 0);
 		if (directMoving) {
 			setPosition(
@@ -709,7 +686,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 				characterPlacement.position.x - next.x,
 				characterPlacement.position.z - next.z
 			);
-			setPosition(clampPoint(stepToward(position(), next, delta, depthScale)));
+			setPosition(clampPoint(stepToward(position(), next, delta)));
 			const after = Math.hypot(
 				characterPlacement.position.x - next.x,
 				characterPlacement.position.z - next.z
@@ -890,7 +867,6 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 			return item?.approach ? walkUp(item) : options.onCuriosity(picked.id);
 		}
 		const point = raycaster.ray.intersectPlane(floorPlane, new Vector3());
-		if (point) point.z /= depthScale;
 		if (
 			point &&
 			point.x >= ROOM.minX &&
@@ -971,49 +947,15 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		if (disposed) return;
 		const { width, height } = canvas.getBoundingClientRect();
 		if (!width || !height) return;
-		const portrait = width <= 820 && height > width;
-		const nextDepth = portrait ? PORTRAIT_ROOM_DEPTH : 1;
-		const offset = portrait ? PORTRAIT_CAMERA_OFFSET : CAMERA_OFFSET;
-		const layoutChanged = nextDepth !== depthScale || cameraOffset !== offset;
-		if (nextDepth !== depthScale) {
-			depthScale = nextDepth;
-			roomRoot.scale.z = depthScale;
-			for (const group of [
-				deskPlacement,
-				recordPlacement,
-				characterPlacement,
-				mirrorPlacement,
-				windowPlacement
-			])
-				group.scale.z = 1 / depthScale;
-			// Position remains in logical room coordinates, with inverse model scaling
-			// on separate parents so character/furniture rotations stay undistorted.
-			const geometry = layouts.get(depthScale)!;
-			litMesh.geometry = geometry.lit;
-			unlitMesh.geometry = geometry.unlit;
-			collectionPictures.geometry = geometry.faces;
-			flagPictures.geometry = geometry.flag;
-			targetMarker.scale.y = 0.12 / depthScale;
-			nearRing.scale.y = 1 / depthScale;
-			for (const { station, mesh } of stationHits) {
-				mesh.position.z = station.hit.center[2] * depthScale;
-				mesh.scale.z = station.hit.size[2] * depthScale;
-				mesh.updateMatrixWorld();
-			}
-			for (const { item, mesh } of curiosityHits) {
-				mesh.position.z = item.hit.center[2] * depthScale;
-				mesh.scale.z = item.hit.size[2] * depthScale;
-				mesh.updateMatrixWorld();
-			}
-		}
+		const offset = width <= 820 && height > width ? PORTRAIT_CAMERA_OFFSET : CAMERA_OFFSET;
 		if (cameraOffset !== offset) {
 			cameraOffset = offset;
 			applyView();
 			frameMirror(offset);
 		}
 		const free = Math.max(height * 0.4, height - insets.top - insets.bottom);
-		// The stronger corner angle needs the full room width, including both walls.
-		const freeHeight = Math.max(insets.units, 11.4 / (width / free));
+		// Fit the same room width on every screen, including both walls.
+		const freeHeight = Math.max(insets.units, 9.8 / (width / free));
 		const unitsPerPx = freeHeight / free;
 		const viewHeight = unitsPerPx * height;
 		const aspect = width / height;
@@ -1023,16 +965,13 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 		camera.right = (viewHeight * aspect) / 2;
 		camera.top = viewHeight / 2 + shift;
 		camera.bottom = -viewHeight / 2 + shift;
-		// An orientation change invalidates the old physical-space camera tween.
-		if (layoutChanged) tween = null;
-		if (framed && !tween) {
+		// Keep a focus animation aimed at the space available after resizing.
+		if (tween) tween.to = framing(framed);
+		else if (framed) {
 			const to = framing(framed);
 			view.target.copy(to.target);
 			view.zoom = to.zoom;
 			view.door = to.door;
-		} else if (layoutChanged) {
-			view.target.set(CAMERA_TARGET[0], CAMERA_TARGET[1], CAMERA_TARGET[2] * depthScale);
-			view.zoom = 1;
 		}
 		applyView();
 		// Use the screen's real density on phones. Only very large drawing buffers
@@ -1067,7 +1006,7 @@ export function createRoom(canvas: HTMLCanvasElement, options: Options) {
 
 	// Client coordinates of a world point; used by diagnostics and browser tests.
 	function project(point: Vec3) {
-		const v = new Vector3(point[0], point[1], point[2] * depthScale).project(camera);
+		const v = new Vector3(...point).project(camera);
 		const rect = canvas.getBoundingClientRect();
 		return {
 			x: rect.left + ((v.x + 1) / 2) * rect.width,
