@@ -232,6 +232,8 @@ for (const width of [320, 390, 430]) {
 		await expect(read).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Movement joystick' })).toHaveCount(0);
 		await expect(menu).toBeHidden();
+		// Measure where the card settles, not partway through its slide-in.
+		await sheet.evaluate((dialog) => Promise.all(dialog.getAnimations().map((a) => a.finished)));
 		const box = (await sheet.boundingBox())!;
 		expect(box.x).toBeCloseTo(16, 0);
 		expect(box.width).toBeCloseTo(width - 32, 0);

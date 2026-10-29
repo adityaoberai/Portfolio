@@ -77,6 +77,8 @@ for (const width of [320, 390, 430]) {
 		expect((await sheet.boundingBox())!.height).toBeLessThan(844 * 0.3);
 		await expect(menuButton).toBeHidden();
 		await expect(page.getByRole('button', { name: 'Movement joystick' })).toHaveCount(0);
+		// Measure where the card settles, not partway through its slide-in.
+		await sheet.evaluate((dialog) => Promise.all(dialog.getAnimations().map((a) => a.finished)));
 		const objectBox = (await sheet.boundingBox())!;
 		expect(objectBox.x).toBeCloseTo(16, 0);
 		expect(objectBox.width).toBeCloseTo(width - 32, 0);
@@ -211,6 +213,7 @@ test('mobile shelf and mirror previews replace the control row and retain the re
 		await expect(sheet.getByRole('heading', { name, exact: true })).toBeVisible();
 		await expect(joystick).toHaveCount(0);
 		await expect(menu).toBeHidden();
+		await sheet.evaluate((dialog) => Promise.all(dialog.getAnimations().map((a) => a.finished)));
 		const box = (await sheet.boundingBox())!;
 		expect(box.x).toBeCloseTo(16, 0);
 		expect(box.width).toBeCloseTo(358, 0);

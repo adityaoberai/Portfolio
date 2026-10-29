@@ -13,6 +13,17 @@
 - Appwrite Analytics replaces Google Analytics and runs only on the two production hostnames, respecting Do Not Track.
 - Node 24 is the development and CI default. The minimum supported version is 22.18.
 
+## 29 October 2026 — Strict dependency audit
+
+- CI runs `npm run audit` instead of `npm audit --audit-level=moderate`. `scripts/audit.mjs` fails on an advisory of any severity, including low and informational ones, unless it is a documented exception in [docs/maintenance.md](docs/maintenance.md). An exception holds only at the severity it was triaged at, and an exception that is no longer reported also fails CI, so the list cannot go stale.
+- CI runs the audit with an empty npm cache under the runner's temporary directory, following review. npm 11 reuses an advisory's cached severity while its affected range is unchanged, so the cache `setup-node` restores could hide a re-score. Confirmed by editing a cached `deepmerge` entry to moderate: a warm cache reported moderate, and a fresh cache reported the registry's low.
+- Fixed the `cookie` advisory (GHSA-pxg6-pf52-xh8x) without waiting for SvelteKit 3: a `cookie@<0.7.0` override installs 0.7.2 under SvelteKit 2. The mode cookie passes its stricter validation, and the override stops matching once SvelteKit 3 brings `cookie` 2.
+- Three exceptions remain: two SvelteKit 2 advisories, fixed only in SvelteKit 3, and `deepmerge` 4.3.1, which has no patched release and is still required by the latest Svelte Vite plugin (7.3.1). Rechecked each exposure note against the code; `deepmerge` is absent from the build output.
+- Reviewed the maintenance doc: recorded the audit policy, the override, and SvelteKit 3.1.0's peer requirements, and noted that `npm audit fix --force` would not resolve `deepmerge`.
+- Validation on Node 24: lint, type checking (0 errors/0 warnings), all 34 unit tests, `npm run audit`, the production build, and all 66 browser tests pass, including the mode-cookie tests against the 0.7.2 server bundle. The audit check also fails, as intended, on edited reports with a new advisory (including an informational one), a re-scored exception, a stale exception, an npm error, and empty output. Locally, `npm ci` could not replace a native module held open by another process, so the tree was restored with `npm install` and checked against the lockfile; CI runs the clean install.
+- After merging the consistent-room change from `main`, the mobile object-card test in `ux.spec.ts` failed intermittently on a loaded local machine at all three phone widths: it measured the card during its 220ms, 20px reveal animation (831–837px against the settled 824px). It and the two other tests that measure a freshly opened mobile sheet (the shelf/mirror previews and the bed's poem card) now wait for the sheet's animations to finish, as the accessibility audit already does. The object-card test went from 6 failures in 9 runs to 15 passes in 15, and the other two passed 12 of 12 repeats.
+- Validation after the merge and fix: lint, type checking, 33 unit tests, `npm run audit`, the build, and all 67 browser tests pass.
+
 ## 29 October 2026 — Consistent room across screen sizes
 
 - Use the desktop room geometry and furniture positions on every screen. Remove the portrait-only 40% floor-depth increase, along with duplicate geometry, inverse model scaling, hitbox remapping, and movement compensation. Keep a portrait-specific camera angle without changing the layout.
@@ -53,7 +64,7 @@
 
 - Run the physical iPhone/Android, screen-reader, Safari playback, and sustained GPU/thermal checks in [docs/room.md](docs/room.md#real-phone-test-not-yet-passed), then record device, browser, connection, and results here. Automated Chromium checks do not replace those checks.
 - `src/lib/data/now.ts`: Reading and Thinking about need Aditya's input. Keep the manual `now.updated` date in sync with content edits.
-- Track the four low-severity dependency advisories and the separate framework migration in [docs/maintenance.md](docs/maintenance.md).
+- Track the three documented audit exceptions and the separate framework migration in [docs/maintenance.md](docs/maintenance.md).
 
 ## Historical record
 

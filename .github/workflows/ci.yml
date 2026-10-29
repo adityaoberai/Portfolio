@@ -28,7 +28,11 @@ jobs:
       - run: npm run lint
       - run: npm run check
       - run: npm test
-      - run: npm audit --audit-level=moderate
+      - run: npm run audit
+        env:
+          # npm reuses an advisory's cached severity until its affected range changes,
+          # so audit with an empty cache rather than the one setup-node restored.
+          npm_config_cache: ${{ runner.temp }}/npm-audit-cache
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e -- --reporter=line
