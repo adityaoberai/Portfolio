@@ -16,6 +16,7 @@
 ## 29 October 2026 — Strict dependency audit
 
 - CI runs `npm run audit` instead of `npm audit --audit-level=moderate`. `scripts/audit.mjs` fails on an advisory of any severity, including low and informational ones, unless it is a documented exception in [docs/maintenance.md](docs/maintenance.md). An exception holds only at the severity it was triaged at, and an exception that is no longer reported also fails CI, so the list cannot go stale.
+- CI runs the audit with an empty npm cache under the runner's temporary directory, following review. npm 11 reuses an advisory's cached severity while its affected range is unchanged, so the cache `setup-node` restores could hide a re-score. Confirmed by editing a cached `deepmerge` entry to moderate: a warm cache reported moderate, and a fresh cache reported the registry's low.
 - Fixed the `cookie` advisory (GHSA-pxg6-pf52-xh8x) without waiting for SvelteKit 3: a `cookie@<0.7.0` override installs 0.7.2 under SvelteKit 2. The mode cookie passes its stricter validation, and the override stops matching once SvelteKit 3 brings `cookie` 2.
 - Three exceptions remain: two SvelteKit 2 advisories, fixed only in SvelteKit 3, and `deepmerge` 4.3.1, which has no patched release and is still required by the latest Svelte Vite plugin (7.3.1). Rechecked each exposure note against the code; `deepmerge` is absent from the build output.
 - Reviewed the maintenance doc: recorded the audit policy, the override, and SvelteKit 3.1.0's peer requirements, and noted that `npm audit fix --force` would not resolve `deepmerge`.

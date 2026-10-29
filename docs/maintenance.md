@@ -6,7 +6,7 @@ Last reviewed: 29 October 2026, using a clean install of `package-lock.json`.
 
 CI runs `npm run audit` at the strictest level: a finding of any severity fails the check, including low and informational ones, unless its advisory is one of the exceptions below. [`scripts/audit.mjs`](../scripts/audit.mjs) holds the same list and enforces it:
 
-- An exception holds only at the severity it was triaged at. If GitHub re-scores the advisory, CI fails until it is triaged again.
+- An exception holds only at the severity it was triaged at. If GitHub re-scores the advisory, CI fails until it is triaged again. CI audits with an empty npm cache for this reason: npm keeps an advisory's cached severity until its affected version range changes, so a local `npm run audit` can still show the old severity.
 - CI also fails when `npm audit` no longer reports an exception. Remove it from the script and from this page in the change that fixes it.
 - Fix a finding when a compatible patch exists, with an `overrides` entry if a dependency has not adopted the patch yet. Add an exception only when there is no fix, together with an exposure note.
 
