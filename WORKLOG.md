@@ -13,6 +13,14 @@
 - Appwrite Analytics replaces Google Analytics and runs only on the two production hostnames, respecting Do Not Track.
 - Node 24 is the development and CI default. The minimum supported version is 22.18.
 
+## 29 October 2026 — Strict dependency audit
+
+- CI runs `npm run audit` instead of `npm audit --audit-level=moderate`. `scripts/audit.mjs` fails on an advisory of any severity, including low and informational ones, unless it is a documented exception in [docs/maintenance.md](docs/maintenance.md). An exception holds only at the severity it was triaged at, and an exception that is no longer reported also fails CI, so the list cannot go stale.
+- Fixed the `cookie` advisory (GHSA-pxg6-pf52-xh8x) without waiting for SvelteKit 3: a `cookie@<0.7.0` override installs 0.7.2 under SvelteKit 2. The mode cookie passes its stricter validation, and the override stops matching once SvelteKit 3 brings `cookie` 2.
+- Three exceptions remain: two SvelteKit 2 advisories, fixed only in SvelteKit 3, and `deepmerge` 4.3.1, which has no patched release and is still required by the latest Svelte Vite plugin (7.3.1). Rechecked each exposure note against the code; `deepmerge` is absent from the build output.
+- Reviewed the maintenance doc: recorded the audit policy, the override, and SvelteKit 3.1.0's peer requirements, and noted that `npm audit fix --force` would not resolve `deepmerge`.
+- Validation on Node 24: lint, type checking (0 errors/0 warnings), all 34 unit tests, `npm run audit`, the production build, and all 66 browser tests pass, including the mode-cookie tests against the 0.7.2 server bundle. The audit check also fails, as intended, on edited reports with a new advisory (including an informational one), a re-scored exception, a stale exception, an npm error, and empty output. Locally, `npm ci` could not replace a native module held open by another process, so the tree was restored with `npm install` and checked against the lockfile; CI runs the clean install.
+
 ## 29 October 2026 — SoundCloud playlist and explicit player visibility
 
 - Replaced Spotify with SoundCloud's hosted player for Aditya's supplied public playlist, `https://soundcloud.com/user-298651421/sets/adis-world`. SoundCloud's oEmbed endpoint confirms the playlist title as "adi's world". No audio files or custom audio player were added.
@@ -45,7 +53,7 @@
 
 - Run the physical iPhone/Android, screen-reader, Safari playback, and sustained GPU/thermal checks in [docs/room.md](docs/room.md#real-phone-test-not-yet-passed), then record device, browser, connection, and results here. Automated Chromium checks do not replace those checks.
 - `src/lib/data/now.ts`: Reading and Thinking about need Aditya's input. Keep the manual `now.updated` date in sync with content edits.
-- Track the four low-severity dependency advisories and the separate framework migration in [docs/maintenance.md](docs/maintenance.md).
+- Track the three documented audit exceptions and the separate framework migration in [docs/maintenance.md](docs/maintenance.md).
 
 ## Historical record
 

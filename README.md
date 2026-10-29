@@ -34,6 +34,7 @@ Open http://localhost:5173. Local development doesn't need any environment varia
 | `npm run format`                | Format everything with Prettier                                                 |
 | `npm test`                      | Run the unit tests (movement, content, journey)                                 |
 | `npm run test:e2e`              | Run the Playwright browser tests against the production build                   |
+| `npm run audit`                 | Fail on any dependency advisory not documented in `docs/maintenance.md`         |
 | `npm run content`               | List every artifact id and each room station's blocks                           |
 | `npm run images`                | Derive card images, the shelf atlas, and the flag texture from `assets/`        |
 | `npm run assets`                | Capture the room still, share-image photo, and resized portrait from the server |
@@ -54,7 +55,7 @@ npm run test:e2e
 
 They cover movement, panels, mobile layouts, music, mode switching, analytics events, and axe accessibility scans using the WCAG 2.2 AA tags. To use a different Chromium, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE`; it then renders WebGL in software.
 
-GitHub Actions runs lint, type checking, unit tests, the dependency audit, the production build, and the browser suite for pull requests and pushes to `main`. Moderate or higher dependency findings fail CI; the remaining low-severity findings are tracked in [docs/maintenance.md](docs/maintenance.md).
+GitHub Actions runs lint, type checking, unit tests, the dependency audit, the production build, and the browser suite for pull requests and pushes to `main`. A dependency finding of any severity fails CI unless it is a documented exception in [docs/maintenance.md](docs/maintenance.md).
 
 ## Project layout
 
