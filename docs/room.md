@@ -41,7 +41,7 @@ To stay inside the budget:
 
 ## Layout
 
-- Portrait screens use a longer floor plan (7 × 8.68 room units instead of 7 × 6.2), with furniture at its original size. Movement, taps, hitboxes, camera focus, the mirror, walking speed, and saved positions all go through the same mapping. Rotating the phone swaps layouts without moving the character to a different logical position.
+- Every screen uses the same 7 × 6.2 room and furniture positions. Portrait screens can use a different camera angle; responsive framing scales and centres the view around the available space. It never stretches the floor plan or moves the furniture. Rotating a phone preserves the character's position and the room's proportions. Movement, taps, hitboxes, camera focus, the mirror, and saved positions all use the same coordinates.
 - The scene frames the room in the space the overlays leave (`setInsets`), so the header, hint, controls, and reading sheets never cover it.
 - The mirror reflects only the character. A second fixed orthographic camera looks along the room camera's view reflected in the glass and renders the character's meshes (layer 1) into a small 4× multisampled texture. It runs only on frames where the character could show in the mirror. The mirror's approach point is where the reflection is centred, and a unit test checks it.
 - The hallway behind the door is separate from the room's static geometry and drawn through a stencil of the doorway. Its passes run only while the door is open, so a closed door shows nothing outside and an open one never reveals the back of the set.

@@ -169,8 +169,8 @@ export function route(from: Point, to: Point): Point[] {
 	return path;
 }
 
-export function stepToward(from: Point, to: Point, delta: number, depth = 1): Point {
-	const remaining = Math.hypot(to.x - from.x, (to.z - from.z) * depth);
+export function stepToward(from: Point, to: Point, delta: number): Point {
+	const remaining = Math.hypot(to.x - from.x, to.z - from.z);
 	const step = SPEED * Math.max(0, Math.min(delta, 0.05));
 	if (remaining <= step) return { ...to };
 	return {
@@ -183,8 +183,7 @@ export function stepToward(from: Point, to: Point, delta: number, depth = 1): Po
 export function screenDirection(
 	horizontal: number,
 	vertical: number,
-	camera = CAMERA_OFFSET,
-	depth = 1
+	camera = CAMERA_OFFSET
 ): Point {
 	const length = Math.hypot(camera[0], camera[2]);
 	const forward = { x: -camera[0] / length, z: -camera[2] / length };
@@ -192,17 +191,17 @@ export function screenDirection(
 	const magnitude = Math.max(1, Math.hypot(horizontal, vertical));
 	return {
 		x: (right.x * horizontal - forward.x * vertical) / magnitude,
-		z: (right.z * horizontal - forward.z * vertical) / magnitude / depth
+		z: (right.z * horizontal - forward.z * vertical) / magnitude
 	};
 }
 
-export function keyboardDirection(keys: Set<string>, camera = CAMERA_OFFSET, depth = 1): Point {
+export function keyboardDirection(keys: Set<string>, camera = CAMERA_OFFSET): Point {
 	const horizontal =
 		Number(keys.has('d') || keys.has('arrowright')) -
 		Number(keys.has('a') || keys.has('arrowleft'));
 	const vertical =
 		Number(keys.has('s') || keys.has('arrowdown')) - Number(keys.has('w') || keys.has('arrowup'));
-	return screenDirection(horizontal, vertical, camera, depth);
+	return screenDirection(horizontal, vertical, camera);
 }
 
 export function nearest<T extends { approach: Point }>(

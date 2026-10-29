@@ -13,6 +13,14 @@
 - Appwrite Analytics replaces Google Analytics and runs only on the two production hostnames, respecting Do Not Track.
 - Node 24 is the development and CI default. The minimum supported version is 22.18.
 
+## 29 October 2026 — Consistent room across screen sizes
+
+- Use the desktop room geometry and furniture positions on every screen. Remove the portrait-only 40% floor-depth increase, along with duplicate geometry, inverse model scaling, hitbox remapping, and movement compensation. Keep a portrait-specific camera angle without changing the layout.
+- Keep responsive camera fitting around the header, touch controls, music player, and reading sheets. Retarget an active focus animation when the available space changes.
+- Fit the narrower shared room more closely on phones so removing the depth stretch does not leave unnecessary space at its sides.
+- Add browser coverage comparing room corners, wall height, and furniture landmarks against the same floor plan at each camera angle across desktop, phone portrait, landscape, and rotation back. Resizing must preserve the character's saved position.
+- Validation: lint, type checking (0 errors/0 warnings), 33 unit tests, and a clean production build pass. The new browser regression reproduces the original 40% depth stretch and passes after removing it. Visually checked the room and bed views at desktop, 390 × 844, 320 × 740, and 844 × 390 with no page overflow. Full browser validation also runs in PR CI.
+
 ## 29 October 2026 — SoundCloud playlist and explicit player visibility
 
 - Replaced Spotify with SoundCloud's hosted player for Aditya's supplied public playlist, `https://soundcloud.com/user-298651421/sets/adis-world`. SoundCloud's oEmbed endpoint confirms the playlist title as "adi's world". No audio files or custom audio player were added.

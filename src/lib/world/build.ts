@@ -54,18 +54,6 @@ export class Batch {
 	private get top() {
 		return this.stack[this.stack.length - 1];
 	}
-	// Cancel the room's extra depth around a furniture group's anchor, retaining
-	// its proportions while its position follows the longer floor plan.
-	preserveDepth(depth: number, anchor: number, draw: () => void) {
-		const local = new Matrix4()
-			.makeTranslation(0, 0, anchor)
-			.scale(new Vector3(1, 1, 1 / depth))
-			.multiply(new Matrix4().makeTranslation(0, 0, -anchor));
-		this.stack.push(this.top.clone().multiply(local));
-		draw();
-		this.stack.pop();
-	}
-
 	group(position: Vec3, rotation: Vec3 | number, draw: () => void, scale = 1) {
 		const euler = typeof rotation === 'number' ? new Euler(0, rotation, 0) : new Euler(...rotation);
 		const local = new Matrix4().compose(
@@ -505,7 +493,7 @@ export function buildTonearm(b: Batch) {
 	b.box('#2f3133', [0, groove + 0.005, arm.length], [0.005, 0.01, 0.005]);
 }
 
-export function buildShell(lit: Batch, unlit: Batch, depth = 1) {
+export function buildShell(lit: Batch, unlit: Batch) {
 	unlit.decal('#d7d8c8', 0, 0.1, 5.1, 4.4, -0.35);
 	lit.box('#ad805b', [-0.075, -0.2, 0.025], [7.15, 0.32, 6.35]);
 	lit.box('#dfc49a', [0, -0.025, 0.1], [7, 0.06, 6.2]);
@@ -531,11 +519,9 @@ export function buildShell(lit: Batch, unlit: Batch, depth = 1) {
 	lit.box('#a87753', [-3.575, 3.1, 0.1], [0.21, 0.1, 6.3]);
 
 	// Warm woven rug; no transparency or real-time shadows.
-	lit.preserveDepth(depth, 0.7, () => {
-		lit.box('#bb7156', [0.5, 0.026, 0.7], [3.3, 0.025, 2.5]);
-		lit.box('#d59870', [0.5, 0.042, 0.7], [3.05, 0.009, 2.25]);
-		for (const z of [-0.3, 1.7]) lit.box('#ebc498', [0.5, 0.05, z], [3, 0.005, 0.055]);
-	});
+	lit.box('#bb7156', [0.5, 0.026, 0.7], [3.3, 0.025, 2.5]);
+	lit.box('#d59870', [0.5, 0.042, 0.7], [3.05, 0.009, 2.25]);
+	for (const z of [-0.3, 1.7]) lit.box('#ebc498', [0.5, 0.05, z], [3, 0.005, 0.055]);
 }
 
 // Asus ROG Zephyrus G15, open, local +z towards whoever sits at it: an Eclipse
@@ -966,7 +952,7 @@ export function buildDoorFrame(lit: Batch) {
 }
 
 // Rendered separately, through a stencil of the doorway. None of the hallway
-// can spill beyond the room silhouette, even from a higher portrait camera.
+// can spill beyond the room silhouette.
 export function buildHallway(lit: Batch) {
 	lit.box('#c9ad86', [-3.95, -0.03, 1.8], [0.7, 0.06, 2.2]);
 	lit.box('#9c5a45', [-3.95, 0.004, 1.75], [0.56, 0.008, 0.5]);
@@ -984,42 +970,33 @@ export function buildDoorSlab(b: Batch) {
 	b.add('sphere', '#c9a24a', [0.05, 1.02, 0.7], [0.035, 0.035, 0.035]);
 }
 
-export function buildDecor(lit: Batch, unlit: Batch, flag: Batch, depth = 1) {
-	lit.preserveDepth(depth, DESK.z, () =>
-		flag.preserveDepth(depth, DESK.z, () => manUtdFlag(lit, flag))
-	);
+export function buildDecor(lit: Batch, unlit: Batch, flag: Batch) {
+	manUtdFlag(lit, flag);
 
 	// Under the board: a small rug and the sofa on it.
 	const sofa = FOOTPRINTS.sofa;
-	lit.preserveDepth(depth, sofa.z, () => {
-		lit.box('#5f7f6a', [-2.8, 0.022, sofa.z], [1.3, 0.02, 1.7]);
-		lit.box('#e2cfa6', [-2.8, 0.033, sofa.z], [1.12, 0.004, 1.52]);
-		for (const dz of [-0.55, 0.55])
-			lit.box('#5f7f6a', [-2.8, 0.036, sofa.z + dz], [1, 0.003, 0.05]);
-		lit.group([sofa.x, 0, sofa.z], sofa.angle, () => twoSeatSofa(lit));
-	});
+	lit.box('#5f7f6a', [-2.8, 0.022, sofa.z], [1.3, 0.02, 1.7]);
+	lit.box('#e2cfa6', [-2.8, 0.033, sofa.z], [1.12, 0.004, 1.52]);
+	for (const dz of [-0.55, 0.55]) lit.box('#5f7f6a', [-2.8, 0.036, sofa.z + dz], [1, 0.003, 0.05]);
+	lit.group([sofa.x, 0, sofa.z], sofa.angle, () => twoSeatSofa(lit));
 	// Beside the bed: the suitcase with travel stickers, and the football,
 	// a white Nike Premier League ball with pixelated navy, blue, and orange bands
 	// and a navy swoosh.
 	const suitcase = FOOTPRINTS.suitcase;
-	lit.preserveDepth(depth, suitcase.z, () => {
-		lit.group([suitcase.x, 0, suitcase.z], suitcase.angle, () => {
-			lit.box('#4f6f7a', [0, 0.36, 0], [0.48, 0.62, 0.26]);
-			lit.box('#3c5760', [0, 0.72, 0], [0.18, 0.05, 0.04]);
-			const stickers: [number, number, string][] = [
-				[-0.12, 0.48, '#e0b84a'],
-				[0.1, 0.28, '#c9573c'],
-				[-0.05, 0.2, '#f6f1e4']
-			];
-			for (const [x, y, color] of stickers)
-				lit.box(color, [x, y, 0.132], [0.12, 0.09, 0.006], [0, 0, 0.2]);
-			for (const x of [-0.17, 0.17])
-				lit.cylinder('#2b2b2a', [x, 0.03, 0], 0.03, 0.03, [0, 0, Math.PI / 2]);
-		});
+	lit.group([suitcase.x, 0, suitcase.z], suitcase.angle, () => {
+		lit.box('#4f6f7a', [0, 0.36, 0], [0.48, 0.62, 0.26]);
+		lit.box('#3c5760', [0, 0.72, 0], [0.18, 0.05, 0.04]);
+		const stickers: [number, number, string][] = [
+			[-0.12, 0.48, '#e0b84a'],
+			[0.1, 0.28, '#c9573c'],
+			[-0.05, 0.2, '#f6f1e4']
+		];
+		for (const [x, y, color] of stickers)
+			lit.box(color, [x, y, 0.132], [0.12, 0.09, 0.006], [0, 0, 0.2]);
+		for (const x of [-0.17, 0.17])
+			lit.cylinder('#2b2b2a', [x, 0.03, 0], 0.03, 0.03, [0, 0, Math.PI / 2]);
 	});
 	const ball = FOOTPRINTS.football;
-	lit.preserveDepth(depth, ball.z, () => premierLeagueBall(lit, [ball.x, 0.13, ball.z], 0.13));
-	unlit.preserveDepth(depth, ball.z, () =>
-		unlit.decal('#caa77f', ball.x, ball.z, 0.14, 0.1, 0.014)
-	);
+	premierLeagueBall(lit, [ball.x, 0.13, ball.z], 0.13);
+	unlit.decal('#caa77f', ball.x, ball.z, 0.14, 0.1, 0.014);
 }
