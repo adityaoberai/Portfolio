@@ -24,6 +24,14 @@
 - After merging the consistent-room change from `main`, the mobile object-card test in `ux.spec.ts` failed intermittently on a loaded local machine at all three phone widths: it measured the card during its 220ms, 20px reveal animation (831–837px against the settled 824px). It and the two other tests that measure a freshly opened mobile sheet (the shelf/mirror previews and the bed's poem card) now wait for the sheet's animations to finish, as the accessibility audit already does. The object-card test went from 6 failures in 9 runs to 15 passes in 15, and the other two passed 12 of 12 repeats.
 - Validation after the merge and fix: lint, type checking, 33 unit tests, `npm run audit`, the build, and all 67 browser tests pass.
 
+## 30 October 2026 — Sitemap freshness in CI
+
+- Confirm the live sitemap lists all 13 current public pages and robots.txt advertises it. Replace its manually maintained route list with generated `static/sitemap.xml`; `npm run sitemap:update` discovers current page routes and runs before every build. Preserve the public `/sitemap.xml` URL.
+- Check the committed sitemap before CI builds with `npm run sitemap:check`. Replace the fixed-list browser assertion with independent route discovery so a missing new route, stale URL, duplicate, or wrong hostname fails CI.
+- Validate XML, canonical page responses, redirects, noindex directives, and the explicit noindex fallback exclusion. Parameterized routes fail with a request for concrete URL coverage.
+- Add `npm run test:sitemap` and a named CI step. Exclude its tag from the remaining browser step so the check runs once per CI build. Document how public route changes update the sitemap.
+- Validation: the live sitemap and robots.txt return HTTP 200 and list all 13 public pages. Adding and removing a route correctly fails freshness checks until regeneration; route groups produce clean URLs and repeated updates are unchanged. Lint, type checking (0 errors/0 warnings), 33 unit tests, the production build with its automatic update hook, and the focused sitemap browser check pass.
+
 ## 29 October 2026 — Consistent room across screen sizes
 
 - Use the desktop room geometry and furniture positions on every screen. Remove the portrait-only 40% floor-depth increase, along with duplicate geometry, inverse model scaling, hitbox remapping, and movement compensation. Keep a portrait-specific camera angle without changing the layout.

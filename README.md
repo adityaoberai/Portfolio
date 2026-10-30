@@ -34,6 +34,9 @@ Open http://localhost:5173. Local development doesn't need any environment varia
 | `npm run format`                | Format everything with Prettier                                                 |
 | `npm test`                      | Run the unit tests (movement, content, journey)                                 |
 | `npm run test:e2e`              | Run the Playwright browser tests against the production build                   |
+| `npm run test:sitemap`          | Check sitemap coverage, XML, robots discovery, and canonical page responses     |
+| `npm run sitemap:update`        | Regenerate static/sitemap.xml from the current public routes                    |
+| `npm run sitemap:check`         | Fail if the generated sitemap is missing or stale                               |
 | `npm run audit`                 | Fail on any dependency advisory not documented in `docs/maintenance.md`         |
 | `npm run content`               | List every artifact id and each room station's blocks                           |
 | `npm run images`                | Derive card images, the shelf atlas, and the flag texture from `assets/`        |
@@ -55,7 +58,13 @@ npm run test:e2e
 
 They cover movement, panels, mobile layouts, music, mode switching, analytics events, and axe accessibility scans using the WCAG 2.2 AA tags. To use a different Chromium, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE`; it then renders WebGL in software.
 
-GitHub Actions runs lint, type checking, unit tests, the dependency audit, the production build, and the browser suite for pull requests and pushes to `main`. A dependency finding of any severity fails CI unless it is a documented exception in [docs/maintenance.md](docs/maintenance.md).
+GitHub Actions runs lint, type checking, unit tests, the dependency audit, the production build, sitemap checks, and the browser suite for pull requests and pushes to `main`. Sitemap checks have their own named step; the remaining browser step excludes their `@sitemap` tag so they run once. A dependency finding of any severity fails CI unless it is a documented exception in [docs/maintenance.md](docs/maintenance.md).
+
+## Sitemap
+
+[`/sitemap.xml`](https://adityaoberai.com/sitemap.xml) is generated into `static/sitemap.xml` from the current page routes by `scripts/sitemap.mjs` and advertised in `static/robots.txt`. Every `npm run build` runs the update automatically. After adding or removing a public page, run `npm run sitemap:update` and commit the regenerated file. `npm run sitemap:check` verifies freshness without changing it; CI runs this before the build so a stale committed sitemap cannot pass by being regenerated silently.
+
+CI independently discovers page routes under `src/routes` and compares them with every sitemap URL. It also checks XML, the production hostname, duplicates and stale entries, the robots declaration, HTTP 200 responses without redirects, canonical URLs, and noindex directives. `/404` is deliberately excluded and must remain noindex. A new parameterized route requires concrete URL coverage in the check before it can pass. Run `npm run build && npm run test:sitemap` locally to verify a change.
 
 ## Project layout
 

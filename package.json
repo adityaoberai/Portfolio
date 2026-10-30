@@ -8,6 +8,7 @@
 	},
 	"scripts": {
 		"dev": "vite dev",
+		"prebuild": "npm run sitemap:update",
 		"build": "vite build",
 		"preview": "node build",
 		"start": "node build",
@@ -16,6 +17,9 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"test": "node --import ./tests/ts-hooks.mjs --test tests/movement.test.mjs tests/content.test.mjs tests/journey.test.mjs",
 		"test:e2e": "playwright test",
+		"test:sitemap": "playwright test --grep @sitemap",
+		"sitemap:update": "node scripts/sitemap.mjs",
+		"sitemap:check": "node scripts/sitemap.mjs --check",
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
 		"audit": "npm audit --json | node scripts/audit.mjs",
