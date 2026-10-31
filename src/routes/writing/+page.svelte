@@ -7,12 +7,13 @@
 	import { contentId } from '$lib/analytics';
 
 	const essays = ofType('essay');
+	const articles = ofType('article');
 	// Professional writing lives on Appwrite's site; these are the existing records for it.
 	const professional = workThemes.find((t) => t.slug === 'product-storytelling')?.items ?? [];
 </script>
 
 <PageMeta
-	title="Writing"
+	title="Essays and technical writing"
 	description="Personal essays by Aditya Oberai on home, friendship, legacy, and being human, plus 100+ technical articles and customer stories for Appwrite."
 	path="/writing"
 />
@@ -47,8 +48,26 @@
 		</p>
 	</section>
 
+	<section class="v3-section" id="technical-writing" aria-labelledby="technical-title">
+		<h2 id="technical-title"><span class="n">02</span>Selected technical writing</h2>
+		<p class="note">Tutorials, product launches, and customer stories, published on Appwrite.</p>
+		<div class="list">
+			{#each articles as article (article.id)}
+				<Row
+					meta={article.date}
+					title={article.title}
+					subtitle={article.context}
+					description={article.description}
+					href={article.externalUrl}
+					tracking={{ type: 'article', id: article.id }}
+					external
+				/>
+			{/each}
+		</div>
+	</section>
+
 	<section class="v3-section" aria-labelledby="work-title">
-		<h2 id="work-title"><span class="n">02</span>For work</h2>
+		<h2 id="work-title"><span class="n">03</span>More from work</h2>
 		<div class="list">
 			{#each professional as item (item.title)}
 				<Row

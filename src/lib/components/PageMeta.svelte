@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { site } from '$lib/data/site';
-	import { socialLinks } from '$lib/data/links';
-	import { pexelsProfile } from '$lib/data/photography';
+	import { canonicalPath } from '$lib/data/canonical';
+	import { person } from '$lib/data/identity';
 
 	let {
 		title,
@@ -9,25 +9,36 @@
 		path = '/'
 	}: { title?: string; description?: string; path?: string } = $props();
 
-	const pageTitle = $derived(title ? `${title} · ${site.name}` : site.name);
+	const pageTitle = $derived(title ? `${title} · ${site.name}` : `${site.name} · ${site.role}`);
 	const pageDescription = $derived(description ?? site.description);
-	const canonical = $derived(`${site.url}${path === '/' ? '/' : path}`);
+	const canonical = $derived(`${site.url}${canonicalPath(path)}`);
 
 	// Structured data for search engines on the pages that introduce Aditya.
-	const person = {
+	const structuredData = $derived({
 		'@context': 'https://schema.org',
-		'@type': 'Person',
-		name: site.name,
-		url: site.url,
-		image: `${site.url}${site.portrait}`,
-		jobTitle: 'Developer Relations Lead',
-		worksFor: { '@type': 'Organization', name: 'Appwrite', url: 'https://appwrite.io' },
-		address: { '@type': 'PostalAddress', addressLocality: 'Bengaluru', addressCountry: 'IN' },
-		email: `mailto:${site.email}`,
-		sameAs: [...socialLinks.map((link) => link.url), 'https://oberai.blog', pexelsProfile]
-	};
-	const jsonLd = `<script type="application/ld+json">${JSON.stringify(person).replace(/</g, '\\u003c')}</${'script'}>`;
-	const introducesPerson = $derived(['/', '/index', '/about'].includes(path));
+		'@graph': [
+			person,
+			{
+				'@type': 'WebSite',
+				'@id': `${site.url}/#website`,
+				url: `${site.url}/`,
+				name: site.name,
+				publisher: { '@id': person['@id'] }
+			},
+			{
+				'@type': path === '/about' ? 'ProfilePage' : 'WebPage',
+				'@id': `${canonical}#webpage`,
+				url: canonical,
+				name: canonicalPath(path) === '/' ? site.name : pageTitle,
+				mainEntity: { '@id': person['@id'] },
+				isPartOf: { '@id': `${site.url}/#website` }
+			}
+		]
+	});
+	const jsonLd = $derived(
+		`<script type="application/ld+json">${JSON.stringify(structuredData).replace(/</g, '\\u003c')}</${'script'}>`
+	);
+	const introducesPerson = $derived(['/', '/world', '/index', '/about'].includes(path));
 </script>
 
 <svelte:head>
@@ -35,6 +46,7 @@
 	<meta name="description" content={pageDescription} />
 	<meta name="author" content={site.name} />
 	<link rel="canonical" href={canonical} />
+	<link rel="describedby" href="/llms.txt" type="text/plain" />
 
 	<meta property="og:type" content={path === '/about' ? 'profile' : 'website'} />
 	<meta property="og:url" content={canonical} />

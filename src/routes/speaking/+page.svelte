@@ -25,7 +25,7 @@
 </script>
 
 <PageMeta
-	title="Speaking"
+	title="Talks on DevRel, AI, and community"
 	description="Aditya Oberai speaks about developer relations, community building, writing, and developer education at conferences including RenderATL, All Things Open, and DevRelCon."
 	path="/speaking"
 />

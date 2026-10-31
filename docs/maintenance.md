@@ -2,6 +2,12 @@
 
 Last reviewed: 29 October 2026, using a clean install of `package-lock.json`.
 
+## 31 October audit follow-up
+
+A clean install of the unchanged lockfile now fails the audit on [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249), a moderate minimatch advisory published to the GitHub Advisory Database on 30 October. ESLint installs minimatch 3.1.5 and typescript-eslint installs 9.0.9. Both are lint dependencies; the advisory lists versions below 11.0.1 as affected, and the current 3.x and 9.x releases have no compatible patched version.
+
+The search-discovery change does not modify dependencies or the audit exceptions. Keep this finding visible in CI until the lint toolchain can adopt a patched version or the advisory's applicability is triaged separately. Replacing minimatch 3 with 11 through a blanket override changes its API and needs its own compatibility review.
+
 ## Audit policy
 
 CI runs `npm run audit` at the strictest level: a finding of any severity fails the check, including low and informational ones, unless its advisory is one of the exceptions below. [`scripts/audit.mjs`](../scripts/audit.mjs) holds the same list and enforces it:

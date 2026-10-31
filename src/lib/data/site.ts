@@ -3,7 +3,7 @@ export const site = {
 	role: 'Developer Relations Lead at Appwrite',
 	tagline: 'Developer Relations, communities, and open source',
 	description:
-		'Aditya Oberai is a DevRel practitioner, writer, speaker, and community builder helping developer tools communicate better, teach better, and build stronger developer communities.',
+		'Aditya Oberai leads Developer Relations at Appwrite. Explore his work in developer education, technical writing, open source, and community building.',
 	url: 'https://adityaoberai.com',
 	ogImage: 'https://adityaoberai.com/og.png?v=world-20261027',
 	email: 'aditya@oberai.dev',

@@ -8,7 +8,7 @@ import { workThemes } from '../src/lib/data/work.ts';
 import { projects } from '../src/lib/data/projects.ts';
 import { talks } from '../src/lib/data/talks.ts';
 import { podcasts } from '../src/lib/data/podcasts.ts';
-import { writingSamples } from '../src/lib/data/writing.ts';
+import { technicalWritingSamples, writingSamples } from '../src/lib/data/writing.ts';
 import { photographs } from '../src/lib/data/photography.ts';
 import { communityInitiatives } from '../src/lib/data/community.ts';
 import { existsSync, readFileSync } from 'node:fs';
@@ -58,6 +58,7 @@ test('every source record becomes exactly one artifact with a unique id', () => 
 		talks.length +
 		podcasts.length +
 		writingSamples.length +
+		technicalWritingSamples.length +
 		photographs.length +
 		communityInitiatives.length +
 		favouriteCards.length;

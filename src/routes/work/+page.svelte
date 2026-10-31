@@ -7,7 +7,7 @@
 </script>
 
 <PageMeta
-	title="Work"
+	title="Developer Relations work"
 	description="Aditya Oberai's professional work, organized by theme: developer relations, product storytelling, community, developer experience, and recognition."
 	path="/work"
 />

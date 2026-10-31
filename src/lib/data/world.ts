@@ -269,6 +269,12 @@ export const world: WorldConfig = {
 				blocks: [
 					{ type: 'items', style: 'pages', items: [{ type: 'essay', limit: 3 }] },
 					{
+						type: 'items',
+						style: 'pages',
+						heading: 'Selected technical writing',
+						items: [{ type: 'article', limit: 4 }]
+					},
+					{
 						type: 'feature',
 						style: 'aside',
 						item: 'work-100-published-articles',
