@@ -13,6 +13,17 @@
 - Appwrite Analytics replaces Google Analytics and runs only on the two production hostnames, respecting Do Not Track.
 - Node 24 is the development and CI default. The minimum supported version is 22.18.
 
+## 31 October 2026 — Search and answer discovery
+
+- Follow Google's SEO Starter Guide for descriptive titles, concise summaries, canonical URLs, crawlable links, and useful source material. Add the Appwrite role to the homepage title and description, and make the work, speaking, and writing titles more descriptive. Keep the room's introduction in the mirror, which shares its text with `/about`.
+- Link introductory pages through one stable Person identity and WebSite graph. Use ProfilePage on `/about`, referencing the same Person, and include the verified Appwrite author, Microsoft MVP, and Sessionize profiles.
+- Canonicalize `/world` to `/` without redirecting the mode-setting route. Exclude the alias from the generated sitemap; independently verify its listed canonical target in the browser check. The sitemap now contains 12 canonical pages.
+- Prerender `/llms.txt` from the existing profile, section, and selected-writing records. Advertise it through `rel="describedby"`; check its plain-text response, Unicode content, and local destinations.
+- Curate four existing Appwrite articles with verified author, date, and URL. Share their records and analytics IDs across `/writing`, the notebook reader, and `/llms.txt`.
+- Document old-domain page, file, and short-link mappings in [redirects.md](docs/redirects.md). Domain forwarding remains an external setup task for Aditya.
+- Validation: clean installation, type checking (0 errors/0 warnings), lint, all 33 unit tests, the production build, sitemap freshness, and all 12 focused discovery/sitemap/mode/page browser checks pass. The expanded article-click analytics check and existing native contact-window check both pass in isolation. The full 70-test browser run encountered a timeout in that native contact-window check before its successful rerun. Desktop and phone writing views are visually checked.
+- The unchanged dependency tree reports a newly published moderate minimatch advisory. Record it in [maintenance.md](docs/maintenance.md#31-october-audit-follow-up); no audit exception or dependency override is added.
+
 ## 29 October 2026 — Strict dependency audit
 
 - CI runs `npm run audit` instead of `npm audit --audit-level=moderate`. `scripts/audit.mjs` fails on an advisory of any severity, including low and informational ones, unless it is a documented exception in [docs/maintenance.md](docs/maintenance.md). An exception holds only at the severity it was triaged at, and an exception that is no longer reported also fails CI, so the list cannot go stale.

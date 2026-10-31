@@ -4,9 +4,11 @@ import { test, expect } from '@playwright/test';
 import { site } from '../../src/lib/data/site';
 
 const namespace = 'http://www.sitemaps.org/schemas/sitemap/0.9';
-// This is a noindex fallback, not a public content page. Any further exclusions
-// must also declare noindex, which is checked below.
-const excluded = ['/404'];
+// Keep expectations independent of the generator and its canonical policy.
+// Exclusions must be noindex pages or declare a healthy, listed canonical target.
+const noindex = ['/404'];
+const aliases: Record<string, string> = { '/world': '/' };
+const excluded = [...noindex, ...Object.keys(aliases)];
 
 test(
 	'sitemap matches public routes and links to healthy canonical pages',
@@ -98,12 +100,15 @@ test(
 				await target.text()
 			);
 			const directives = `${target.headers()['x-robots-tag'] ?? ''},${metadata.robots}`;
-			if (excluded.includes(new URL(url).pathname)) {
+			const path = new URL(url).pathname;
+			if (noindex.includes(path)) {
 				expect(directives, `${url} must justify its sitemap exclusion with noindex`).toMatch(
 					/\b(noindex|none)\b/i
 				);
 			} else {
-				expect(metadata.canonicals, url).toEqual([url]);
+				const canonical = aliases[path] ? `${site.url}${aliases[path]}` : url;
+				expect(metadata.canonicals, url).toEqual([canonical]);
+				expect(locations, `${url} must resolve to a listed canonical page`).toContain(canonical);
 				expect(directives, url).not.toMatch(/\b(noindex|none)\b/i);
 			}
 		}

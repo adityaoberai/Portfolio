@@ -362,6 +362,12 @@ test('content links identify the item and entry page, including keyboard and mid
 			id: 'collection',
 			action: 'showcase',
 			section: 'collection_page'
+		},
+		{
+			path: '/writing',
+			selector: '#technical-writing a[data-content-type="article"]',
+			type: 'article',
+			section: 'writing_page'
 		}
 	];
 	for (const [index, item] of cases.entries()) {

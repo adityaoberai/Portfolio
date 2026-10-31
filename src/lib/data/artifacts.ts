@@ -5,12 +5,13 @@ import { podcasts } from './podcasts';
 import { projects } from './projects';
 import { talks } from './talks';
 import { workThemes } from './work';
-import { writingSamples } from './writing';
+import { technicalWritingSamples, writingSamples } from './writing';
 
 export type ArtifactType =
 	| 'project'
 	| 'work'
 	| 'essay'
+	| 'article'
 	| 'photo'
 	| 'collectible'
 	| 'talk'
@@ -153,6 +154,17 @@ const written: Artifact[] = writingSamples.map((essay, i) => ({
 	featured: i === 0
 }));
 
+const technicalWriting: Artifact[] = technicalWritingSamples.map((article) => ({
+	id: `article-${slug(article.title)}`,
+	type: 'article',
+	worlds: ['write', 'build'],
+	title: article.title,
+	description: article.description,
+	date: article.meta,
+	context: `${article.kind} · Appwrite`,
+	externalUrl: article.href
+}));
+
 const photographed: Artifact[] = photographs.map((photo, i) => ({
 	id: `photo-${photo.id}`,
 	type: 'photo',
@@ -195,6 +207,7 @@ export const artifacts: Artifact[] = [
 	...built,
 	...spoken,
 	...written,
+	...technicalWriting,
 	...photographed,
 	...gathered,
 	...collected
