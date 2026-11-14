@@ -13,6 +13,11 @@
 - Appwrite Analytics replaces Google Analytics and runs only on the two production hostnames, respecting Do Not Track.
 - Node 24 is the development and CI default. The minimum supported version is 22.18.
 
+## 14 November 2026 – Latest personal essay
+
+- Added “The Unsubtly Intrusive Art Of Street Photography” as the newest essay and refreshed the Now page's update date.
+- Lint, type checking, all 33 unit tests, the production build, and sitemap freshness pass. Verified the listing on Writing, Now, and On paper, plus the notebook's resolved essay order. The dependency audit reports the same three advisories on this branch and `main`.
+
 ## 29 October 2026 — Strict dependency audit
 
 - CI runs `npm run audit` instead of `npm audit --audit-level=moderate`. `scripts/audit.mjs` fails on an advisory of any severity, including low and informational ones, unless it is a documented exception in [docs/maintenance.md](docs/maintenance.md). An exception holds only at the severity it was triaged at, and an exception that is no longer reported also fails CI, so the list cannot go stale.
