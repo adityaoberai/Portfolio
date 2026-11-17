@@ -81,10 +81,99 @@ test('llms.txt is readable text with working local destinations and published wr
 	);
 	expect(destinations).toContain('/about');
 	expect(destinations).toContain('/writing');
+	expect(destinations).toContain('/llms-full.txt');
+	expect(destinations).toContain('/projects/relief-atl');
+	expect(destinations).toContain(
+		'/speaking/why-agents-make-different-decisions-with-the-same-tools'
+	);
 	for (const path of new Set(destinations)) {
 		const target = await request.get(path, { maxRedirects: 0 });
 		expect(target.status(), path).toBe(200);
 	}
+});
+
+test('the room introduces the portfolio in HTML without scripts or a saved mode', async ({
+	browser
+}) => {
+	const context = await browser.newContext({ javaScriptEnabled: false });
+	try {
+		const page = await context.newPage();
+		await page.goto('/');
+		await expect(page.locator('.welcome-bio')).toContainText(
+			'Developer Relations Lead at Appwrite'
+		);
+		const nav = page.getByRole('navigation', { name: 'Portfolio pages' });
+		await expect(nav.getByRole('link', { name: 'Projects' })).toHaveAttribute('href', '/projects');
+		await expect(nav.getByRole('link', { name: 'Speaking' })).toHaveAttribute('href', '/speaking');
+		await nav.getByRole('link', { name: 'About' }).click();
+		await expect(page.getByRole('heading', { name: 'Career journey' })).toBeVisible();
+	} finally {
+		await context.close();
+	}
+});
+
+test('project and talk detail pages connect public evidence to the same person', async ({
+	page,
+	request
+}) => {
+	const cases = [
+		{
+			hub: '/projects',
+			path: '/projects/relief-atl',
+			name: 'Relief ATL',
+			citation: 'https://doi.org/10.1371/journal.pwat.0000574',
+			excerpt: '55.3% of the 262 potential restroom locations',
+			key: 'contributor'
+		},
+		{
+			hub: '/speaking',
+			path: '/speaking/why-agents-make-different-decisions-with-the-same-tools',
+			name: 'Why Agents Make Different Decisions With the Same Tools',
+			citation: 'https://www.youtube.com/watch?v=lSjakfdOUqc',
+			excerpt: 'with Jyoti Bisht and Animesh Pathak',
+			key: 'creator'
+		}
+	];
+	for (const item of cases) {
+		await page.goto(item.hub);
+		await page.locator(`main a[href="${item.path}"]`).first().click();
+		await expect(page.getByRole('heading', { level: 1, name: item.name })).toBeVisible();
+		await expect(page.locator('main article')).toContainText(item.excerpt);
+		await expect(page.locator(`main a[href="${item.citation}"]`)).toHaveAttribute(
+			'target',
+			'_blank'
+		);
+		const graph = JSON.parse(
+			(await page.locator('script[type="application/ld+json"]').textContent()) ?? ''
+		)['@graph'];
+		const webPage = graph.find((node: { '@type': string }) => node['@type'] === 'WebPage');
+		const entity = graph.find(
+			(node: { '@id': string }) => node['@id'] === webPage.mainEntity['@id']
+		);
+		expect(webPage.url).toBe(`${origin}${item.path}`);
+		expect(entity.name).toBe(item.name);
+		expect(entity.citation).toContain(item.citation);
+		const credits = Array.isArray(entity[item.key]) ? entity[item.key] : [entity[item.key]];
+		expect(credits).toContainEqual({ '@id': `${origin}/#person` });
+	}
+	expect((await request.get('/projects/no-such-project')).status()).toBe(404);
+	expect((await request.get('/speaking/no-such-talk')).status()).toBe(404);
+});
+
+test('the full text export includes sourced work, speaking, and the latest essay', async ({
+	request
+}) => {
+	const response = await request.get('/llms-full.txt');
+	expect(response.status()).toBe(200);
+	expect(response.headers()['content-type']).toMatch(/^text\/plain(?:;|$)/i);
+	const body = await response.text();
+	expect(body).toMatch(/^# Aditya Oberai\n\n> Developer Relations Lead at Appwrite/);
+	expect(body).toContain('December 2025');
+	expect(body).toContain('55.3% of the 262 potential restroom locations');
+	expect(body).toContain('https://doi.org/10.1371/journal.pwat.0000574');
+	expect(body).toContain('Jyoti Bisht, Animesh Pathak');
+	expect(body).toContain('https://www.oberai.blog/p/the-unsubtly-intrusive-art-of-street');
+	expect(body).not.toContain('<html');
 });
 
 test('technical writing is available in the page HTML and the notebook reader', async ({
@@ -92,19 +181,28 @@ test('technical writing is available in the page HTML and the notebook reader', 
 	page
 }) => {
 	const response = await request.get('/writing');
-	const titles = await page.evaluate(
-		(html) => {
-			const document = new DOMParser().parseFromString(html, 'text/html');
-			return Array.from(document.querySelectorAll('#technical-writing a')).map((link) => ({
-				title: link.querySelector('.title')?.textContent,
-				href: link.getAttribute('href'),
-				target: link.getAttribute('target'),
-				id: link.getAttribute('data-content-id')
-			}));
-		},
-		await response.text()
-	);
+	const html = await response.text();
+	const graph = await page.evaluate((html) => {
+		const document = new DOMParser().parseFromString(html, 'text/html');
+		return JSON.parse(
+			document.querySelector('script[type="application/ld+json"]')?.textContent ?? ''
+		)['@graph'];
+	}, html);
+	const articles = graph.filter((node: { '@type': string }) => node['@type'] === 'BlogPosting');
+	const titles = await page.evaluate((html) => {
+		const document = new DOMParser().parseFromString(html, 'text/html');
+		return Array.from(document.querySelectorAll('#technical-writing a')).map((link) => ({
+			title: link.querySelector('.title')?.textContent,
+			href: link.getAttribute('href'),
+			target: link.getAttribute('target'),
+			id: link.getAttribute('data-content-id')
+		}));
+	}, html);
 	expect(titles).toHaveLength(4);
+	expect(articles.map((node: { url: string }) => node.url)).toEqual(
+		titles.map((article) => article.href)
+	);
+	for (const article of articles) expect(article.author).toEqual({ '@id': `${origin}/#person` });
 	await page.goto('/world#notebook');
 	const reader = page.locator('dialog.sheet');
 	await expect(reader.getByRole('heading', { name: 'Selected technical writing' })).toBeVisible();

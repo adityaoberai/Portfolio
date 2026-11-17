@@ -1,3 +1,11 @@
+type TalkDetail = {
+	slug: string;
+	location: string;
+	coSpeakers?: string[];
+	takeaways: string[];
+	sources: { label: string; href: string }[];
+};
+
 export type Talk = {
 	title: string;
 	event: string;
@@ -6,6 +14,7 @@ export type Talk = {
 	recording?: string;
 	slides?: string;
 	featured?: boolean;
+	detail?: TalkDetail;
 };
 
 export const talks: Talk[] = [
@@ -16,6 +25,21 @@ export const talks: Talk[] = [
 		description:
 			'How AI-assisted long-form technical content can drive growth for developer-facing products, with a practical workflow for articles that rank on Google and influence AI-generated answers.',
 		slides: 'https://drive.google.com/file/d/1FOhj1zm_a3tnqiyf2m6A5d20hojDqWUN/view?usp=sharing',
+		detail: {
+			slug: 'ai-assisted-technical-content',
+			location: 'Atlanta, Georgia, USA',
+			takeaways: [
+				'How long-form technical writing can support growth for a developer tool.',
+				'How search rankings and the way answer engines retrieve and cite sources differ.',
+				'A practical workflow for producing technically accurate, in-depth articles with AI assistance.'
+			],
+			sources: [
+				{
+					label: 'Session abstract',
+					href: 'https://sessionize.com/s/adityaoberai/the-content-roi-shift-is-ai-scaled-technical-blogg/181278'
+				}
+			]
+		},
 		featured: true
 	},
 	{
@@ -23,8 +47,24 @@ export const talks: Talk[] = [
 		event: 'MCP Dev Summit Bengaluru',
 		year: 2026,
 		description:
-			'Practical testing and development practices for MCP servers that make AI agents meaningfully more reliable. Presented with Jyoti Bisht and Animesh Pathak.',
+			'Why agents can choose different tools for the same task, and how to test a Model Context Protocol (MCP) server for more reliable tool selection.',
 		recording: 'https://www.youtube.com/watch?v=lSjakfdOUqc',
+		detail: {
+			slug: 'why-agents-make-different-decisions-with-the-same-tools',
+			location: 'Bengaluru, India',
+			coSpeakers: ['Jyoti Bisht', 'Animesh Pathak'],
+			takeaways: [
+				'The same set of tool capabilities can lead to different choices when presented differently to an agent.',
+				'Tool names and descriptions are inputs to the model and can affect which option it picks.',
+				'Test which tool the agent selects in representative tasks, alongside testing whether each tool works when called.'
+			],
+			sources: [
+				{
+					label: 'Agentic AI Foundation conference recap',
+					href: 'https://aaif.io/blog/56-things-we-learned-from-mcp-dev-summit-bengaluru'
+				}
+			]
+		},
 		featured: true
 	},
 	{
@@ -34,6 +74,21 @@ export const talks: Talk[] = [
 		description:
 			"A framework for evaluating your company's readiness to launch community initiatives, before you burn goodwill finding out the hard way.",
 		slides: 'https://drive.google.com/file/d/1dbsZEPMbhGjr3Q_uaAx6l9DHuG2BKgsA/view?usp=sharing',
+		detail: {
+			slug: 'does-your-tech-company-need-a-community',
+			location: 'Raleigh, North Carolina, USA',
+			takeaways: [
+				'Where a developer community can help a company learn what to build and help developers adopt it.',
+				'What teams can learn from community programs at Microsoft, Twilio, and Appwrite.',
+				'How to assess whether to launch a dedicated program, work with existing forums, or wait.'
+			],
+			sources: [
+				{
+					label: 'All Things Open session page',
+					href: 'https://2025.allthingsopen.org/sessions/does-your-tech-company-even-need-a-community'
+				}
+			]
+		},
 		featured: true
 	},
 	{
@@ -111,6 +166,22 @@ export const talks: Talk[] = [
 	}
 ];
 
+export const talkPages = talks.filter((talk): talk is Talk & { detail: TalkDetail } =>
+	Boolean(talk.detail)
+);
+
+export const talkPagePath = (slug: string) => `/speaking/${slug}`;
+
+export function talkResources(talk: Talk): { label: string; href: string; action?: string }[] {
+	return [
+		...(talk.recording
+			? [{ label: 'Watch the recording', href: talk.recording, action: 'recording' }]
+			: []),
+		...(talk.slides ? [{ label: 'See the slides', href: talk.slides, action: 'slides' }] : []),
+		...(talk.detail?.sources ?? [])
+	];
+}
+
 export const speakingTopics: string[] = [
 	'developer relations',
 	'community building',
@@ -125,8 +196,3 @@ export const speakingTopics: string[] = [
 	'cloud computing',
 	'API development'
 ];
-
-export const speakerBio = [
-	'Aditya Oberai is the Developer Relations Lead at Appwrite and an avid tech community and hackathon enthusiast. Having worked with various web and cloud technologies, he has spent the last seven years empowering student and tech communities in India and beyond.',
-	'Aditya has been an active Microsoft MVP since 2022. He was awarded "Best Developer Relations Professional of the Year" at the CMX Community Industry Awards 2024 and led the organisation of the first-ever DevRelCon in India in 2024.'
-].join('\n\n');

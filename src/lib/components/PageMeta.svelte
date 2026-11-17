@@ -1,44 +1,65 @@
 <script lang="ts">
 	import { site } from '$lib/data/site';
 	import { canonicalPath } from '$lib/data/canonical';
-	import { person } from '$lib/data/identity';
+	import { person, type StructuredEntity } from '$lib/data/identity';
 
 	let {
 		title,
 		description,
-		path = '/'
-	}: { title?: string; description?: string; path?: string } = $props();
+		path = '/',
+		mainEntity,
+		mentions = []
+	}: {
+		title?: string;
+		description?: string;
+		path?: string;
+		mainEntity?: StructuredEntity;
+		mentions?: StructuredEntity[];
+	} = $props();
 
 	const pageTitle = $derived(title ? `${title} · ${site.name}` : `${site.name} · ${site.role}`);
 	const pageDescription = $derived(description ?? site.description);
 	const canonical = $derived(`${site.url}${canonicalPath(path)}`);
 
-	// Structured data for search engines on the pages that introduce Aditya.
+	const introducesPerson = $derived(['/', '/world', '/index', '/about'].includes(path));
+	const websiteId = `${site.url}/#website`;
+	const hasStructuredData = $derived(
+		introducesPerson || Boolean(mainEntity) || mentions.length > 0
+	);
+
+	// Reference the same Person across the profile, authored work, and the site itself.
 	const structuredData = $derived({
 		'@context': 'https://schema.org',
 		'@graph': [
 			person,
 			{
 				'@type': 'WebSite',
-				'@id': `${site.url}/#website`,
+				'@id': websiteId,
 				url: `${site.url}/`,
 				name: site.name,
 				publisher: { '@id': person['@id'] }
 			},
 			{
-				'@type': path === '/about' ? 'ProfilePage' : 'WebPage',
+				'@type': path === '/about' ? 'ProfilePage' : mentions.length ? 'CollectionPage' : 'WebPage',
 				'@id': `${canonical}#webpage`,
 				url: canonical,
 				name: canonicalPath(path) === '/' ? site.name : pageTitle,
-				mainEntity: { '@id': person['@id'] },
-				isPartOf: { '@id': `${site.url}/#website` }
-			}
+				description: pageDescription,
+				mainEntity: mainEntity
+					? { '@id': mainEntity['@id'] }
+					: introducesPerson
+						? { '@id': person['@id'] }
+						: undefined,
+				mentions: mentions.length ? mentions.map((item) => ({ '@id': item['@id'] })) : undefined,
+				isPartOf: { '@id': websiteId }
+			},
+			...(mainEntity ? [mainEntity] : []),
+			...mentions
 		]
 	});
 	const jsonLd = $derived(
 		`<script type="application/ld+json">${JSON.stringify(structuredData).replace(/</g, '\\u003c')}</${'script'}>`
 	);
-	const introducesPerson = $derived(['/', '/world', '/index', '/about'].includes(path));
 </script>
 
 <svelte:head>
@@ -69,7 +90,7 @@
 	<meta name="twitter:description" content={pageDescription} />
 	<meta name="twitter:image" content={site.ogImage} />
 
-	{#if introducesPerson}
+	{#if hasStructuredData}
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -- static, escaped JSON-LD -->
 		{@html jsonLd}
 	{/if}

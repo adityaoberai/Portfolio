@@ -13,6 +13,20 @@
 - Appwrite Analytics replaces Google Analytics and runs only on the two production hostnames, respecting Do Not Track.
 - Node 24 is the development and CI default. The minimum supported version is 22.18.
 
+## 18 November 2026 – Portfolio discovery
+
+- Bring the existing discovery branch up to date with the November essay and resume edits. Put a short introduction and direct section links in the room's initial HTML.
+- Add project pages for Relief ATL, Offline Journal, and CodeCapture, plus talk pages for RenderATL, MCP Dev Summit Bengaluru, and All Things Open. Include project contributions and outcomes, talk takeaways and co-speakers, and links to primary sources.
+- Connect the profile, project, talk, and writing metadata to one Person ID. Use the recorded Appwrite career dates and the award organiser's CMX title across the relevant pages.
+- Prerender the portfolio directory and full text export from the shared content. Include the six detail URLs in the 18-page sitemap and verify that their listing pages link to them.
+- Verify the production HTML and text responses, including every sitemap entry and the local destinations in both exports. The 33 unit tests and 73 browser tests pass. Recheck discovery, accessibility, and room layout after the final landscape adjustment.
+- The dependency audit also fails on `main` with the same lockfile and audit rules. The audit findings require a dependency maintenance change.
+
+## 14 November 2026 – Latest personal essay
+
+- Added “The Unsubtly Intrusive Art Of Street Photography” as the newest essay and refreshed the Now page's update date.
+- Lint, type checking, all 33 unit tests, the production build, and sitemap freshness pass. Verified the listing on Writing, Now, and On paper, plus the notebook's resolved essay order. The dependency audit reports the same three advisories on this branch and `main`.
+
 ## 31 October 2026 — Search and answer discovery
 
 - Follow Google's SEO Starter Guide for descriptive titles, concise summaries, canonical URLs, crawlable links, and useful source material. Add the Appwrite role to the homepage title and description, and make the work, speaking, and writing titles more descriptive. Keep the room's introduction in the mirror, which shares its text with `/about`.

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { sectionById } from '$lib/data/sections';
+	import { site } from '$lib/data/site';
 	import { onMount, tick } from 'svelte';
 	import { beforeNavigate, pushState, replaceState } from '$app/navigation';
 	import { page as route } from '$app/state';
@@ -515,6 +517,9 @@
 		dialog.style.setProperty('--corner', cornerInset);
 		frameEl.style.setProperty('--menu-top', `${menuButton.getBoundingClientRect().bottom + 12}px`);
 		const titleBottom = topEl.getBoundingClientRect().bottom;
+		const shortLandscape = height <= 500 && frameEl.clientWidth / height >= 1.5;
+		const headerInset = titleBottom * (shortLandscape ? 1 : 0.5);
+		frameEl.style.setProperty('--room-header-bottom', `${titleBottom}px`);
 		room.setInsets(
 			stacked
 				? {
@@ -523,7 +528,7 @@
 						units: 9.4
 					}
 				: {
-						top: inspecting ? 80 : titleBottom * 0.5,
+						top: inspecting ? 80 : headerInset,
 						bottom: compactPlayer || playerRowOpen ? Math.max(24, height - cornerTop + 12) : 24,
 						units: 8.6
 					}
@@ -704,7 +709,23 @@
 	<div class="top" bind:this={topEl}>
 		<V3Header overlay menu={roomMenu} />
 		<div class="welcome">
-			<h1 id="world-title">{copy.title}</h1>
+			<h1
+				id="world-title"
+				class="sr-only [@media(min-width:821px)_and_(min-height:501px)]:not-sr-only"
+			>
+				{copy.title}
+			</h1>
+			<p class="welcome-bio">
+				I'm the {site.role}.
+				<span class="welcome-description"
+					>I work on product launches, developer docs, and community programs.</span
+				>
+			</p>
+			<nav aria-label="Portfolio pages" class="welcome-links">
+				{#each [sectionById.work, sectionById.projects, sectionById.speaking, sectionById.writing, sectionById.about] as section (section.id)}
+					<a href={section.href}>{section.label}</a>
+				{/each}
+			</nav>
 		</div>
 		{#if diagnostics && roomState}<output class="diagnostics"
 				>{roomState.calls} draws · {roomState.triangles} triangles · DPR {roomState.dpr} · {roomState.frames}
@@ -763,7 +784,7 @@
 						>
 					{:else}<p>
 							{coarse || narrow
-								? 'Take a wander. Drag the stick or tap the floor to move.'
+								? 'Move with the stick or tap the floor.'
 								: 'Take a wander. WASD or arrows to move, E to look closer.'}
 						</p>{/if}
 				</div>
@@ -961,6 +982,25 @@
 		line-height: 1.3;
 		letter-spacing: -0.01em;
 		font-weight: 400;
+	}
+	.welcome-bio {
+		max-width: 42ch;
+		margin-top: 4px;
+		font: var(--type-ui) / 1.5 var(--font-ui);
+	}
+	.welcome-links {
+		display: flex;
+		flex-wrap: wrap;
+		column-gap: 16px;
+	}
+	.welcome-links a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+		font: 500 var(--type-caption) / 1.4 var(--font-ui);
+		color: var(--color-accent);
+		text-decoration: underline;
+		text-underline-offset: 4px;
 	}
 	.inspecting .welcome {
 		display: none;
@@ -1328,9 +1368,6 @@
 		}
 	}
 	@media (max-width: 820px), (pointer: coarse) {
-		.welcome {
-			display: none;
-		}
 		.corner {
 			left: 16px;
 			right: 16px;
@@ -1388,11 +1425,27 @@
 		}
 	}
 	@media (max-height: 500px) and (min-aspect-ratio: 3/2) {
+		.welcome {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 12px;
+			max-width: none;
+		}
+		.welcome-description {
+			display: none;
+		}
+		.welcome-links {
+			justify-content: flex-end;
+			column-gap: 12px;
+			max-width: 60%;
+			flex-shrink: 0;
+		}
 		.room-hint.touch-hint {
 			position: fixed;
-			top: 72px;
+			top: calc(var(--room-header-bottom, 126px) + 8px);
 			left: 16px;
-			max-width: calc(20vw - 32px);
+			max-width: calc(26vw - 32px);
 		}
 	}
 	@media (max-width: 820px) {

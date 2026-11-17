@@ -6,7 +6,7 @@ Last reviewed: 29 October 2026, using a clean install of `package-lock.json`.
 
 A clean install of the unchanged lockfile now fails the audit on [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249), a moderate minimatch advisory published to the GitHub Advisory Database on 30 October. ESLint installs minimatch 3.1.5 and typescript-eslint installs 9.0.9. Both are lint dependencies; the advisory lists versions below 11.0.1 as affected, and the current 3.x and 9.x releases have no compatible patched version.
 
-The search-discovery change does not modify dependencies or the audit exceptions. Keep this finding visible in CI until the lint toolchain can adopt a patched version or the advisory's applicability is triaged separately. Replacing minimatch 3 with 11 through a blanket override changes its API and needs its own compatibility review.
+Replacing minimatch 3 with 11 through a blanket override changes its API and needs a compatibility review. Keep the audit finding open until the lint toolchain can adopt a patched version or the applicability of the advisory has been reviewed.
 
 ## Audit policy
 
@@ -18,7 +18,7 @@ CI runs `npm run audit` at the strictest level: a finding of any severity fails 
 
 ## Exceptions
 
-`npm audit` reports six affected packages, all low severity, from three advisories. The other packages are flagged because they depend on one of these; they are not separate advisories.
+The table lists the three triaged exceptions. Packages that depend on an affected package can also appear in audit output under the same advisory.
 
 | Advisory                                                                 | Dependency                                                                                            | Exposure in this repository                                                                                          | Follow-up                                                                                                                                                                     |
 | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

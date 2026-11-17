@@ -2,8 +2,8 @@ import { cardImage, collection, favouriteCards } from './collection';
 import { communityInitiatives } from './community';
 import { photographs, photoSrc } from './photography';
 import { podcasts } from './podcasts';
-import { projects } from './projects';
-import { talks } from './talks';
+import { projectPagePath, projects } from './projects';
+import { talkPagePath, talks } from './talks';
 import { workThemes } from './work';
 import { technicalWritingSamples, writingSamples } from './writing';
 
@@ -108,7 +108,7 @@ const built: Artifact[] = projects.map((project) => ({
 	title: project.name,
 	description: project.overview,
 	context: project.outcome,
-	href: `/projects#${project.slug}`,
+	href: project.detail ? projectPagePath(project.slug) : `/projects#${project.slug}`,
 	externalUrl: project.links[0]?.href,
 	featured: project.slug === 'relief-atl'
 }));
@@ -122,7 +122,7 @@ const spoken: Artifact[] = [
 		description: talk.description,
 		context: talk.event,
 		date: String(talk.year),
-		href: '/speaking',
+		href: talk.detail ? talkPagePath(talk.detail.slug) : '/speaking',
 		externalUrl: talk.recording ?? talk.slides,
 		externalLabel: talk.recording
 			? 'Watch the recording'

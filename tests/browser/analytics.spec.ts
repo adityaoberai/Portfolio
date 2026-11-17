@@ -334,7 +334,7 @@ test('content links identify the item and entry page, including keyboard and mid
 	const cases = [
 		{
 			path: '/projects',
-			selector: 'main li[data-content-id="project-relief-atl"] a',
+			selector: 'main li[data-content-id="project-relief-atl"] a[data-content-action="devpost"]',
 			type: 'project',
 			id: 'project-relief-atl',
 			action: 'devpost',

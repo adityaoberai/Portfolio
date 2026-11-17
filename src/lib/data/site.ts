@@ -1,6 +1,12 @@
+const jobTitle = 'Developer Relations Lead';
+const employer = { name: 'Appwrite', url: 'https://appwrite.io' };
+
 export const site = {
 	name: 'Aditya Oberai',
-	role: 'Developer Relations Lead at Appwrite',
+	jobTitle,
+	employer,
+	role: `${jobTitle} at ${employer.name}`,
+	location: { city: 'Bengaluru', country: 'India', countryCode: 'IN' },
 	tagline: 'Developer Relations, communities, and open source',
 	description:
 		'Aditya Oberai leads Developer Relations at Appwrite. Explore his work in developer education, technical writing, open source, and community building.',

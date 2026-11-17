@@ -1,6 +1,7 @@
 import { collection } from './collection';
 import { cameraBody } from './photography';
 import { sectionById } from './sections';
+import { site } from './site';
 import { talks } from './talks';
 import { writingSamples } from './writing';
 
@@ -17,9 +18,9 @@ const recentTalks = talks.filter((talk) => talk.year === talks[0].year);
 // records. Reading and Thinking about need Aditya's own answers, so they are
 // omitted until he adds them (see WORKLOG.md).
 export const now = {
-	basedIn: 'Bengaluru, India',
+	basedIn: `${site.location.city}, ${site.location.country}`,
 	timeZone: 'Asia/Kolkata',
-	updated: '2026-09-30',
+	updated: '2026-11-14',
 	items: [
 		{
 			label: 'Working on',
@@ -42,7 +43,7 @@ export const now = {
 			text: `${collection.subject}. ${collection.favourite}, always.`,
 			href: sectionById.collection.href
 		},
-		{ label: 'Based in', text: 'Bengaluru, India' }
+		{ label: 'Based in', text: `${site.location.city}, ${site.location.country}` }
 	] satisfies NowItem[],
 	reading: undefined as string | undefined,
 	thinkingAbout: undefined as string | undefined

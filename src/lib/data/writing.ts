@@ -54,6 +54,12 @@ export const technicalWritingSamples: TechnicalArticle[] = [
 // meta: a short mono tag shown left of the title (e.g. 'MAY 2026').
 export const writingSamples: WritingSample[] = [
 	{
+		meta: 'NOV 2026',
+		title: 'The Unsubtly Intrusive Art Of Street Photography',
+		description: 'Why I keep photographing strange people, places, and the world around me',
+		href: 'https://www.oberai.blog/p/the-unsubtly-intrusive-art-of-street'
+	},
+	{
 		meta: 'AUG 2026',
 		title: 'The Grief And Rage Leaving Home Brings',
 		description: 'Remembering The Caterpillar Before The Butterfly.',

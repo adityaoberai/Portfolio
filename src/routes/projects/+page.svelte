@@ -2,7 +2,7 @@
 	import { externalLinkAttrs } from '$lib/external-links';
 	import PageMeta from '$lib/components/PageMeta.svelte';
 	import PageIntro from '$lib/components/PageIntro.svelte';
-	import { projects } from '$lib/data/projects';
+	import { projectPagePath, projects } from '$lib/data/projects';
 </script>
 
 <PageMeta
@@ -13,10 +13,7 @@
 
 <div class="v3-page" data-analytics-section="projects_page">
 	<PageIntro title="Things I've built." station="desk">
-		<p>
-			Seven projects, curated. Most were built to teach something, and all of them to scratch an
-			itch.
-		</p>
+		<p>Most of these projects were built to teach something, and all of them to scratch an itch.</p>
 	</PageIntro>
 
 	<ol class="projects">
@@ -24,7 +21,15 @@
 			<li id={project.slug} data-content-type="project" data-content-id={`project-${project.slug}`}>
 				<span class="n">{String(i + 1).padStart(2, '0')}</span>
 				<article aria-labelledby="{project.slug}-title">
-					<h2 id="{project.slug}-title">{project.name}</h2>
+					<h2 id="{project.slug}-title">
+						{#if project.detail}
+							<a class="prose-link" href={projectPagePath(project.slug)} data-content-action="read"
+								>{project.name}</a
+							>
+						{:else}
+							{project.name}
+						{/if}
+					</h2>
 					<p class="overview">{project.overview}</p>
 					<dl>
 						<div>

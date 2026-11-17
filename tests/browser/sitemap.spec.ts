@@ -17,7 +17,7 @@ test(
 	},
 	async ({ page, request }) => {
 		// Discover routes independently of the generated sitemap and its update script.
-		const paths = readdirSync(new URL('../../src/routes/', import.meta.url), {
+		const routes = readdirSync(new URL('../../src/routes/', import.meta.url), {
 			recursive: true,
 			encoding: 'utf8'
 		})
@@ -28,10 +28,32 @@ test(
 					.split('/')
 					.slice(0, -1)
 					.filter((part) => !/^\(.*\)$/.test(part));
-				if (segments.some((part) => part.includes('[')))
-					throw new Error(`Add concrete sitemap URL coverage for the parameterized route ${file}`);
 				return `/${segments.join('/')}`;
 			});
+		const paths = routes.filter((route) => !route.includes('['));
+		// Check the public links on each listing page, independently of the route data.
+		for (const route of routes.filter((route) => route.includes('['))) {
+			const parent = route.replace(/\/\[slug\]$/, '');
+			if (!['/projects', '/speaking'].includes(parent))
+				throw new Error(`Add concrete sitemap URL coverage for the parameterized route ${route}`);
+			const listing = await request.get(parent);
+			expect(listing.status()).toBe(200);
+			const entries = await page.evaluate(
+				({ html, parent }) => {
+					const document = new DOMParser().parseFromString(html, 'text/html');
+					const detailPath = new RegExp(`^${parent}/[a-z0-9]+(?:-[a-z0-9]+)*$`);
+					const urls = Array.from(document.querySelectorAll('main a[href]'), (link) =>
+						link.getAttribute('href')
+					);
+					return Array.from(
+						new Set(urls.filter((href): href is string => href !== null && detailPath.test(href)))
+					);
+				},
+				{ html: await listing.text(), parent }
+			);
+			expect(entries, `${parent} should link directly to its detail pages`).not.toHaveLength(0);
+			paths.push(...entries);
+		}
 		for (const path of excluded) expect(paths, `Stale sitemap exclusion: ${path}`).toContain(path);
 		const expected = paths
 			.filter((path) => !excluded.includes(path))

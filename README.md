@@ -64,17 +64,17 @@ GitHub Actions runs lint, type checking, unit tests, the dependency audit, the p
 
 [`/sitemap.xml`](https://adityaoberai.com/sitemap.xml) is generated into `static/sitemap.xml` from the current page routes by `scripts/sitemap.mjs` and advertised in `static/robots.txt`. Every `npm run build` runs the update automatically. After adding or removing a public page, run `npm run sitemap:update` and commit the regenerated file. `npm run sitemap:check` verifies freshness without changing it; CI runs this before the build so a stale committed sitemap cannot pass by being regenerated silently.
 
-CI independently discovers page routes under `src/routes` and compares them with every sitemap URL. It also checks XML, the production hostname, duplicates and stale entries, the robots declaration, HTTP 200 responses without redirects, canonical URLs, and noindex directives. `/404` is deliberately excluded and must remain noindex. `/world` is a usable alias whose canonical is `/`; the sitemap lists only its canonical target. Declare aliases in `src/lib/data/canonical.ts` and add an independent expectation to the browser check. A new parameterized route requires concrete URL coverage in the check before it can pass. Run `npm run build && npm run test:sitemap` locally to verify a change.
+CI checks static page routes and reads the project and talk detail links from their listing pages. It compares these with the sitemap and verifies the XML, production hostname, robots declaration, successful HTTP responses, canonical URLs, and indexability. `/404` is excluded with `noindex`. `/world` is a usable alias whose canonical is `/`. Declare new aliases in `src/lib/data/canonical.ts` and add an independent expectation to the browser check. Run `npm run build && npm run test:sitemap` locally to verify a change.
 
 ## Search and answer discovery
 
-The implementation follows [Google's SEO Starter Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide): descriptive titles and summaries, crawlable links, useful original content, and consistent canonical URLs. Titles identify the role or subject while the visible room and page headings retain their existing voice. The selected writing links to the original published articles rather than reproducing them.
+The room's introduction and links to Work, Projects, Speaking, Writing, and About appear in the initial HTML. The longer biography lives in the mirror and on `/about`. Search metadata and crawlable links follow [Google's SEO Starter Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide).
 
-`PageMeta.svelte` serves canonical metadata and a connected Person, WebSite, and WebPage graph on the introductory pages. `/about` uses ProfilePage with the same Person as its main entity. Profile links live in `src/lib/data/identity.ts`. The room's mirror and `/about` share `about.intro`; the room does not need a second visible bio.
+`/about` uses `ProfilePage` and shares a stable `Person` ID with project, talk, and writing metadata. Edit the career dates, recognition, and public profiles in `src/lib/data/profile.ts`. Each project or talk with a `detail` record in `src/lib/data/projects.ts` or `src/lib/data/talks.ts` gets a prerendered page, a listing link, and a sitemap entry. Keep its slug stable and add sources for claims, outcomes, and co-speaker credits.
 
-[`/llms.txt`](https://adityaoberai.com/llms.txt) is a plain-text Markdown guide, prerendered from existing profile, section, and writing records on every build. Pages advertise it with `rel="describedby"`. Update the source records rather than maintaining a second copy of the facts. The file is a curated guide, not a crawler access policy or a guarantee of search visibility.
+[`/llms.txt`](https://adityaoberai.com/llms.txt) is a plain-text Markdown directory and [`/llms-full.txt`](https://adityaoberai.com/llms-full.txt) is a fuller portfolio export. Both are generated from the site data at build time. Pages advertise the directory with `rel="describedby"`. The writing entries link to the original publications. Edit the shared records when facts change.
 
-Selected Appwrite articles live in `src/lib/data/writing.ts`, alongside personal writing. They appear on `/writing`, in the room's notebook, and in `/llms.txt`, with shared artifact IDs for analytics. Verify each article's author, publication date, and URL before adding it. The discovery browser checks cover raw-HTML structured data, the alias canonical, llms.txt destinations, and notebook/page consistency.
+The discovery browser checks exercise the homepage with JavaScript disabled, verify canonical metadata and authorship, and check the text exports and the notebook's writing links. After deployment, use [Search Console URL Inspection](https://support.google.com/webmasters/answer/9012289) to verify the canonical pages. Review Appwrite Analytics traffic by source and landing page. ChatGPT Search links use `utm_source=chatgpt.com` ([OpenAI publisher FAQ](https://help.openai.com/en/articles/12627856-publishers-and-developers-faq)). Ask an assistant with web search about a named project or talk and check which source it cites.
 
 ## Project layout
 
@@ -85,7 +85,7 @@ src/
   lib/data/world.ts  everything the room says and shows
   lib/world/       the 3D room: layout, objects, movement, camera, time of day
   lib/components/  shared UI, plus the room's and On paper's own components
-  lib/server/      the mode cookie
+  lib/server/      mode preference and the generated plain-text portfolio
 assets/            originals for derived images (cards, flag)
 static/            served as-is, including derived images and the share image
 og/                share image source
