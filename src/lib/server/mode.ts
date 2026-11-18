@@ -5,9 +5,9 @@ export type Mode = 'world' | 'index';
 const COOKIE = 'mode';
 const ONE_YEAR = 60 * 60 * 24 * 365;
 
-// First-time visitors get World.
-export function readMode(cookies: Cookies): Mode {
-	return cookies.get(COOKIE) === 'index' ? 'index' : 'world';
+export function readMode(cookies: Cookies): Mode | null {
+	const mode = cookies.get(COOKIE);
+	return mode === 'world' || mode === 'index' ? mode : null;
 }
 
 // Explicit /world and /index visits win over the cookie, then become the preference.

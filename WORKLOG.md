@@ -15,11 +15,11 @@
 
 ## 18 November 2026 – Portfolio discovery
 
-- Bring the existing discovery branch up to date with the November essay and resume edits. Put a short introduction and direct section links in the room's initial HTML.
+- Bring the discovery branch up to date with the November essay and resume edits. Serve the introduction in a welcome dialog before the room loads. Save the visitor's choice to enter the room or open the index.
 - Add project pages for Relief ATL, Offline Journal, and CodeCapture, plus talk pages for RenderATL, MCP Dev Summit Bengaluru, and All Things Open. Include project contributions and outcomes, talk takeaways and co-speakers, and links to primary sources.
 - Connect the profile, project, talk, and writing metadata to one Person ID. Use the recorded Appwrite career dates and the award organiser's CMX title across the relevant pages.
 - Prerender the portfolio directory and full text export from the shared content. Include the six detail URLs in the 18-page sitemap and verify that their listing pages link to them.
-- Verify the production HTML and text responses, including every sitemap entry and the local destinations in both exports. The 33 unit tests and 73 browser tests pass. Recheck discovery, accessibility, and room layout after the final landscape adjustment.
+- Verify the production HTML and text responses, including every sitemap entry and the local destinations in both exports. The build, lint, type check, and 33 unit tests pass. Browser coverage includes the welcome with and without JavaScript, the saved view, shared links, discovery, and the room layout.
 - The dependency audit also fails on `main` with the same lockfile and audit rules. The audit findings require a dependency maintenance change.
 
 ## 14 November 2026 – Latest personal essay

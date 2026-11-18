@@ -1,6 +1,6 @@
 import { readMode } from '$lib/server/mode';
 
-// `/` renders the visitor's preferred mode on the server, so there is no client-side flash.
+// Serve the welcome or the visitor's preferred view in the initial HTML.
 export const prerender = false;
 
 export function load({ cookies, setHeaders }) {

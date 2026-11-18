@@ -60,7 +60,7 @@ To stay inside the budget:
 
 ## Choosing My room or On paper
 
-`/` is rendered on the server from a `mode` cookie (`src/lib/server/mode.ts`), with `Vary: Cookie` and `Cache-Control: private, no-cache`. First-time visitors get the room. Visiting `/world` or `/index` opens that mode and stores it as the preference for a year. Because the server makes the choice, there's no flash of the wrong mode. Don't move it to `localStorage`, and don't host `/` statically.
+`/` is rendered on the server from a `mode` cookie (`src/lib/server/mode.ts`), with `Vary: Cookie` and `Cache-Control: private, no-cache`. Visitors without a saved view get the welcome dialog. Its links work without JavaScript. Visiting `/world` or `/index` opens that view and stores it as the preference for a year. Shared room links can go straight to `/world#station`. An older `/#station` link opens the same panel after hydration.
 
 ## Real-phone test (not yet passed)
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import PageMeta from '$lib/components/PageMeta.svelte';
+	import WelcomeDialog from '$lib/components/world/WelcomeDialog.svelte';
 	import WorldView from '$lib/components/world/WorldView.svelte';
 	import IndexView from '$lib/components/index/IndexView.svelte';
 
@@ -7,9 +8,10 @@
 </script>
 
 <PageMeta path="/" />
-<!-- The mode comes from the server (cookie), so the right view is in the first HTML. -->
 {#if data.mode === 'index'}
 	<IndexView />
-{:else}
+{:else if data.mode === 'world'}
 	<WorldView />
+{:else}
+	<WelcomeDialog />
 {/if}

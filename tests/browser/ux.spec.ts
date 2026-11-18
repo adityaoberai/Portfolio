@@ -43,10 +43,8 @@ for (const width of [320, 390, 430]) {
 		await page.goto('/world?diagnostics=1');
 		await expect(page.locator('canvas')).toHaveClass(/loaded/);
 		await expect(page.locator('.destinations')).toHaveCount(0);
-		await expect(page.locator('.welcome-bio')).toBeVisible();
-		await expect(
-			page.getByRole('navigation', { name: 'Portfolio pages' }).getByRole('link')
-		).toHaveCount(5);
+		await expect(page.getByRole('dialog', { name: /Come spend a minute/ })).toHaveCount(0);
+		await expect(page.getByRole('navigation', { name: 'Portfolio pages' })).toHaveCount(0);
 		const menuButton = page.getByRole('button', { name: 'Room menu', exact: true });
 		const buttonBox = (await menuButton.boundingBox())!;
 		expect(buttonBox.y).toBeGreaterThan(844 * 0.75);

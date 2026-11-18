@@ -13,7 +13,7 @@
 	const path = $derived(page.url.pathname.replace(/\/$/, ''));
 	// World and Index carry their own wayfinding; every other page gets the section nav.
 	const home = $derived(['', '/world', '/index'].includes(path));
-	// World fills the whole page and floats its own header, so the shell steps aside.
+	// The room and its welcome screen use their own full-page layouts.
 	const immersive = $derived(path === '/world' || (path === '' && page.data.mode !== 'index'));
 
 	onMount(() => {

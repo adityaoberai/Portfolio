@@ -8,7 +8,7 @@ The home page is **My room**: a small 3D bedroom you can walk around, where each
 
 - SvelteKit 2, Svelte 5, TypeScript, Tailwind CSS 4
 - Three.js for the room, loaded only where the room is shown
-- `@sveltejs/adapter-node`: `/` is rendered on the server from the visitor's `mode` cookie, so it opens in the mode they last chose. Most other pages are prerendered.
+- `@sveltejs/adapter-node`: `/` serves the welcome dialog or the visitor's saved view from their `mode` cookie. Most other pages are prerendered.
 - Hosted on Appwrite Sites, with Appwrite Analytics for events
 
 ## Getting started
@@ -68,7 +68,7 @@ CI checks static page routes and reads the project and talk detail links from th
 
 ## Search and answer discovery
 
-The room's introduction and links to Work, Projects, Speaking, Writing, and About appear in the initial HTML. The longer biography lives in the mirror and on `/about`. Search metadata and crawlable links follow [Google's SEO Starter Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide).
+The welcome dialog includes the introduction and links to `/world` and `/index` in the initial HTML. The index links to the portfolio pages. The longer biography lives in the mirror and on `/about`. Search metadata and crawlable links follow [Google's SEO Starter Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide).
 
 `/about` uses `ProfilePage` and shares a stable `Person` ID with project, talk, and writing metadata. Edit the career dates, recognition, and public profiles in `src/lib/data/profile.ts`. Each project or talk with a `detail` record in `src/lib/data/projects.ts` or `src/lib/data/talks.ts` gets a prerendered page, a listing link, and a sitemap entry. Keep its slug stable and add sources for claims, outcomes, and co-speaker credits.
 
@@ -80,7 +80,7 @@ The discovery browser checks exercise the homepage with JavaScript disabled, ver
 
 ```
 src/
-  routes/          pages; / chooses My room or On paper, /world and /index set the choice
+  routes/          pages; / welcomes new visitors, /world and /index save their preferred view
   lib/data/        content: work, projects, talks, writing, photography, collection, and more
   lib/data/world.ts  everything the room says and shows
   lib/world/       the 3D room: layout, objects, movement, camera, time of day

@@ -92,21 +92,25 @@ test('llms.txt is readable text with working local destinations and published wr
 	}
 });
 
-test('the room introduces the portfolio in HTML without scripts or a saved mode', async ({
+test('the welcome introduces the portfolio and leads to the index without JavaScript', async ({
 	browser
 }) => {
 	const context = await browser.newContext({ javaScriptEnabled: false });
 	try {
 		const page = await context.newPage();
 		await page.goto('/');
-		await expect(page.locator('.welcome-bio')).toContainText(
-			'Developer Relations Lead at Appwrite'
+		const welcome = page.getByRole('dialog');
+		await expect(welcome).toContainText('Developer Relations Lead at Appwrite');
+		await expect(welcome.getByRole('link', { name: 'Enter the room' })).toHaveAttribute(
+			'href',
+			'/world'
 		);
-		const nav = page.getByRole('navigation', { name: 'Portfolio pages' });
-		await expect(nav.getByRole('link', { name: 'Projects' })).toHaveAttribute('href', '/projects');
-		await expect(nav.getByRole('link', { name: 'Speaking' })).toHaveAttribute('href', '/speaking');
-		await nav.getByRole('link', { name: 'About' }).click();
-		await expect(page.getByRole('heading', { name: 'Career journey' })).toBeVisible();
+		await welcome.getByRole('link', { name: 'See it on paper' }).click();
+		await expect(page).toHaveURL(/\/index$/);
+		await expect(page.locator('main a[href="/about"]')).toBeVisible();
+		await page.goto('/');
+		await expect(page.getByRole('heading', { level: 1 })).toContainText('bring people together');
+		await expect(welcome).toHaveCount(0);
 	} finally {
 		await context.close();
 	}

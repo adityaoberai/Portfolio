@@ -16,6 +16,7 @@ async function audit(page: Page, label: string) {
 }
 
 const pages = [
+	'/',
 	'/index',
 	'/work',
 	'/projects',
