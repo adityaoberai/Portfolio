@@ -4,5 +4,7 @@ import { rememberMode } from '$lib/server/mode';
 export const prerender = false;
 
 export function load({ cookies, url }) {
+	// Following a legacy shared link opens a station without choosing a default view.
+	if (url.searchParams.get('keep-mode') === '1') return;
 	rememberMode(cookies, url, 'world');
 }

@@ -17,8 +17,9 @@
 		<Portrait width={180} loading="eager" class="portrait" />
 		<div class="intro-copy">
 			<p class="lede">
-				I'm Aditya, {site.role}. I help developers find their way from an idea to something they can
-				make. Away from the desk, there's usually a camera, a notebook, or a Pokémon card nearby.
+				I'm {site.name}, {site.role}. I help developers find their way from an idea to something
+				they can make. Away from the desk, there's usually a camera, a notebook, or a Pokémon card
+				nearby.
 			</p>
 			<div
 				class="intro-links"

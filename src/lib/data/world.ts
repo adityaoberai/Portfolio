@@ -45,6 +45,7 @@ import { books } from './books';
 import { collection } from './collection';
 import { socialLinks, sponsorLink } from './links';
 import { now } from './now';
+import { appwriteCareer } from './profile';
 import { cameraBody, pexelsProfile } from './photography';
 import { site } from './site';
 import { talks } from './talks';
@@ -261,13 +262,19 @@ export const world: WorldConfig = {
 			short: 'notebook',
 			area: 'Writing',
 			world: 'write',
-			summary: 'Essays on home, friendship, and being human. Plus 100+ technical articles.',
+			summary: `Essays on home, friendship, and being human. Plus ${appwriteCareer.articles} technical articles.`,
 			section: 'writing',
 			panel: {
 				title: 'Pages from the notebook',
 				lead: 'The personal essays live on oberai.blog; the professional writing lives on the Appwrite blog.',
 				blocks: [
 					{ type: 'items', style: 'pages', items: [{ type: 'essay', limit: 3 }] },
+					{
+						type: 'items',
+						style: 'pages',
+						heading: 'Selected technical writing',
+						items: [{ type: 'article', limit: 4 }]
+					},
 					{
 						type: 'feature',
 						style: 'aside',

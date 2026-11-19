@@ -2,15 +2,16 @@ import { cardImage, collection, favouriteCards } from './collection';
 import { communityInitiatives } from './community';
 import { photographs, photoSrc } from './photography';
 import { podcasts } from './podcasts';
-import { projects } from './projects';
-import { talks } from './talks';
+import { projectPagePath, projects } from './projects';
+import { talkPagePath, talks } from './talks';
 import { workThemes } from './work';
-import { writingSamples } from './writing';
+import { technicalWritingSamples, writingSamples } from './writing';
 
 export type ArtifactType =
 	| 'project'
 	| 'work'
 	| 'essay'
+	| 'article'
 	| 'photo'
 	| 'collectible'
 	| 'talk'
@@ -107,7 +108,7 @@ const built: Artifact[] = projects.map((project) => ({
 	title: project.name,
 	description: project.overview,
 	context: project.outcome,
-	href: `/projects#${project.slug}`,
+	href: project.detail ? projectPagePath(project.slug) : `/projects#${project.slug}`,
 	externalUrl: project.links[0]?.href,
 	featured: project.slug === 'relief-atl'
 }));
@@ -121,7 +122,7 @@ const spoken: Artifact[] = [
 		description: talk.description,
 		context: talk.event,
 		date: String(talk.year),
-		href: '/speaking',
+		href: talk.detail ? talkPagePath(talk.detail.slug) : '/speaking',
 		externalUrl: talk.recording ?? talk.slides,
 		externalLabel: talk.recording
 			? 'Watch the recording'
@@ -151,6 +152,17 @@ const written: Artifact[] = writingSamples.map((essay, i) => ({
 	date: essay.meta,
 	externalUrl: essay.href,
 	featured: i === 0
+}));
+
+const technicalWriting: Artifact[] = technicalWritingSamples.map((article) => ({
+	id: `article-${slug(article.title)}`,
+	type: 'article',
+	worlds: ['write', 'build'],
+	title: article.title,
+	description: article.description,
+	date: article.meta,
+	context: `${article.kind} · Appwrite`,
+	externalUrl: article.href
 }));
 
 const photographed: Artifact[] = photographs.map((photo, i) => ({
@@ -195,6 +207,7 @@ export const artifacts: Artifact[] = [
 	...built,
 	...spoken,
 	...written,
+	...technicalWriting,
 	...photographed,
 	...gathered,
 	...collected

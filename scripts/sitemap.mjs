@@ -1,28 +1,38 @@
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { sep } from 'node:path';
 import { site } from '../src/lib/data/site.ts';
+import { canonicalAliases } from '../src/lib/data/canonical.ts';
+import { projectPagePath, projectPages } from '../src/lib/data/projects.ts';
+import { talkPagePath, talkPages } from '../src/lib/data/talks.ts';
 
 const args = process.argv.slice(2);
 if (args.some((arg) => arg !== '--check'))
 	throw new Error('Usage: node scripts/sitemap.mjs [--check]');
 
-// Redirect-only routes have no +page.svelte file. The noindex fallback is the
-// only content page deliberately excluded; the browser check verifies its policy.
-const excluded = new Set(['/404']);
+// Redirect-only routes have no +page.svelte file. Exclude the noindex fallback
+// and usable aliases; the browser check verifies each exclusion's policy.
+const excluded = new Set(['/404', ...Object.keys(canonicalAliases)]);
+const detailsByRoute = new Map([
+	['/projects/[slug]', projectPages.map((project) => projectPagePath(project.slug))],
+	['/speaking/[slug]', talkPages.map((talk) => talkPagePath(talk.detail.slug))]
+]);
 const pages = readdirSync(new URL('../src/routes/', import.meta.url), {
 	recursive: true,
 	encoding: 'utf8'
 })
 	.map((file) => file.split(sep).join('/'))
 	.filter((file) => file === '+page.svelte' || file.endsWith('/+page.svelte'))
-	.map((file) => {
+	.flatMap((file) => {
 		const segments = file
 			.split('/')
 			.slice(0, -1)
 			.filter((part) => !/^\(.*\)$/.test(part));
-		if (segments.some((part) => part.includes('[')))
+		const route = `/${segments.join('/')}`;
+		if (!segments.some((part) => part.includes('['))) return [route];
+		const details = detailsByRoute.get(route);
+		if (!details?.length)
 			throw new Error(`Add concrete sitemap URLs for the parameterized route ${file}`);
-		return `/${segments.join('/')}`;
+		return details;
 	})
 	.filter((path) => !excluded.has(path))
 	.sort();

@@ -12,7 +12,7 @@ The SDK handles pageviews, outbound links, PDF/DOCX downloads, scroll depth, and
 | ------------------------ | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
 | `contact_section_viewed` | Contact controls become at least 50% visible in an active tab, or the room's contact reader opens           | `section`                                 |
 | `contact_clicked`        | Email, speaking invitation, contact-page/panel entry, meeting link, contact-area profile, or newsletter CTA | `method`, `purpose`, `section`            |
-| `content_clicked`        | Project, work, essay, talk, podcast, community, collection, photo-source, or room-section link              | `type`, `content_id`, `action`, `section` |
+| `content_clicked`        | Project, work, essay, article, talk, podcast, community, collection, photo-source, or room-section link     | `type`, `content_id`, `action`, `section` |
 | `resume_clicked`         | PDF or legacy DOCX resume link, including redirect aliases                                                  | `format`, `section`                       |
 | `speaker_bio_copied`     | Speaker bio successfully written to the clipboard                                                           | `section`                                 |
 | `speaker_asset_clicked`  | Headshot link                                                                                               | `asset`, `section`                        |

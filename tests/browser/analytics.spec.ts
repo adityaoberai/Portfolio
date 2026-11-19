@@ -334,7 +334,7 @@ test('content links identify the item and entry page, including keyboard and mid
 	const cases = [
 		{
 			path: '/projects',
-			selector: 'main li[data-content-id="project-relief-atl"] a',
+			selector: 'main li[data-content-id="project-relief-atl"] a[data-content-action="devpost"]',
 			type: 'project',
 			id: 'project-relief-atl',
 			action: 'devpost',
@@ -362,6 +362,12 @@ test('content links identify the item and entry page, including keyboard and mid
 			id: 'collection',
 			action: 'showcase',
 			section: 'collection_page'
+		},
+		{
+			path: '/writing',
+			selector: '#technical-writing a[data-content-type="article"]',
+			type: 'article',
+			section: 'writing_page'
 		}
 	];
 	for (const [index, item] of cases.entries()) {

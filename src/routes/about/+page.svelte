@@ -3,6 +3,7 @@
 	import PageMeta from '$lib/components/PageMeta.svelte';
 	import PageIntro from '$lib/components/PageIntro.svelte';
 	import { about } from '$lib/data/about';
+	import { identityProfiles, microsoftInterview } from '$lib/data/profile';
 	import Portrait from '$lib/components/Portrait.svelte';
 </script>
 
@@ -26,6 +27,17 @@
 		<section aria-labelledby="journey-title">
 			<h2 id="journey-title"><span class="n">01</span>Career journey</h2>
 			{#each about.journey as paragraph (paragraph)}<p>{paragraph}</p>{/each}
+			<p>
+				<a href={identityProfiles.appwrite} {...externalLinkAttrs(identityProfiles.appwrite)}
+					>Appwrite author profile</a
+				>
+				·
+				<a href={microsoftInterview} {...externalLinkAttrs(microsoftInterview)}
+					>Microsoft Learn interview</a
+				>
+				·
+				<a href="/work#recognition">Awards and recognition</a>
+			</p>
 		</section>
 
 		<section aria-labelledby="care-title">

@@ -1,4 +1,5 @@
 import { collection } from './collection';
+import { appwriteCareer } from './profile';
 import { site } from './site';
 import { writingSamples } from './writing';
 
@@ -52,7 +53,7 @@ export const sections: Section[] = [
 		label: 'Writing',
 		href: '/writing',
 		external: false,
-		summary: `Personal essays (latest: “${writingSamples[0].title}”) and 100+ technical articles.`
+		summary: `Personal essays (latest: “${writingSamples[0].title}”) and ${appwriteCareer.articles} technical articles.`
 	},
 	{
 		id: 'community',

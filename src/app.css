@@ -131,6 +131,38 @@
 		margin-top: 48px;
 	}
 
+	.v3-detail {
+		max-width: 760px;
+		padding-bottom: 24px;
+	}
+	.v3-detail .v3-section {
+		padding-top: 24px;
+	}
+	.v3-detail .v3-section + .v3-section {
+		margin-top: 28px;
+	}
+	.v3-detail .v3-section p,
+	.v3-detail .v3-section ul {
+		margin-top: 12px;
+		color: var(--color-ink-soft);
+	}
+	.v3-detail .v3-section ul {
+		list-style: disc;
+		padding-left: 20px;
+	}
+	.v3-detail .v3-section li + li {
+		margin-top: 6px;
+	}
+	.v3-detail .v3-section a {
+		overflow-wrap: anywhere;
+	}
+	.v3-detail .detail-back {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+		margin-top: 20px;
+	}
+
 	/* Metadata: years, domains, tech lists. */
 	.meta {
 		font-family: var(--font-ui);

@@ -13,10 +13,36 @@
 - Appwrite Analytics replaces Google Analytics and runs only on the two production hostnames, respecting Do Not Track.
 - Node 24 is the development and CI default. The minimum supported version is 22.18.
 
+## 19 November 2026 – Pikachu V
+
+- Replaced the featured Pikachu with Pikachu V TG16/TG30 from Lost Origin Trainer Gallery using Aditya's supplied artwork. Regenerated the card image, shelf texture, and room still.
+- Verified the card and its metadata on `/collection` with JavaScript disabled and in the room's shelf panel. The room loaded the updated shelf texture. All 33 unit tests and six focused browser tests passed.
+
+## 18 November 2026 – Portfolio discovery
+
+- Review follow-up: preserve the saved view when opening legacy station links, use native modal semantics after hydration, and check HTTP responses before running accessibility audits.
+- Bring the discovery branch up to date with the November essay and resume edits. Serve the introduction in a welcome dialog before the room loads. Save the visitor's choice to enter the room or open the index.
+- Add project pages for Relief ATL, Offline Journal, and CodeCapture, plus talk pages for RenderATL, MCP Dev Summit Bengaluru, and All Things Open. Include project contributions and outcomes, talk takeaways and co-speakers, and links to primary sources.
+- Connect the profile, project, talk, and writing metadata to one Person ID. Use the recorded Appwrite career dates and the award organiser's CMX title across the relevant pages.
+- Prerender the portfolio directory and full text export from the shared content. Include the six detail URLs in the 18-page sitemap and verify that their listing pages link to them.
+- Verify the production HTML and text responses, including every sitemap entry and the local destinations in both exports. The build, lint, type check, and 33 unit tests pass. Browser coverage includes the welcome with and without JavaScript, the saved view, shared links, discovery, and the room layout.
+- The dependency audit also fails on `main` with the same lockfile and audit rules. The audit findings require a dependency maintenance change.
+
 ## 14 November 2026 – Latest personal essay
 
 - Added “The Unsubtly Intrusive Art Of Street Photography” as the newest essay and refreshed the Now page's update date.
 - Lint, type checking, all 33 unit tests, the production build, and sitemap freshness pass. Verified the listing on Writing, Now, and On paper, plus the notebook's resolved essay order. The dependency audit reports the same three advisories on this branch and `main`.
+
+## 31 October 2026 — Search and answer discovery
+
+- Follow Google's SEO Starter Guide for descriptive titles, concise summaries, canonical URLs, crawlable links, and useful source material. Add the Appwrite role to the homepage title and description, and make the work, speaking, and writing titles more descriptive. Keep the room's introduction in the mirror, which shares its text with `/about`.
+- Link introductory pages through one stable Person identity and WebSite graph. Use ProfilePage on `/about`, referencing the same Person, and include the verified Appwrite author, Microsoft MVP, and Sessionize profiles.
+- Canonicalize `/world` to `/` without redirecting the mode-setting route. Exclude the alias from the generated sitemap; independently verify its listed canonical target in the browser check. The sitemap now contains 12 canonical pages.
+- Prerender `/llms.txt` from the existing profile, section, and selected-writing records. Advertise it through `rel="describedby"`; check its plain-text response, Unicode content, and local destinations.
+- Curate four existing Appwrite articles with verified author, date, and URL. Share their records and analytics IDs across `/writing`, the notebook reader, and `/llms.txt`.
+- Document old-domain page, file, and short-link mappings in [redirects.md](docs/redirects.md). Domain forwarding remains an external setup task for Aditya.
+- Validation: clean installation, type checking (0 errors/0 warnings), lint, all 33 unit tests, the production build, sitemap freshness, and all 12 focused discovery/sitemap/mode/page browser checks pass. The expanded article-click analytics check and existing native contact-window check both pass in isolation. The full 70-test browser run encountered a timeout in that native contact-window check before its successful rerun. Desktop and phone writing views are visually checked.
+- The unchanged dependency tree reports a newly published moderate minimatch advisory. Record it in [maintenance.md](docs/maintenance.md#31-october-audit-follow-up); no audit exception or dependency override is added.
 
 ## 29 October 2026 — Strict dependency audit
 

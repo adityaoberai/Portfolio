@@ -1,7 +1,9 @@
-// Compact proof points rendered as the hero's mono fact strip.
+import { appwriteCareer, cmxAward, microsoftMvpSince } from './profile';
+
+// Compact proof points rendered in the On paper overview.
 export const highlights: string[] = [
-	'100+ technical articles',
+	`${appwriteCareer.articles} technical articles`,
 	'8+ conference talks across 3 continents',
-	'5× Microsoft MVP',
-	'CMX Best DevRel Community Professional, 2024'
+	`Microsoft MVP since ${microsoftMvpSince}`,
+	`CMX ${cmxAward.title}, ${cmxAward.year}`
 ];

@@ -3,7 +3,8 @@
 	import PageMeta from '$lib/components/PageMeta.svelte';
 	import PageIntro from '$lib/components/PageIntro.svelte';
 	import Row from '$lib/components/Row.svelte';
-	import { talks, speakingTopics, speakerBio } from '$lib/data/talks';
+	import { talks, speakingTopics, talkPagePath } from '$lib/data/talks';
+	import { cmxAward, identityProfiles, speakerBio } from '$lib/data/profile';
 	import { podcasts } from '$lib/data/podcasts';
 	import { site } from '$lib/data/site';
 	import { contentId, trackEvent } from '$lib/analytics';
@@ -25,7 +26,7 @@
 </script>
 
 <PageMeta
-	title="Speaking"
+	title="Talks on DevRel, AI, and community"
 	description="Aditya Oberai speaks about developer relations, community building, writing, and developer education at conferences including RenderATL, All Things Open, and DevRelCon."
 	path="/speaking"
 />
@@ -47,7 +48,17 @@
 					data-content-id={contentId('talk', `${talk.event}-${talk.year}`)}
 				>
 					<span class="badge-head">{talk.event} · {talk.year}</span>
-					<h3>{talk.title}</h3>
+					<h3>
+						{#if talk.detail}
+							<a
+								class="talk-title prose-link"
+								href={talkPagePath(talk.detail.slug)}
+								data-content-action="read">{talk.title}</a
+							>
+						{:else}
+							{talk.title}
+						{/if}
+					</h3>
 					<p>{talk.description}</p>
 					{#if talk.recording}<a
 							href={talk.recording}
@@ -71,6 +82,17 @@
 			{#each speakerBio.split('\n\n') as paragraph (paragraph)}
 				<p>{paragraph}</p>
 			{/each}
+			<p>
+				<a
+					class="prose-link"
+					href={identityProfiles.sessionize}
+					{...externalLinkAttrs(identityProfiles.sessionize)}>Sessionize speaker profile</a
+				>
+				·
+				<a class="prose-link" href={cmxAward.url} {...externalLinkAttrs(cmxAward.url)}
+					>CMX award announcement</a
+				>
+			</p>
 			<div
 				class="bio-actions"
 				data-contact-section="speaking_page"
@@ -96,13 +118,13 @@
 					title={talk.title}
 					subtitle={talk.event}
 					description={talk.description}
-					href={talk.recording ?? talk.slides}
+					href={talk.detail ? talkPagePath(talk.detail.slug) : (talk.recording ?? talk.slides)}
 					tracking={{
 						type: 'talk',
 						id: contentId('talk', `${talk.event}-${talk.year}`),
-						action: talk.recording ? 'recording' : 'slides'
+						action: talk.detail ? 'read' : talk.recording ? 'recording' : 'slides'
 					}}
-					external={Boolean(talk.recording ?? talk.slides)}
+					external={!talk.detail && Boolean(talk.recording ?? talk.slides)}
 				/>
 			{/each}
 		</div>
@@ -168,7 +190,7 @@
 		line-height: 1.55;
 		color: var(--color-secondary);
 	}
-	.badges a,
+	.badges a:not(.talk-title),
 	.bio-actions a {
 		display: inline-flex;
 		align-items: center;

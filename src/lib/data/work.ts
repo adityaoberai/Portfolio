@@ -1,3 +1,6 @@
+import { appwriteCareer, cmxAward, identityProfiles, microsoftMvpSince } from './profile';
+import { projectPagePath } from './projects';
+
 export type WorkItem = {
 	tag: string;
 	title: string;
@@ -56,10 +59,9 @@ export const workThemes: WorkTheme[] = [
 		items: [
 			{
 				tag: 'WRITING',
-				title: '100+ published articles',
-				description:
-					'Technical tutorials, product deep-dives, and announcements written and published on the Appwrite blog.',
-				link: { label: 'Appwrite blog', href: 'https://appwrite.io/blog/author/aditya-oberai' }
+				title: `${appwriteCareer.articles} published articles`,
+				description: `Technical tutorials, product deep-dives, and announcements written for the Appwrite blog during my Developer Advocate tenure (${appwriteCareer.advocatePeriod}).`,
+				link: { label: 'Appwrite author archive', href: identityProfiles.appwrite }
 			},
 			{
 				tag: 'STORIES',
@@ -80,8 +82,11 @@ export const workThemes: WorkTheme[] = [
 			{
 				tag: 'STUDENTS',
 				title: "Appwrite's Education program",
-				description:
-					'Launched with GitHub Education to support college and university students, growing to 15,000+ students.'
+				description: `Launched with GitHub Education in 2024. The program reached ${appwriteCareer.students} students during my Developer Advocate tenure (${appwriteCareer.advocatePeriod}).`,
+				link: {
+					label: 'Education program announcement',
+					href: 'https://appwrite.io/blog/post/announcing-appwrite-education-program'
+				}
 			},
 			{
 				tag: 'AMBASSADORS',
@@ -92,14 +97,16 @@ export const workThemes: WorkTheme[] = [
 			{
 				tag: 'HACKATHONS',
 				title: "Appwrite's Hackathons",
-				description:
-					'Planned and hosted multiple hackathons end to end, from marketing and submissions to community and judging, engaging 10,000+ developers.'
+				description: `Planned and hosted hackathons that engaged ${appwriteCareer.hackathonParticipants} developers during my Developer Advocate tenure (${appwriteCareer.advocatePeriod}).`,
+				link: {
+					label: 'Appwrite hackathons',
+					href: 'https://appwrite.io/blog/categories/hackathons'
+				}
 			},
 			{
 				tag: 'OPEN SOURCE',
 				title: 'Hacktoberfest and open-source programs',
-				description:
-					'Represented Appwrite in collaborative initiatives like Hacktoberfest, onboarding 100,000+ new community members.'
+				description: `Represented Appwrite in initiatives like Hacktoberfest, which together helped onboard ${appwriteCareer.communityMembers} new community members during my Developer Advocate tenure (${appwriteCareer.advocatePeriod}).`
 			}
 		]
 	},
@@ -118,9 +125,11 @@ export const workThemes: WorkTheme[] = [
 			{
 				tag: 'CATALOG',
 				title: 'Integrations catalog',
-				description:
-					"Launched and grew Appwrite's integrations catalog to 40+ integrations and templates across Appwrite products.",
-				link: { label: 'Integrations catalog', href: 'https://appwrite.io/integrations' }
+				description: `Launched Appwrite's integrations catalog in 2024 and grew it to 40+ integrations and templates during my Developer Advocate tenure (${appwriteCareer.advocatePeriod}).`,
+				link: {
+					label: 'Integrations catalog launch',
+					href: 'https://appwrite.io/blog/post/announcing-appwrite-integration-catalog'
+				}
 			},
 			{
 				tag: 'TUTORIALS',
@@ -137,22 +146,22 @@ export const workThemes: WorkTheme[] = [
 		summary: 'Milestones from along the way.',
 		items: [
 			{
-				tag: '2022–27',
+				tag: `Since ${microsoftMvpSince}`,
 				title: 'Microsoft MVP',
 				description:
-					'Awarded five years running for contributions to the .NET, JavaScript, and Azure developer communities.',
+					'Recognised for contributions to the .NET, JavaScript, and Azure developer communities.',
 				link: {
 					label: 'MVP profile',
-					href: 'https://mvp.microsoft.com/en-US/MVP/profile/4a922093-396f-ed11-81ab-000d3a5600fa'
+					href: identityProfiles.microsoftMvp
 				}
 			},
 			{
-				tag: '2024',
+				tag: String(cmxAward.year),
 				title: 'CMX Community Industry Award',
-				description: 'Best Developer Relations Community Professional of the Year.',
+				description: `${cmxAward.title}.`,
 				link: {
 					label: 'Announcement',
-					href: 'https://www.cmxhub.com/blog/the-2024-cmx-community-industry-awards-winners-are-in'
+					href: cmxAward.url
 				}
 			},
 			{
@@ -170,8 +179,8 @@ export const workThemes: WorkTheme[] = [
 				description:
 					'National winner in the Education category at the India chapter, for CodeCapture.',
 				link: {
-					label: 'Certificate',
-					href: 'https://drive.google.com/drive/folders/1123cDUF5Zvf1Rvd3Ctjz56itF3Qbz3e7?usp=drive_link'
+					label: 'CodeCapture case study',
+					href: projectPagePath('codecapture')
 				}
 			}
 		]

@@ -1,5 +1,5 @@
 // Facts supplied in the V3 brief, plus the favourite cards Aditya chose to show
-// (images supplied by him, 2026-10-01). The full inventory lives on Collectr;
+// (images supplied by him). The full inventory lives on Collectr;
 // this site shows the favourites and links there for the rest.
 export const collection = {
 	favourite: 'Blastoise',
@@ -47,14 +47,13 @@ export const favouriteCards: Card[] = [
 		alt: 'Japanese Squirtle card: Squirtle floats in a swirl of shallow, rainbow-tinted water.'
 	},
 	{
-		id: 'pikachu-151',
-		name: 'Pikachu',
-		printedName: 'ピカチュウ',
-		language: 'Japanese',
-		set: 'Pokémon Card 151',
-		number: '173/165 AR',
-		illustrator: 'Hiroyuki Yamamoto',
-		alt: 'Japanese Pikachu card: Pikachu runs across a busy town square full of people and Pokémon.'
+		id: 'pikachu-v-tg16',
+		name: 'Pikachu V',
+		language: 'English',
+		set: 'Lost Origin Trainer Gallery',
+		number: 'TG16/TG30',
+		illustrator: 'Ryota Murayama',
+		alt: 'Pikachu V card: Pikachu stands in a forest beside a Trainer in a red cap reading a map.'
 	},
 	{
 		id: 'mew-promo',

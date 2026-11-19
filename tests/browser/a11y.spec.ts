@@ -16,25 +16,35 @@ async function audit(page: Page, label: string) {
 }
 
 const pages = [
+	'/',
 	'/index',
 	'/work',
 	'/projects',
+	'/projects/relief-atl',
 	'/speaking',
+	'/speaking/why-agents-make-different-decisions-with-the-same-tools',
 	'/writing',
 	'/community',
 	'/photography',
 	'/collection',
 	'/about',
 	'/contact',
-	'/now',
-	'/this-page-does-not-exist'
+	'/now'
 ];
 
 test('content pages meet WCAG 2.2 AA (automated checks)', async ({ page }) => {
 	for (const path of pages) {
-		await page.goto(path);
+		const response = await page.goto(path);
+		expect(response?.status(), path).toBe(200);
 		await audit(page, path);
 	}
+});
+
+test('the 404 page meets WCAG 2.2 AA (automated checks)', async ({ page }) => {
+	const path = '/this-page-does-not-exist';
+	const response = await page.goto(path);
+	expect(response?.status(), path).toBe(404);
+	await audit(page, path);
 });
 
 test('the room, its guide, and every station meet WCAG 2.2 AA (automated checks)', async ({

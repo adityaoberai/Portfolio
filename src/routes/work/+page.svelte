@@ -2,12 +2,14 @@
 	import { externalLinkAttrs } from '$lib/external-links';
 	import PageMeta from '$lib/components/PageMeta.svelte';
 	import PageIntro from '$lib/components/PageIntro.svelte';
+	import { appwriteCareer } from '$lib/data/profile';
+	import { site } from '$lib/data/site';
 	import { workThemes } from '$lib/data/work';
 	import { contentId } from '$lib/analytics';
 </script>
 
 <PageMeta
-	title="Work"
+	title="Developer Relations work"
 	description="Aditya Oberai's professional work, organized by theme: developer relations, product storytelling, community, developer experience, and recognition."
 	path="/work"
 />
@@ -15,8 +17,9 @@
 <div class="v3-page" data-analytics-section="work_page">
 	<PageIntro title="The work, by theme." station="desk">
 		<p>
-			Job titles say less than the work does, so here it is, organized by what it was for rather
-			than where it happened.
+			I've been the {site.role} since {appwriteCareer.leadSince}. Before that, I joined Appwrite as
+			a Developer Advocate in {appwriteCareer.joined}. Here's the work by theme, from product
+			launches and documentation to education and community programs.
 		</p>
 	</PageIntro>
 
@@ -38,9 +41,9 @@
 							<h3>{item.title}</h3>
 							<p>{item.description}</p>
 							{#if item.link}<a href={item.link.href} {...externalLinkAttrs(item.link.href)}
-									>{item.link.label}<span aria-hidden="true">&nbsp;↗</span><span class="sr-only">
-										(opens in a new tab)</span
-									></a
+									>{item.link.label}{#if externalLinkAttrs(item.link.href).target}<span
+											aria-hidden="true">&nbsp;↗</span
+										><span class="sr-only"> (opens in a new tab)</span>{/if}</a
 								>{/if}
 						</div>
 					</li>
