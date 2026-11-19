@@ -3,17 +3,10 @@
 	import { goto } from '$app/navigation';
 	import { page as room } from '$lib/data/room';
 	import { site } from '$lib/data/site';
-	import { stationId } from '$lib/world/journey';
 
 	let dialog: HTMLDialogElement;
 
 	onMount(() => {
-		// Fragments are only available in the browser. Keep old shared station URLs working.
-		const station = stationId(location.hash.slice(1));
-		if (station) {
-			void goto(`/world${location.search}#${station}`, { replaceState: true });
-			return;
-		}
 		// The server renders the open dialog. Upgrade it to a native modal for keyboard focus.
 		dialog.close();
 		dialog.showModal();
@@ -32,7 +25,6 @@
 <dialog
 	bind:this={dialog}
 	open
-	aria-modal="true"
 	aria-labelledby="welcome-title"
 	aria-describedby="welcome-intro"
 	oncancel={enterOnEscape}

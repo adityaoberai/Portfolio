@@ -101,6 +101,7 @@ test('the welcome introduces the portfolio and leads to the index without JavaSc
 		await page.goto('/');
 		const welcome = page.getByRole('dialog');
 		await expect(welcome).toContainText('Developer Relations Lead at Appwrite');
+		await expect(welcome).not.toHaveAttribute('aria-modal', 'true');
 		await expect(welcome.getByRole('link', { name: 'Enter the room' })).toHaveAttribute(
 			'href',
 			'/world'
@@ -110,7 +111,7 @@ test('the welcome introduces the portfolio and leads to the index without JavaSc
 		await expect(page.locator('main a[href="/about"]')).toBeVisible();
 		await page.goto('/');
 		await expect(page.getByRole('heading', { level: 1 })).toContainText('bring people together');
-		await expect(welcome).toHaveCount(0);
+		await expect(page.locator('dialog[aria-labelledby="welcome-title"]')).toHaveCount(0);
 	} finally {
 		await context.close();
 	}

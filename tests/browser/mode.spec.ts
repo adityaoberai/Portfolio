@@ -73,19 +73,33 @@ test('the welcome index link and the room switch set the preferred view', async 
 	await expect(page.getByRole('dialog', { name: /Come spend a minute/ })).toHaveCount(0);
 });
 
-test('Escape closes the welcome and enters the room', async ({ page }) => {
+test('Escape closes the welcome and saves the room preference', async ({ page, context }) => {
 	await page.goto('/');
 	await expect(page.locator('dialog:modal')).toHaveCount(1);
 	await page.keyboard.press('Escape');
 	await expect(page).toHaveURL(/\/world$/);
 	await expect(page.getByRole('dialog', { name: /Come spend a minute/ })).toHaveCount(0);
+	expect(await modeCookie(context)).toBe('world');
 });
 
-test('an existing homepage station link opens the right room panel on a fresh visit', async ({
-	page
-}) => {
-	await page.goto('/#camera');
-	await expect(page).toHaveURL(/\/world#camera$/);
-	await expect(page.getByRole('dialog')).toBeVisible();
-	await expect(page.getByRole('heading', { name: 'Fujifilm X-T30 II', exact: true })).toBeVisible();
-});
+for (const mode of ['unset', 'index', 'world'] as const) {
+	test(`a legacy station link opens the camera and preserves the ${mode} preference`, async ({
+		page,
+		context
+	}) => {
+		if (mode !== 'unset') await page.goto(`/${mode}`);
+		await page.goto('/#camera');
+		await expect(page).toHaveURL(mode === 'world' ? /\/#camera$/ : /\/world\?keep-mode=1#camera$/);
+		await expect(
+			page.getByRole('heading', { name: 'Fujifilm X-T30 II', exact: true })
+		).toBeVisible();
+		expect(await modeCookie(context)).toBe(mode === 'unset' ? undefined : mode);
+
+		if (mode !== 'world') {
+			await page.goto('/');
+			await expect(page.getByRole('heading', { level: 1 })).toContainText(
+				mode === 'unset' ? 'Come spend a minute' : 'bring people together'
+			);
+		}
+	});
+}

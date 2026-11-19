@@ -15,6 +15,7 @@
 
 ## 18 November 2026 – Portfolio discovery
 
+- Review follow-up: preserve the saved view when opening legacy station links, use native modal semantics after hydration, and check HTTP responses before running accessibility audits.
 - Bring the discovery branch up to date with the November essay and resume edits. Serve the introduction in a welcome dialog before the room loads. Save the visitor's choice to enter the room or open the index.
 - Add project pages for Relief ATL, Offline Journal, and CodeCapture, plus talk pages for RenderATL, MCP Dev Summit Bengaluru, and All Things Open. Include project contributions and outcomes, talk takeaways and co-speakers, and links to primary sources.
 - Connect the profile, project, talk, and writing metadata to one Person ID. Use the recorded Appwrite career dates and the award organiser's CMX title across the relevant pages.
