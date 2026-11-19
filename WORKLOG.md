@@ -13,6 +13,11 @@
 - Appwrite Analytics replaces Google Analytics and runs only on the two production hostnames, respecting Do Not Track.
 - Node 24 is the development and CI default. The minimum supported version is 22.18.
 
+## 19 November 2026 – Pikachu V
+
+- Replaced the featured Pikachu with Pikachu V TG16/TG30 from Lost Origin Trainer Gallery using Aditya's supplied artwork. Regenerated the card image, shelf texture, and room still.
+- Verified the card and its metadata on `/collection` with JavaScript disabled and in the room's shelf panel. The room loaded the updated shelf texture. All 33 unit tests and six focused browser tests passed.
+
 ## 18 November 2026 – Portfolio discovery
 
 - Review follow-up: preserve the saved view when opening legacy station links, use native modal semantics after hydration, and check HTTP responses before running accessibility audits.
